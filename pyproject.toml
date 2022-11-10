@@ -1,0 +1,20 @@
+[tool.poetry]
+authors = ["Joel Collins <joel.collins@renalregistry.nhs.uk>"]
+description = "A barebones library to convert RDA XML files to UKRDC SQLAlchemy objects"
+name = "ukrdc-xml-to-sqla"
+packages = [{include = "ukrdc_xml2sqla"}]
+readme = "README.md"
+version = "0.1.0"
+
+[tool.poetry.dependencies]
+python = "^3.9"
+ukrdc-sqla = "^2.0.0"
+ukrdc-xsdata = "^3.3.0.post1"
+
+[tool.poetry.group.dev.dependencies]
+black = {version = "^22.10.0", allow-prereleases = true}
+pylint = "^2.15.4"
+
+[build-system]
+build-backend = "poetry.core.masonry.api"
+requires = ["poetry-core"]
