@@ -21,6 +21,22 @@ import ukrdc_sqla.ukrdc as orm
 import ukrdc_xsdata.ukrdc.types as xsd_types
 import ukrdc_xsdata.ukrdc as xsd_ukrdc
 import ukrdc_xsdata.ukrdc.lab_orders as xsd_lab_orders
+import ukrdc_xsdata.ukrdc.social_histories as xsd_social_histories
+
+
+class SocialHistory:
+    def __init__(self, social_history: xsd_social_histories.SocialHistory):
+        self.social_history = social_history
+
+    def to_orm(self) -> orm.SocialHistory:
+        orm_social_history = orm.SocialHistory(
+            socialhabitcode=self.social_history.social_habit.code if self.social_history.social_habit else None,
+            socialhabitcodestd=self.social_history.social_habit.coding_standard if self.social_history.social_habit else None,
+            socialhabitcodedesc=self.social_history.social_habit.description if self.social_history.social_habit else None,
+            updatedon=self.social_history.updated_on,
+            externalid=self.social_history.external_id,
+        )
+        return orm_social_history
 
 
 class ResultItem:
@@ -235,4 +251,5 @@ class PatientRecord:
             sendingextract=self.xml.sending_extract,
             patient=Patient(self.xml.patient).to_orm() if self.xml.patient else None,
             lab_orders=[LabOrder(order).to_orm() for order in self.xml.lab_orders.lab_order] if self.xml.lab_orders else [],
+            social_histories=[SocialHistory(history).to_orm() for history in self.xml.social_histories.social_history] if self.xml.social_histories else [],
         )
