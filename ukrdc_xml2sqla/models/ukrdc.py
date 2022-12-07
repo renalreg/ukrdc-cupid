@@ -23,29 +23,81 @@ import ukrdc_xsdata.ukrdc as xsd_ukrdc
 import ukrdc_xsdata.ukrdc.lab_orders as xsd_lab_orders
 import ukrdc_xsdata.ukrdc.social_histories as xsd_social_history
 import ukrdc_xsdata.ukrdc.family_histories as xsd_family_history
+import ukrdc_xsdata.ukrdc.allergies as xsd_allergy
+
+
+class Allergy:
+    def __init__(self, allergy: xsd_allergy.Allergy) -> None:
+        self.allergy = allergy
+
+    def to_orm(self) -> orm.Allergy:
+        allergy = orm.Allergy()
+
+        # Basic columns
+
+        allergy.discoverytime = self.allergy.discovery_time.to_datetime()
+        allergy.confirmedtime = self.allergy.confirmed_time.to_datetime()
+        allergy.inactivetime = self.allergy.inactive_time.to_datetime()
+        allergy.commenttext = self.allergy.comments
+        allergy.freetextallergy = self.allergy.free_text_allergy
+        allergy.qualifyingdetails = self.allergy.qualifying_details
+        allergy.updatedon = self.allergy.updated_on
+        allergy.externalid = self.allergy.external_id
+
+        if self.allergy.allergy:
+            allergy.allergycode = self.allergy.allergy.code
+            allergy.allergycodestd = self.allergy.allergy.coding_standard
+            allergy.allergydesc = self.allergy.allergy.description
+
+        if self.allergy.allergy_category:
+            allergy.allergycategorycode = self.allergy.allergy_category.code
+            allergy.allergycategorycodestd = self.allergy.allergy_category.coding_standard
+            allergy.allergycategorydesc = self.allergy.allergy_category.description
+
+        if self.allergy.severity:
+            allergy.severitycode = self.allergy.severity.code
+            allergy.severitycodestd = self.allergy.severity.coding_standard
+            allergy.severitydesc = self.allergy.severity.description
+
+        if self.allergy.clinician:
+            allergy.cliniciancode = self.allergy.clinician.code
+            allergy.cliniciancodestd = self.allergy.clinician.coding_standard
+            allergy.cliniciandesc = self.allergy.clinician.description
+
+        return allergy
 
 
 class FamilyHistory:
     def __init__(self, family_history: xsd_family_history.FamilyHistory):
         self.family_history = family_history
 
-    def to_orm(self):
-        return orm.FamilyHistory(
-            familymembercode=self.family_history.family_member.code if self.family_history.family_member else None,
-            familymembercodestd=self.family_history.family_member.coding_standard if self.family_history.family_member else None,
-            familymemberdesc=self.family_history.family_member.description if self.family_history.family_member else None,
-            diagnosiscode=self.family_history.diagnosis.code if self.family_history.diagnosis else None,
-            diagnosiscodestd=self.family_history.diagnosis.coding_standard if self.family_history.diagnosis else None,
-            diagnosisdesc=self.family_history.diagnosis.description if self.family_history.diagnosis else None,
-            notetext=self.family_history.note_text,
-            enteredatcode=self.family_history.entered_at.code if self.family_history.entered_at else None,
-            enteredatcodestd=self.family_history.entered_at.coding_standard if self.family_history.entered_at else None,
-            enteredatdesc=self.family_history.entered_at.description if self.family_history.entered_at else None,
-            fromtime=self.family_history.from_time,
-            totime=self.family_history.to_time,
-            updatedon=self.family_history.updated_on,
-            externalid=self.family_history.external_id,
-        )
+    def to_orm(self) -> orm.FamilyHistory:
+        history = orm.FamilyHistory()
+
+        # Basic columns
+
+        history.notetext = self.family_history.note_text
+        history.fromtime = self.family_history.from_time
+        history.totime = self.family_history.to_time
+        history.updatedon = self.family_history.updated_on
+        history.externalid = self.family_history.external_id
+
+        if self.family_history.family_member:
+            history.familymembercode = self.family_history.family_member.code
+            history.familymembercodestd = self.family_history.family_member.coding_standard
+            history.familymemberdesc = self.family_history.family_member.description
+
+        if self.family_history.diagnosis:
+            history.diagnosiscode = self.family_history.diagnosis.code
+            history.diagnosiscodestd = self.family_history.diagnosis.coding_standard
+            history.diagnosisdesc = self.family_history.diagnosis.description
+
+        if self.family_history.entered_at:
+            history.enteredatcode = self.family_history.entered_at.code
+            history.enteredatcodestd = self.family_history.entered_at.coding_standard
+            history.enteredatdesc = self.family_history.entered_at.description
+
+        return history
 
 
 class SocialHistory:
@@ -53,13 +105,19 @@ class SocialHistory:
         self.social_history = social_history
 
     def to_orm(self) -> orm.SocialHistory:
-        return orm.SocialHistory(
-            socialhabitcode=self.social_history.social_habit.code if self.social_history.social_habit else None,
-            socialhabitcodestd=self.social_history.social_habit.coding_standard if self.social_history.social_habit else None,
-            socialhabitcodedesc=self.social_history.social_habit.description if self.social_history.social_habit else None,
-            updatedon=self.social_history.updated_on,
-            externalid=self.social_history.external_id,
-        )
+        history = orm.SocialHistory()
+
+        # Basic columns
+
+        history.updatedon = self.social_history.updated_on
+        history.externalid = self.social_history.external_id
+
+        if self.social_history.social_habit:
+            history.socialhabitcode = self.social_history.social_habit.code
+            history.socialhabitcodestd = self.social_history.social_habit.coding_standard
+            history.socialhabitcodedesc = self.social_history.social_habit.description
+
+        return history
 
 
 class ResultItem:
@@ -67,23 +125,29 @@ class ResultItem:
         self.result_item = result_item
 
     def to_orm(self) -> orm.ResultItem:
-        return orm.ResultItem(
-            resulttype=self.result_item.result_type,
-            enteredon=self.result_item.entered_on,
-            prepost=self.result_item.pre_post.value if self.result_item.pre_post else None,
-            serviceidcode=self.result_item.service_id.code if self.result_item.service_id else None,
-            serviceidcodestd=self.result_item.service_id.coding_standard if self.result_item.service_id else None,
-            serviceiddesc=self.result_item.service_id.description if self.result_item.service_id else None,
-            subid=self.result_item.sub_id,
-            resultvalue=self.result_item.result_value,
-            resultvalueunits=self.result_item.result_value_units,
-            referencerange=self.result_item.reference_range,
-            interpretationcodes=self.result_item.interpretation_codes.value if self.result_item.interpretation_codes else None,
-            status=self.result_item.status.value if self.result_item.status else None,
-            observationtime=self.result_item.observation_time,
-            commenttext=self.result_item.comments,
-            referencecomment=self.result_item.reference_comment,
-        )
+        result = orm.ResultItem()
+
+        # Basic columns
+
+        result.resulttype = self.result_item.result_type
+        result.enteredon = self.result_item.entered_on
+        result.prepost = self.result_item.pre_post.value if self.result_item.pre_post else None
+        result.subid = self.result_item.sub_id
+        result.resultvalue = self.result_item.result_value
+        result.resultvalueunits = self.result_item.result_value_units
+        result.referencerange = self.result_item.reference_range
+        result.interpretationcodes = self.result_item.interpretation_codes.value if self.result_item.interpretation_codes else None
+        result.status = self.result_item.status.value if self.result_item.status else None
+        result.observationtime = self.result_item.observation_time
+        result.commenttext = self.result_item.comments
+        result.referencecomment = self.result_item.reference_comment
+
+        if self.result_item.service_id:
+            result.serviceidcode = self.result_item.service_id.code
+            result.serviceidcodestd = self.result_item.service_id.coding_standard
+            result.serviceiddesc = self.result_item.service_id.description
+
+        return result
 
 
 class LabOrder:
@@ -91,43 +155,67 @@ class LabOrder:
         self.laborder = laborder
 
     def to_orm(self) -> orm.LabOrder:
-        return orm.LabOrder(
-            receivinglocationcode=self.laborder.receiving_location.code if self.laborder.receiving_location else None,
-            receivinglocationdesc=self.laborder.receiving_location.description if self.laborder.receiving_location else None,
-            receivinglocationcodestd=self.laborder.receiving_location.coding_standard if self.laborder.receiving_location else None,
-            placerid=self.laborder.placer_id,
-            fillerid=self.laborder.filler_id,
-            orderedbycode=self.laborder.ordered_by.code if self.laborder.ordered_by else None,
-            orderedbydesc=self.laborder.ordered_by.description if self.laborder.ordered_by else None,
-            orderedbycodestd=self.laborder.ordered_by.coding_standard if self.laborder.ordered_by else None,
-            orderitemcode=self.laborder.order_item.code if self.laborder.order_item else None,
-            orderitemdesc=self.laborder.order_item.description if self.laborder.order_item else None,
-            orderitemcodestd=self.laborder.order_item.coding_standard if self.laborder.order_item else None,
-            ordercategorycode=self.laborder.order_category.code if self.laborder.order_category else None,
-            ordercategorydesc=self.laborder.order_category.description if self.laborder.order_category else None,
-            ordercategorycodestd=self.laborder.order_category.coding_standard if self.laborder.order_category else None,
-            specimencollectedtime=self.laborder.specimen_collected_time,
-            specimenreceivedtime=self.laborder.specimen_received_time,
-            status=self.laborder.status,
-            prioritycode=self.laborder.priority.code if self.laborder.priority else None,
-            prioritydesc=self.laborder.priority.description if self.laborder.priority else None,
-            prioritycodestd=self.laborder.priority.coding_standard if self.laborder.priority else None,
-            specimensource=self.laborder.specimen_source,
-            duration=self.laborder.duration,
-            patientclasscode=self.laborder.patient_class.code if self.laborder.patient_class else None,
-            patientclassdesc=self.laborder.patient_class.description if self.laborder.patient_class else None,
-            patientclasscodestd=self.laborder.patient_class.coding_standard if self.laborder.patient_class else None,
-            enteredon=self.laborder.entered_on,
-            enteredatcode=self.laborder.entered_at.code if self.laborder.entered_at else None,
-            enteredatdesc=self.laborder.entered_at.description if self.laborder.entered_at else None,
-            enteredatcodestd=self.laborder.entered_at.coding_standard if self.laborder.entered_at else None,
-            enteringorganizationcode=self.laborder.entering_organization.code if self.laborder.entering_organization else None,
-            enteringorganizationdesc=self.laborder.entering_organization.description if self.laborder.entering_organization else None,
-            enteringorganizationcodestd=self.laborder.entering_organization.coding_standard if self.laborder.entering_organization else None,
-            updatedon=self.laborder.updated_on,
-            externalid=self.laborder.external_id,
-            result_items=[ResultItem(item).to_orm() for item in self.laborder.result_items.result_item] if self.laborder.result_items else None,
-        )
+        order = orm.LabOrder()
+
+        # Basic columns
+
+        order.placerid = self.laborder.placer_id
+        order.fillerid = self.laborder.filler_id
+        order.specimencollectedtime = self.laborder.specimen_collected_time
+        order.specimenreceivedtime = self.laborder.specimen_received_time
+        order.status = self.laborder.status
+        order.specimensource = self.laborder.specimen_source
+        order.duration = self.laborder.duration
+        order.enteredon = self.laborder.entered_on
+        order.updatedon = self.laborder.updated_on
+        order.externalid = self.laborder.external_id
+
+        if self.laborder.receiving_location:
+            order.receivinglocationcode = self.laborder.receiving_location.code
+            order.receivinglocationdesc = self.laborder.receiving_location.description
+            order.receivinglocationcodestd = self.laborder.receiving_location.coding_standard
+
+        if self.laborder.ordered_by:
+            order.orderedbycode = self.laborder.ordered_by.code
+            order.orderedbydesc = self.laborder.ordered_by.description
+            order.orderedbycodestd = self.laborder.ordered_by.coding_standard
+
+        if self.laborder.order_item:
+            order.orderitemcode = self.laborder.order_item.code
+            order.orderitemdesc = self.laborder.order_item.description
+            order.orderitemcodestd = self.laborder.order_item.coding_standard
+
+        if self.laborder.order_category:
+            order.ordercategorycode = self.laborder.order_category.code
+            order.ordercategorydesc = self.laborder.order_category.description
+            order.ordercategorycodestd = self.laborder.order_category.coding_standard
+
+        if self.laborder.priority:
+            order.prioritycode = self.laborder.priority.code
+            order.prioritydesc = self.laborder.priority.description
+            order.prioritycodestd = self.laborder.priority.coding_standard
+
+        if self.laborder.patient_class:
+            order.patientclasscode = self.laborder.patient_class.code
+            order.patientclassdesc = self.laborder.patient_class.description
+            order.patientclasscodestd = self.laborder.patient_class.coding_standard
+
+        if self.laborder.entered_at:
+            order.enteredatcode = self.laborder.entered_at.code
+            order.enteredatdesc = self.laborder.entered_at.description
+            order.enteredatcodestd = self.laborder.entered_at.coding_standard
+
+        if self.laborder.entering_organization:
+            order.enteringorganizationcode = self.laborder.entering_organization.code
+            order.enteringorganizationdesc = self.laborder.entering_organization.description
+            order.enteringorganizationcodestd = self.laborder.entering_organization.coding_standard
+
+        # Relationships
+
+        if self.laborder.result_items:
+            order.result_items = [ResultItem(item).to_orm() for item in self.laborder.result_items.result_item]
+
+        return order
 
 
 class FamilyDoctor:
@@ -135,25 +223,34 @@ class FamilyDoctor:
         self.family_doctor = family_doctor
 
     def to_orm(self) -> orm.FamilyDoctor:
-        return orm.FamilyDoctor(
-            gpname=self.family_doctor.gpname,
-            gpid=self.family_doctor.gpid,
-            gppracticeid=self.family_doctor.gppractice_id,
-            addressuse=self.family_doctor.address.use if self.family_doctor.address else None,
-            fromtime=self.family_doctor.address.from_time if self.family_doctor.address else None,
-            totime=self.family_doctor.address.to_time if self.family_doctor.address else None,
-            street=self.family_doctor.address.street if self.family_doctor.address else None,
-            town=self.family_doctor.address.town if self.family_doctor.address else None,
-            county=self.family_doctor.address.county if self.family_doctor.address else None,
-            postcode=self.family_doctor.address.postcode if self.family_doctor.address else None,
-            countrycode=self.family_doctor.address.country.code if self.family_doctor.address and self.family_doctor.address.country else None,
-            countrycodestd=self.family_doctor.address.country.coding_standard if self.family_doctor.address and self.family_doctor.address.country else None,
-            countrydesc=self.family_doctor.address.country.description if self.family_doctor.address and self.family_doctor.address.country else None,
-            contactuse=self.family_doctor.contact_detail.use if self.family_doctor.contact_detail else None,
-            contactvalue=self.family_doctor.contact_detail.value if self.family_doctor.contact_detail else None,
-            email=self.family_doctor.email,
-            commenttext=self.family_doctor.contact_detail.comments if self.family_doctor.contact_detail else None,
-        )
+        doctor = orm.FamilyDoctor()
+
+        doctor.gpname = self.family_doctor.gpname
+        doctor.gpid = self.family_doctor.gpid
+        doctor.gppracticeid = self.family_doctor.gppractice_id
+
+        doctor.email = self.family_doctor.email
+
+        if self.family_doctor.address:
+            doctor.addressuse = self.family_doctor.address.use
+            doctor.fromtime = self.family_doctor.address.from_time
+            doctor.totime = self.family_doctor.address.to_time
+            doctor.street = self.family_doctor.address.street
+            doctor.town = self.family_doctor.address.town
+            doctor.county = self.family_doctor.address.county
+            doctor.postcode = self.family_doctor.address.postcode
+
+            if self.family_doctor.address.country:
+                doctor.countrycode = self.family_doctor.address.country.code
+                doctor.countrycodestd = self.family_doctor.address.country.coding_standard
+                doctor.countrydesc = self.family_doctor.address.country.description
+
+        if self.family_doctor.contact_detail:
+            doctor.contactuse = self.family_doctor.contact_detail.use
+            doctor.contactvalue = self.family_doctor.contact_detail.value
+            doctor.commenttext = self.family_doctor.contact_detail.comments
+
+        return doctor
 
 
 class Address:
@@ -161,18 +258,22 @@ class Address:
         self.address = address
 
     def to_orm(self) -> orm.Address:
-        return orm.Address(
-            addressuse=self.address.use,
-            fromtime=self.address.from_time,
-            totime=self.address.to_time,
-            street=self.address.street,
-            town=self.address.town,
-            county=self.address.county,
-            postcode=self.address.postcode,
-            countrycode=self.address.country.code if self.address.country else None,
-            countrycodestd=self.address.country.coding_standard if self.address.country else None,
-            countrydesc=self.address.country.description if self.address.country else None,
-        )
+        address = orm.Address()
+
+        address.addressuse = self.address.use
+        address.fromtime = self.address.from_time
+        address.totime = self.address.to_time
+        address.street = self.address.street
+        address.town = self.address.town
+        address.county = self.address.county
+        address.postcode = self.address.postcode
+
+        if self.address.country:
+            address.countrycode = self.address.country.code
+            address.countrycodestd = self.address.country.coding_standard
+            address.countrydesc = self.address.country.description
+
+        return address
 
 
 class ContactDetail:
@@ -180,11 +281,13 @@ class ContactDetail:
         self.xsd_contact = xsd_contact
 
     def to_orm(self) -> orm.ContactDetail:
-        return orm.ContactDetail(
-            contactuse=self.xsd_contact.use,
-            contactvalue=self.xsd_contact.value,
-            commenttext=self.xsd_contact.comments,
-        )
+        detail = orm.ContactDetail()
+
+        detail.contactuse = self.xsd_contact.use
+        detail.contactvalue = self.xsd_contact.value
+        detail.commenttext = self.xsd_contact.comments
+
+        return detail
 
 
 class Name:
@@ -192,14 +295,16 @@ class Name:
         self.xml = xml
 
     def to_orm(self):
-        return orm.Name(
-            nameuse=self.xml.use,
-            prefix=self.xml.prefix,
-            family=self.xml.family,
-            given=self.xml.given,
-            othergivennames=self.xml.other_given_names,
-            suffix=self.xml.suffix,
-        )
+        name = orm.Name()
+
+        name.nameuse = self.xml.use
+        name.prefix = self.xml.prefix
+        name.family = self.xml.family
+        name.given = self.xml.given
+        name.othergivennames = self.xml.other_given_names
+        name.suffix = self.xml.suffix
+
+        return name
 
 
 class PatientNumber:
@@ -207,11 +312,13 @@ class PatientNumber:
         self.xml = xml
 
     def to_orm(self):
-        return orm.PatientNumber(
-            patientid=self.xml.number,
-            organization=self.xml.organization,
-            numbertype=self.xml.number_type,
-        )
+        number = orm.PatientNumber()
+
+        number.patientid = self.xml.number
+        number.organization = self.xml.organization
+        number.numbertype = self.xml.number_type
+
+        return number
 
 
 class Patient:
@@ -225,35 +332,65 @@ class Patient:
         return None
 
     def to_orm(self):
-        return orm.Patient(
-            birthtime=self.xml.birth_time.to_datetime() if self.xml.birth_time else None,
-            deathtime=self.xml.death_time.to_datetime() if self.xml.death_time else None,
-            gender=self.xml.gender,
-            countryofbirth=self.xml.country_of_birth,
-            ethnicgroupcode=self.xml.ethnic_group.code if self.xml.ethnic_group else None,
-            ethnicgroupcodestd=self.xml.ethnic_group.coding_standard if self.xml.ethnic_group else None,
-            ethnicgroupdesc=self.xml.ethnic_group.description if self.xml.ethnic_group else None,
-            persontocontactname=self.xml.person_to_contact.name if self.xml.person_to_contact else None,
-            persontocontact_contactnumber=self._first_person_to_contact.value if self._first_person_to_contact else None,
-            persontocontact_relationship=self.xml.person_to_contact.relationship if self.xml.person_to_contact else None,
-            persontocontact_contactnumbercomments=self._first_person_to_contact.comments if self._first_person_to_contact else None,
-            persontocontact_contacttype=self._first_person_to_contact.use if self._first_person_to_contact else None,
-            occupationcode=self.xml.occupation.code if self.xml.occupation else None,
-            occupationcodestd=self.xml.occupation.coding_standard if self.xml.occupation else None,
-            occupationdesc=self.xml.occupation.description if self.xml.occupation else None,
-            primarylanguagecode=self.xml.primary_language.code if self.xml.primary_language else None,
-            primarylanguagecodestd=self.xml.primary_language.coding_standard if self.xml.primary_language else None,
-            primarylanguagedesc=self.xml.primary_language.description if self.xml.primary_language else None,
-            death=self.xml.death,
-            updatedon=self.xml.updated_on.to_datetime() if self.xml.updated_on else None,
-            bloodgroup=self.xml.blood_group,
-            bloodrhesus=self.xml.blood_rhesus,
-            numbers=[PatientNumber(number).to_orm() for number in self.xml.patient_numbers.patient_number] if self.xml.patient_numbers else [],
-            names=[Name(name).to_orm() for name in self.xml.names.name] if self.xml.names else [],
-            contact_details=[ContactDetail(contact).to_orm() for contact in self.xml.contact_details.contact_detail] if self.xml.contact_details else [],
-            addresses=[Address(address).to_orm() for address in self.xml.addresses.address] if self.xml.addresses else [],
-            familydoctor=FamilyDoctor(self.xml.family_doctor).to_orm() if self.xml.family_doctor else None,
-        )
+        patient = orm.Patient()
+
+        # Basic columns
+
+        patient.birthtime = self.xml.birth_time.to_datetime() if self.xml.birth_time else None
+        patient.deathtime = self.xml.death_time.to_datetime() if self.xml.death_time else None
+
+        patient.gender = self.xml.gender
+        patient.countryofbirth = self.xml.country_of_birth
+
+        if self.xml.ethnic_group:
+            patient.ethnicgroupcode = self.xml.ethnic_group.code
+            patient.ethnicgroupcodestd = self.xml.ethnic_group.coding_standard
+            patient.ethnicgroupdesc = self.xml.ethnic_group.description
+
+        if self.xml.person_to_contact:
+            patient.persontocontactname = self.xml.person_to_contact.name
+            patient.persontocontact_relationship = self.xml.person_to_contact.relationship
+
+            if self.xml.person_to_contact.contact_details:
+                patient.persontocontact_contactnumber = self.xml.person_to_contact.contact_details[0].value
+                patient.persontocontact_contactnumbercomments = self.xml.person_to_contact.contact_details[0].comments
+                patient.persontocontact_contactnumbertype = self.xml.person_to_contact.contact_details[0].use
+
+        if self.xml.occupation:
+            patient.occupationcode = self.xml.occupation.code
+            patient.occupationcodestd = self.xml.occupation.coding_standard
+            patient.occupationdesc = self.xml.occupation.description
+
+        if self.xml.primary_language:
+            patient.primarylanguagecode = self.xml.primary_language.code
+            patient.primarylanguagecodestd = self.xml.primary_language.coding_standard
+            patient.primarylanguagedesc = self.xml.primary_language.description
+
+        patient.death = self.xml.death
+
+        patient.updatedon = self.xml.updated_on.to_datetime() if self.xml.updated_on else None
+
+        patient.bloodgroup = self.xml.blood_group
+        patient.bloodrhesus = self.xml.blood_rhesus
+
+        # Relationships
+
+        if self.xml.patient_numbers:
+            patient.numbers = [PatientNumber(number).to_orm() for number in self.xml.patient_numbers.patient_number]
+
+        if self.xml.names:
+            patient.names = [Name(name).to_orm() for name in self.xml.names.name]
+
+        if self.xml.contact_details:
+            patient.contact_details = [ContactDetail(contact).to_orm() for contact in self.xml.contact_details.contact_detail]
+
+        if self.xml.addresses:
+            patient.addresses = [Address(address).to_orm() for address in self.xml.addresses.address]
+
+        if self.xml.family_doctor:
+            patient.familydoctor = FamilyDoctor(self.xml.family_doctor).to_orm()
+
+        return patient
 
 
 class PatientRecord:
@@ -261,19 +398,91 @@ class PatientRecord:
         self.xml = xml
 
     def to_orm(self):
-        return orm.PatientRecord(
-            # pid=self.pid,
-            # ukrdcid=self.ukrdcid,
-            # localpatientid=self.localpatientid,
-            # extracttime=self.extract_time,
-            # creationdate=self.creation_date,
-            # updatedate=self.update_date,
-            # repositorycreationdate=self.repository_creation_date,
-            # repositoryupdatedate=self.repository_update_date,
-            sendingfacility=self.xml.sending_facility.value if self.xml.sending_facility else None,
-            sendingextract=self.xml.sending_extract,
-            patient=Patient(self.xml.patient).to_orm() if self.xml.patient else None,
-            lab_orders=[LabOrder(order).to_orm() for order in self.xml.lab_orders.lab_order] if self.xml.lab_orders else [],
-            social_histories=[SocialHistory(history).to_orm() for history in self.xml.social_histories.social_history] if self.xml.social_histories else [],
-            family_histories=[FamilyHistory(history).to_orm() for history in self.xml.family_histories.family_history] if self.xml.family_histories else [],
-        )
+        record = orm.PatientRecord()
+
+        # Basic columns
+
+        record.sendingfacility = self.xml.sending_facility.value if self.xml.sending_facility else None
+        record.sendingextract = self.xml.sending_extract
+
+        # Relationships
+
+        record.patient = Patient(self.xml.patient).to_orm() if self.xml.patient else None
+
+        if self.xml.lab_orders:
+            record.lab_orders = [LabOrder(order).to_orm() for order in self.xml.lab_orders.lab_order]
+
+        if self.xml.social_histories:
+            record.social_histories = [SocialHistory(history).to_orm() for history in self.xml.social_histories.social_history]
+
+        if self.xml.family_histories:
+            record.family_histories = [FamilyHistory(history).to_orm() for history in self.xml.family_histories.family_history]
+
+        if self.xml.allergies:
+            record.allergies = [Allergy(allergy).to_orm() for allergy in self.xml.allergies.allergy]
+
+        if self.xml.diagnoses:
+            if self.xml.diagnoses.diagnosis:
+                # self.diagnoses = [Diagnosis(diagnosis).to_orm() for diagnosis in self.xml.diagnoses.diagnosis]
+                pass
+            if self.xml.diagnoses.cause_of_death:
+                # self.cause_of_death = [CauseOfDeath(self.xml.diagnoses.cause_of_death).to_orm()]
+                pass
+            if self.xml.diagnoses.renal_diagnosis:
+                # self.renaldiagnoses = [RenalDiagnosis(self.xml.diagnoses.renal_diagnosis).to_orm()]
+                pass
+
+        if self.xml.medications:
+            # self.medications = [Medication(medication).to_orm() for medication in self.xml.medications]
+            pass
+
+        if self.xml.procedures:
+            if self.xml.procedures.procedure:
+                # self.procedures = [Procedure(procedure).to_orm() for procedure in self.xml.procedures.procedure]
+                pass
+            if self.xml.procedures.dialysis_sessions:
+                # self.dialysis_sessions = [DialysisSession(session).to_orm() for session in self.xml.procedures.dialysis_sessions]
+                pass
+            if self.xml.procedures.transplant:
+                # self.transplants = [Transplant(transplant).to_orm() for transplant in self.xml.procedures.transplant]
+                pass
+            if self.xml.procedures.vascular_access:
+                # self.vascular_accesses = [VascularAccess(access).to_orm() for access in self.xml.procedures.vascular_access]
+                pass
+
+        if self.xml.documents:
+            # self.documents = [Document(document).to_orm() for document in self.xml.documents]
+            pass
+
+        if self.xml.encounters:
+            if self.xml.encounters.encounter:
+                # self.encounters = [Encounter(encounter).to_orm() for encounter in self.xml.encounters.encounter]
+                pass
+            if self.xml.encounters.treatment:
+                # self.treatments = [Treatment(treatment).to_orm() for treatment in self.xml.encounters.treatment]
+                pass
+            if self.xml.encounters.transplant_list:
+                # self.transplantlists = [TransplantList(tplist).to_orm() for tplist in self.xml.encounters.transplant_list]
+                pass
+
+        if self.xml.program_memberships:
+            # self.program_memberships = [ProgramMembership(membership).to_orm() for membership in self.xml.program_memberships]
+            pass
+
+        if self.xml.opt_outs:
+            # self.opt_outs = [OptOut(optout).to_orm() for optout in self.xml.opt_outs]
+            pass
+
+        if self.xml.clinical_relationships:
+            # self.clinical_relationships = [ClinicalRelationship(relationship).to_orm() for relationship in self.xml.clinical_relationships]
+            pass
+
+        if self.xml.surveys:
+            # self.surveys = [Survey(survey).to_orm() for survey in self.xml.surveys]
+            pass
+
+        if self.xml.pvdata:
+            # self.pvdata = [PVData(pvdata).to_orm() for pvdata in self.xml.pvdata]
+            pass
+
+        return record
