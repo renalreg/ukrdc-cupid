@@ -21,22 +21,45 @@ import ukrdc_sqla.ukrdc as orm
 import ukrdc_xsdata.ukrdc.types as xsd_types
 import ukrdc_xsdata.ukrdc as xsd_ukrdc
 import ukrdc_xsdata.ukrdc.lab_orders as xsd_lab_orders
-import ukrdc_xsdata.ukrdc.social_histories as xsd_social_histories
+import ukrdc_xsdata.ukrdc.social_histories as xsd_social_history
+import ukrdc_xsdata.ukrdc.family_histories as xsd_family_history
+
+
+class FamilyHistory:
+    def __init__(self, family_history: xsd_family_history.FamilyHistory):
+        self.family_history = family_history
+
+    def to_orm(self):
+        return orm.FamilyHistory(
+            familymembercode=self.family_history.family_member.code if self.family_history.family_member else None,
+            familymembercodestd=self.family_history.family_member.coding_standard if self.family_history.family_member else None,
+            familymemberdesc=self.family_history.family_member.description if self.family_history.family_member else None,
+            diagnosiscode=self.family_history.diagnosis.code if self.family_history.diagnosis else None,
+            diagnosiscodestd=self.family_history.diagnosis.coding_standard if self.family_history.diagnosis else None,
+            diagnosisdesc=self.family_history.diagnosis.description if self.family_history.diagnosis else None,
+            notetext=self.family_history.note_text,
+            enteredatcode=self.family_history.entered_at.code if self.family_history.entered_at else None,
+            enteredatcodestd=self.family_history.entered_at.coding_standard if self.family_history.entered_at else None,
+            enteredatdesc=self.family_history.entered_at.description if self.family_history.entered_at else None,
+            fromtime=self.family_history.from_time,
+            totime=self.family_history.to_time,
+            updatedon=self.family_history.updated_on,
+            externalid=self.family_history.external_id,
+        )
 
 
 class SocialHistory:
-    def __init__(self, social_history: xsd_social_histories.SocialHistory):
+    def __init__(self, social_history: xsd_social_history.SocialHistory):
         self.social_history = social_history
 
     def to_orm(self) -> orm.SocialHistory:
-        orm_social_history = orm.SocialHistory(
+        return orm.SocialHistory(
             socialhabitcode=self.social_history.social_habit.code if self.social_history.social_habit else None,
             socialhabitcodestd=self.social_history.social_habit.coding_standard if self.social_history.social_habit else None,
             socialhabitcodedesc=self.social_history.social_habit.description if self.social_history.social_habit else None,
             updatedon=self.social_history.updated_on,
             externalid=self.social_history.external_id,
         )
-        return orm_social_history
 
 
 class ResultItem:
@@ -252,4 +275,5 @@ class PatientRecord:
             patient=Patient(self.xml.patient).to_orm() if self.xml.patient else None,
             lab_orders=[LabOrder(order).to_orm() for order in self.xml.lab_orders.lab_order] if self.xml.lab_orders else [],
             social_histories=[SocialHistory(history).to_orm() for history in self.xml.social_histories.social_history] if self.xml.social_histories else [],
+            family_histories=[FamilyHistory(history).to_orm() for history in self.xml.family_histories.family_history] if self.xml.family_histories else [],
         )
