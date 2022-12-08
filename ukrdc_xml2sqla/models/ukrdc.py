@@ -37,7 +37,7 @@ class DialysisSession:
     def to_orm(self) -> orm.DialysisSession:
         dialysis_session = orm.DialysisSession()
 
-        # Basic
+        # Basic columns
 
         dialysis_session.externalid = self.dialysis_session.external_id
 
