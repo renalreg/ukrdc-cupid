@@ -25,6 +25,72 @@ import ukrdc_xsdata.ukrdc.social_histories as xsd_social_history
 import ukrdc_xsdata.ukrdc.family_histories as xsd_family_history
 import ukrdc_xsdata.ukrdc.allergies as xsd_allergy
 import ukrdc_xsdata.ukrdc.diagnoses as xsd_diagnosis
+import ukrdc_xsdata.ukrdc.medications as xsd_medication
+
+
+class Medication:
+    def __init__(self, medication: xsd_medication.Medication) -> None:
+        self.medication = medication
+
+    def to_orm(self) -> orm.Medication:
+        medication = orm.Medication()
+
+        # Basic columns
+
+        medication.prescriptionnumber = self.medication.prescription_number
+        medication.frequency = self.medication.frequency
+        medication.comments = self.medication.comments
+        medication.dosequantity = self.medication.dose_quantity
+        medication.indication = self.medication.indication
+        medication.encounternumber = self.medication.encounter_number
+        medication.externalid = self.medication.external_id
+
+        if self.medication.updated_on:
+            medication.updatedon = self.medication.updated_on.to_datetime()
+        if self.medication.from_time:
+            medication.fromtime = self.medication.from_time.to_datetime()
+        if self.medication.to_time:
+            medication.totime = self.medication.to_time.to_datetime()
+
+        if self.medication.ordered_by:
+            medication.orderedbycode = self.medication.ordered_by.code
+            medication.orderedbycodestd = self.medication.ordered_by.coding_standard
+            medication.orderedbydesc = self.medication.ordered_by.description
+
+        if self.medication.entering_organization:
+            medication.enteringorganizationcode = self.medication.entering_organization.code
+            medication.enteringorganizationcodestd = self.medication.entering_organization.coding_standard
+            medication.enteringorganizationdesc = self.medication.entering_organization.description
+
+        if self.medication.route:
+            medication.routecode = self.medication.route.code
+            medication.routecodestd = self.medication.route.coding_standard
+            medication.routedesc = self.medication.route.description
+
+        if self.medication.drug_product:
+            if self.medication.drug_product.id:
+                medication.drugproductidcode = self.medication.drug_product.id.code
+                medication.drugproductidcodestd = self.medication.drug_product.id.coding_standard
+                medication.drugproductiddesc = self.medication.drug_product.id.description
+            if self.medication.drug_product.generic:
+                medication.drugproductgeneric = self.medication.drug_product.generic
+            if self.medication.drug_product.label_name:
+                medication.drugproductlabelname = self.medication.drug_product.label_name
+            if self.medication.drug_product.form:
+                medication.drugproductformcode = self.medication.drug_product.form.code
+                medication.drugproductformcodestd = self.medication.drug_product.form.coding_standard
+                medication.drugproductformdesc = self.medication.drug_product.form.description
+            if self.medication.drug_product.strength_units:
+                medication.drugproductstrengthunitscode = self.medication.drug_product.strength_units.code
+                medication.drugproductstrengthunitscodestd = self.medication.drug_product.strength_units.coding_standard
+                medication.drugproductstrengthunitsdesc = self.medication.drug_product.strength_units.description
+
+        if self.medication.dose_uo_m:
+            medication.doseuomcode = self.medication.dose_uo_m.code
+            medication.doseuomcodestd = self.medication.dose_uo_m.coding_standard
+            medication.doseuomdesc = self.medication.dose_uo_m.description
+
+        return medication
 
 
 class RenalDiagnosis:
@@ -549,8 +615,7 @@ class PatientRecord:
                 record.renaldiagnoses = [RenalDiagnosis(self.xml.diagnoses.renal_diagnosis).to_orm()]
 
         if self.xml.medications:
-            # self.medications = [Medication(medication).to_orm() for medication in self.xml.medications]
-            pass
+            record.medications = [Medication(medication).to_orm() for medication in self.xml.medications.medication]
 
         if self.xml.procedures:
             if self.xml.procedures.procedure:
