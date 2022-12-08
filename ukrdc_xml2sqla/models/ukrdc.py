@@ -27,6 +27,72 @@ import ukrdc_xsdata.ukrdc.allergies as xsd_allergy
 import ukrdc_xsdata.ukrdc.diagnoses as xsd_diagnosis
 
 
+class RenalDiagnosis:
+    def __init__(self, renal_diagnosis: xsd_diagnosis.RenalDiagnosis) -> None:
+        self.renal_diagnosis = renal_diagnosis
+
+    def to_orm(self) -> orm.RenalDiagnosis:
+        renal_diagnosis = orm.RenalDiagnosis()
+
+        # Basic columns
+
+        renal_diagnosis.diagnosistype = self.renal_diagnosis.diagnosis_type
+        renal_diagnosis.comments = self.renal_diagnosis.comments
+        renal_diagnosis.externalid = self.renal_diagnosis.external_id
+
+        if self.renal_diagnosis.identification_time:
+            renal_diagnosis.identificationtime = self.renal_diagnosis.identification_time.to_datetime()
+        if self.renal_diagnosis.onset_time:
+            renal_diagnosis.onsettime = self.renal_diagnosis.onset_time.to_datetime()
+        if self.renal_diagnosis.entered_on:
+            renal_diagnosis.enteredon = self.renal_diagnosis.entered_on.to_datetime()
+        if self.renal_diagnosis.updated_on:
+            renal_diagnosis.updatedon = self.renal_diagnosis.updated_on.to_datetime()
+
+        if self.renal_diagnosis.diagnosing_clinician:
+            renal_diagnosis.diagnosingcliniciancode = self.renal_diagnosis.diagnosing_clinician.code
+            renal_diagnosis.diagnosingcliniciancodestd = self.renal_diagnosis.diagnosing_clinician.coding_standard
+            renal_diagnosis.diagnosingcliniciandesc = self.renal_diagnosis.diagnosing_clinician.description
+
+        if self.renal_diagnosis.diagnosis:
+            renal_diagnosis.diagnosiscode = self.renal_diagnosis.diagnosis.code
+            renal_diagnosis.diagnosiscodestd = self.renal_diagnosis.diagnosis.coding_standard
+            renal_diagnosis.diagnosisdesc = self.renal_diagnosis.diagnosis.description
+
+        return renal_diagnosis
+
+
+class CauseOfDeath:
+    def __init__(self, cause_of_death: xsd_diagnosis.CauseOfDeath) -> None:
+        self.cause_of_death = cause_of_death
+
+    def to_orm(self) -> orm.CauseOfDeath:
+        cause_of_death = orm.CauseOfDeath()
+
+        # Basic columns
+
+        cause_of_death.diagnosistype = self.cause_of_death.diagnosis_type
+        cause_of_death.comments = self.cause_of_death.comments
+        cause_of_death.externalid = self.cause_of_death.external_id
+
+        if self.cause_of_death.entered_on:
+            cause_of_death.enteredon = self.cause_of_death.entered_on.to_datetime()
+        if self.cause_of_death.updated_on:
+            cause_of_death.updatedon = self.cause_of_death.updated_on.to_datetime()
+
+        if self.cause_of_death.diagnosing_clinician:
+            cause_of_death.diagnosingcliniciancode = self.cause_of_death.diagnosing_clinician.code
+            cause_of_death.diagnosingcliniciancodestd = self.cause_of_death.diagnosing_clinician.coding_standard
+            cause_of_death.diagnosingcliniciandesc = self.cause_of_death.diagnosing_clinician.description
+
+        if self.cause_of_death.diagnosis:
+            cause_of_death.diagnosiscode = self.cause_of_death.diagnosis.code
+            cause_of_death.diagnosiscodestd = self.cause_of_death.diagnosis.coding_standard
+            cause_of_death.diagnosisdesc = self.cause_of_death.diagnosis.description
+
+        return cause_of_death
+
+
 class Diagnosis:
     def __init__(self, diagnosis: xsd_diagnosis.Diagnosis) -> None:
         self.diagnosis = diagnosis
@@ -478,11 +544,9 @@ class PatientRecord:
             if self.xml.diagnoses.diagnosis:
                 record.diagnoses = [Diagnosis(diagnosis).to_orm() for diagnosis in self.xml.diagnoses.diagnosis]
             if self.xml.diagnoses.cause_of_death:
-                # record.cause_of_death = [CauseOfDeath(self.xml.diagnoses.cause_of_death).to_orm()]
-                pass
+                record.cause_of_death = [CauseOfDeath(self.xml.diagnoses.cause_of_death).to_orm()]
             if self.xml.diagnoses.renal_diagnosis:
-                # record.renaldiagnoses = [RenalDiagnosis(self.xml.diagnoses.renal_diagnosis).to_orm()]
-                pass
+                record.renaldiagnoses = [RenalDiagnosis(self.xml.diagnoses.renal_diagnosis).to_orm()]
 
         if self.xml.medications:
             # self.medications = [Medication(medication).to_orm() for medication in self.xml.medications]
