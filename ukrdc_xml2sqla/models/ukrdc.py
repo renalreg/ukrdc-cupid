@@ -26,6 +26,98 @@ import ukrdc_xsdata.ukrdc.family_histories as xsd_family_history
 import ukrdc_xsdata.ukrdc.allergies as xsd_allergy
 import ukrdc_xsdata.ukrdc.diagnoses as xsd_diagnosis
 import ukrdc_xsdata.ukrdc.medications as xsd_medication
+import ukrdc_xsdata.ukrdc.procedures as xsd_procedure
+import ukrdc_xsdata.ukrdc.dialysis_sessions as xsd_dialysis_session
+
+
+class DialysisSession:
+    def __init__(self, dialysis_session: xsd_dialysis_session.DialysisSession) -> None:
+        self.dialysis_session = dialysis_session
+
+    def to_orm(self) -> orm.DialysisSession:
+        dialysis_session = orm.DialysisSession()
+
+        # Basic
+
+        dialysis_session.externalid = self.dialysis_session.external_id
+
+        if self.dialysis_session.procedure_time:
+            dialysis_session.proceduretime = self.dialysis_session.procedure_time.to_datetime()
+
+        if self.dialysis_session.updated_on:
+            dialysis_session.updatedon = self.dialysis_session.updated_on.to_datetime()
+
+        if self.dialysis_session.procedure_type:
+            dialysis_session.proceduretypecode = self.dialysis_session.procedure_type.code
+            dialysis_session.proceduretypecodestd = self.dialysis_session.procedure_type.coding_standard
+            dialysis_session.proceduretypedesc = self.dialysis_session.procedure_type.description
+
+        if self.dialysis_session.clinician:
+            dialysis_session.cliniciancode = self.dialysis_session.clinician.code
+            dialysis_session.cliniciancodestd = self.dialysis_session.clinician.coding_standard
+            dialysis_session.cliniciandesc = self.dialysis_session.clinician.description
+
+        if self.dialysis_session.entered_by:
+            dialysis_session.enteredbycode = self.dialysis_session.entered_by.code
+            dialysis_session.enteredbycodestd = self.dialysis_session.entered_by.coding_standard
+            dialysis_session.enteredbydesc = self.dialysis_session.entered_by.description
+
+        if self.dialysis_session.entered_at:
+            dialysis_session.enteredatcode = self.dialysis_session.entered_at.code
+            dialysis_session.enteredatcodestd = self.dialysis_session.entered_at.coding_standard
+            dialysis_session.enteredatdesc = self.dialysis_session.entered_at.description
+
+        if self.dialysis_session.attributes:
+            dialysis_session.qhd19 = self.dialysis_session.attributes.qhd19
+            dialysis_session.qhd20 = self.dialysis_session.attributes.qhd20
+            dialysis_session.qhd21 = self.dialysis_session.attributes.qhd21
+            dialysis_session.qhd22 = self.dialysis_session.attributes.qhd22
+            dialysis_session.qhd30 = self.dialysis_session.attributes.qhd30
+            dialysis_session.qhd31 = self.dialysis_session.attributes.qhd31
+            dialysis_session.qhd32 = self.dialysis_session.attributes.qhd32
+            dialysis_session.qhd33 = self.dialysis_session.attributes.qhd33
+
+        return dialysis_session
+
+
+class Procedure:
+    def __init__(self, procedure: xsd_procedure.Procedure) -> None:
+        self.procedure = procedure
+
+    def to_orm(self) -> orm.Procedure:
+        procedure = orm.Procedure()
+
+        # Basic columns
+
+        procedure.externalid = self.procedure.external_id
+
+        if self.procedure.procedure_time:
+            procedure.proceduretime = self.procedure.procedure_time.to_datetime()
+
+        if self.procedure.updated_on:
+            procedure.updatedon = self.procedure.updated_on.to_datetime()
+
+        if self.procedure.procedure_type:
+            procedure.proceduretypecode = self.procedure.procedure_type.code
+            procedure.proceduretypecodestd = self.procedure.procedure_type.coding_standard
+            procedure.proceduretypedesc = self.procedure.procedure_type.description
+
+        if self.procedure.clinician:
+            procedure.cliniciancode = self.procedure.clinician.code
+            procedure.cliniciancodestd = self.procedure.clinician.coding_standard
+            procedure.cliniciandesc = self.procedure.clinician.description
+
+        if self.procedure.entered_by:
+            procedure.enteredbycode = self.procedure.entered_by.code
+            procedure.enteredbycodestd = self.procedure.entered_by.coding_standard
+            procedure.enteredbydesc = self.procedure.entered_by.description
+
+        if self.procedure.entered_at:
+            procedure.enteredatcode = self.procedure.entered_at.code
+            procedure.enteredatcodestd = self.procedure.entered_at.coding_standard
+            procedure.enteredatdesc = self.procedure.entered_at.description
+
+        return procedure
 
 
 class Medication:
@@ -619,11 +711,16 @@ class PatientRecord:
 
         if self.xml.procedures:
             if self.xml.procedures.procedure:
-                # record.procedures = [Procedure(procedure).to_orm() for procedure in self.xml.procedures.procedure]
-                pass
+                record.procedures = [Procedure(procedure).to_orm() for procedure in self.xml.procedures.procedure]
             if self.xml.procedures.dialysis_sessions:
-                # record.dialysis_sessions = [DialysisSession(session).to_orm() for session in self.xml.procedures.dialysis_sessions]
-                pass
+                # XML schema nests individual sessions in a list of lists of sessions.
+                # Each list of sessions has a seemingly unused start and stop attribute.
+                # This double-nesting may be an artifact of the generated XSData classes.
+                record.dialysis_sessions = [
+                    DialysisSession(session).to_orm()
+                    for dialysis_sessions in self.xml.procedures.dialysis_sessions
+                    for session in dialysis_sessions.dialysis_session
+                ]
             if self.xml.procedures.transplant:
                 # record.transplants = [Transplant(transplant).to_orm() for transplant in self.xml.procedures.transplant]
                 pass
