@@ -713,9 +713,11 @@ class PatientRecord:
             if self.xml.procedures.procedure:
                 record.procedures = [Procedure(procedure).to_orm() for procedure in self.xml.procedures.procedure]
             if self.xml.procedures.dialysis_sessions:
-                # XML schema nests individual sessions in a list of lists of sessions.
-                # Each list of sessions has a seemingly unused start and stop attribute.
-                # This double-nesting may be an artifact of the generated XSData classes.
+                # DialysisSessions list can be split into multiple elements with different start and stop values.
+                # In the XML files, this simply corresponds to multiple <DialysisSessions start=... stop=...> elements,
+                # each containing a list of DialysisSession elements.
+                # In the Python XSData objects though, this corresponds to a two-deep nested list which we need to unpack.
+                # Currently, the start and stop values of each outer element are ignored.
                 record.dialysis_sessions = [
                     DialysisSession(session).to_orm()
                     for dialysis_sessions in self.xml.procedures.dialysis_sessions
