@@ -24,6 +24,51 @@ import ukrdc_xsdata.ukrdc.lab_orders as xsd_lab_orders
 import ukrdc_xsdata.ukrdc.social_histories as xsd_social_history
 import ukrdc_xsdata.ukrdc.family_histories as xsd_family_history
 import ukrdc_xsdata.ukrdc.allergies as xsd_allergy
+import ukrdc_xsdata.ukrdc.diagnoses as xsd_diagnosis
+
+
+class Diagnosis:
+    def __init__(self, diagnosis: xsd_diagnosis.Diagnosis) -> None:
+        self.diagnosis = diagnosis
+
+    def to_orm(self) -> orm.Diagnosis:
+        diagnosis = orm.Diagnosis()
+
+        # Basic columns
+
+        diagnosis.diagnosistype = self.diagnosis.diagnosis_type
+        diagnosis.comments = self.diagnosis.comments
+        diagnosis.encounternumber = self.diagnosis.encounter_number
+        diagnosis.externalid = self.diagnosis.external_id
+
+        if self.diagnosis.identification_time:
+            diagnosis.identificationtime = self.diagnosis.identification_time.to_datetime()
+        if self.diagnosis.onset_time:
+            diagnosis.onsettime = self.diagnosis.onset_time.to_datetime()
+        if self.diagnosis.entered_on:
+            diagnosis.enteredon = self.diagnosis.entered_on.to_datetime()
+        if self.diagnosis.updated_on:
+            diagnosis.updatedon = self.diagnosis.updated_on.to_datetime()
+
+        if self.diagnosis.verification_status:
+            diagnosis.verificationstatus = self.diagnosis.verification_status.value
+
+        if self.diagnosis.diagnosing_clinician:
+            diagnosis.diagnosingcliniciancode = self.diagnosis.diagnosing_clinician.code
+            diagnosis.diagnosingcliniciancodestd = self.diagnosis.diagnosing_clinician.coding_standard
+            diagnosis.diagnosingcliniciandesc = self.diagnosis.diagnosing_clinician.description
+
+        if self.diagnosis.diagnosis:
+            diagnosis.diagnosiscode = self.diagnosis.diagnosis.code
+            diagnosis.diagnosiscodestd = self.diagnosis.diagnosis.coding_standard
+            diagnosis.diagnosisdesc = self.diagnosis.diagnosis.description
+
+        if self.diagnosis.entered_at:
+            diagnosis.enteredatcode = self.diagnosis.entered_at.code
+            diagnosis.enteredatcodestd = self.diagnosis.entered_at.coding_standard
+            diagnosis.enteredatdesc = self.diagnosis.entered_at.description
+
+        return diagnosis
 
 
 class Allergy:
@@ -35,9 +80,13 @@ class Allergy:
 
         # Basic columns
 
-        allergy.discoverytime = self.allergy.discovery_time.to_datetime()
-        allergy.confirmedtime = self.allergy.confirmed_time.to_datetime()
-        allergy.inactivetime = self.allergy.inactive_time.to_datetime()
+        if self.allergy.discovery_time:
+            allergy.discoverytime = self.allergy.discovery_time.to_datetime()
+        if self.allergy.confirmed_time:
+            allergy.confirmedtime = self.allergy.confirmed_time.to_datetime()
+        if self.allergy.inactive_time:
+            allergy.inactivetime = self.allergy.inactive_time.to_datetime()
+
         allergy.commenttext = self.allergy.comments
         allergy.freetextallergy = self.allergy.free_text_allergy
         allergy.qualifyingdetails = self.allergy.qualifying_details
@@ -129,15 +178,19 @@ class ResultItem:
 
         # Basic columns
 
+        if self.result_item.pre_post:
+            result.prepost = self.result_item.pre_post.value
+        if self.result_item.interpretation_codes:
+            result.interpretationcodes = self.result_item.interpretation_codes.value
+        if self.result_item.status:
+            result.status = self.result_item.status.value if self.result_item.status else None
+
         result.resulttype = self.result_item.result_type
         result.enteredon = self.result_item.entered_on
-        result.prepost = self.result_item.pre_post.value if self.result_item.pre_post else None
         result.subid = self.result_item.sub_id
         result.resultvalue = self.result_item.result_value
         result.resultvalueunits = self.result_item.result_value_units
         result.referencerange = self.result_item.reference_range
-        result.interpretationcodes = self.result_item.interpretation_codes.value if self.result_item.interpretation_codes else None
-        result.status = self.result_item.status.value if self.result_item.status else None
         result.observationtime = self.result_item.observation_time
         result.commenttext = self.result_item.comments
         result.referencecomment = self.result_item.reference_comment
@@ -423,13 +476,12 @@ class PatientRecord:
 
         if self.xml.diagnoses:
             if self.xml.diagnoses.diagnosis:
-                # self.diagnoses = [Diagnosis(diagnosis).to_orm() for diagnosis in self.xml.diagnoses.diagnosis]
-                pass
+                record.diagnoses = [Diagnosis(diagnosis).to_orm() for diagnosis in self.xml.diagnoses.diagnosis]
             if self.xml.diagnoses.cause_of_death:
-                # self.cause_of_death = [CauseOfDeath(self.xml.diagnoses.cause_of_death).to_orm()]
+                # record.cause_of_death = [CauseOfDeath(self.xml.diagnoses.cause_of_death).to_orm()]
                 pass
             if self.xml.diagnoses.renal_diagnosis:
-                # self.renaldiagnoses = [RenalDiagnosis(self.xml.diagnoses.renal_diagnosis).to_orm()]
+                # record.renaldiagnoses = [RenalDiagnosis(self.xml.diagnoses.renal_diagnosis).to_orm()]
                 pass
 
         if self.xml.medications:
@@ -438,51 +490,51 @@ class PatientRecord:
 
         if self.xml.procedures:
             if self.xml.procedures.procedure:
-                # self.procedures = [Procedure(procedure).to_orm() for procedure in self.xml.procedures.procedure]
+                # record.procedures = [Procedure(procedure).to_orm() for procedure in self.xml.procedures.procedure]
                 pass
             if self.xml.procedures.dialysis_sessions:
-                # self.dialysis_sessions = [DialysisSession(session).to_orm() for session in self.xml.procedures.dialysis_sessions]
+                # record.dialysis_sessions = [DialysisSession(session).to_orm() for session in self.xml.procedures.dialysis_sessions]
                 pass
             if self.xml.procedures.transplant:
-                # self.transplants = [Transplant(transplant).to_orm() for transplant in self.xml.procedures.transplant]
+                # record.transplants = [Transplant(transplant).to_orm() for transplant in self.xml.procedures.transplant]
                 pass
             if self.xml.procedures.vascular_access:
-                # self.vascular_accesses = [VascularAccess(access).to_orm() for access in self.xml.procedures.vascular_access]
+                # record.vascular_accesses = [VascularAccess(access).to_orm() for access in self.xml.procedures.vascular_access]
                 pass
 
         if self.xml.documents:
-            # self.documents = [Document(document).to_orm() for document in self.xml.documents]
+            # record.documents = [Document(document).to_orm() for document in self.xml.documents]
             pass
 
         if self.xml.encounters:
             if self.xml.encounters.encounter:
-                # self.encounters = [Encounter(encounter).to_orm() for encounter in self.xml.encounters.encounter]
+                # record.encounters = [Encounter(encounter).to_orm() for encounter in self.xml.encounters.encounter]
                 pass
             if self.xml.encounters.treatment:
-                # self.treatments = [Treatment(treatment).to_orm() for treatment in self.xml.encounters.treatment]
+                # record.treatments = [Treatment(treatment).to_orm() for treatment in self.xml.encounters.treatment]
                 pass
             if self.xml.encounters.transplant_list:
-                # self.transplantlists = [TransplantList(tplist).to_orm() for tplist in self.xml.encounters.transplant_list]
+                # record.transplantlists = [TransplantList(tplist).to_orm() for tplist in self.xml.encounters.transplant_list]
                 pass
 
         if self.xml.program_memberships:
-            # self.program_memberships = [ProgramMembership(membership).to_orm() for membership in self.xml.program_memberships]
+            # record.program_memberships = [ProgramMembership(membership).to_orm() for membership in self.xml.program_memberships]
             pass
 
         if self.xml.opt_outs:
-            # self.opt_outs = [OptOut(optout).to_orm() for optout in self.xml.opt_outs]
+            # record.opt_outs = [OptOut(optout).to_orm() for optout in self.xml.opt_outs]
             pass
 
         if self.xml.clinical_relationships:
-            # self.clinical_relationships = [ClinicalRelationship(relationship).to_orm() for relationship in self.xml.clinical_relationships]
+            # record.clinical_relationships = [ClinicalRelationship(relationship).to_orm() for relationship in self.xml.clinical_relationships]
             pass
 
         if self.xml.surveys:
-            # self.surveys = [Survey(survey).to_orm() for survey in self.xml.surveys]
+            # record.surveys = [Survey(survey).to_orm() for survey in self.xml.surveys]
             pass
 
         if self.xml.pvdata:
-            # self.pvdata = [PVData(pvdata).to_orm() for pvdata in self.xml.pvdata]
+            # record.pvdata = [PVData(pvdata).to_orm() for pvdata in self.xml.pvdata]
             pass
 
         return record
