@@ -35,6 +35,7 @@ import ukrdc_xsdata.ukrdc.program_memberships as xsd_program_memberships
 import ukrdc_xsdata.ukrdc.opt_outs as xsd_opt_outs
 import ukrdc_xsdata.ukrdc.clinical_relationships as xsd_clinical_relationships
 import ukrdc_xsdata.ukrdc.surveys as xsd_surveys
+import ukrdc_xsdata.ukrdc.documents as xsd_documents
 import ukrdc_xsdata.pv as xsd_pvdata
 
 
@@ -139,7 +140,7 @@ class Medication:
 
         medication.prescriptionnumber = self.medication.prescription_number
         medication.frequency = self.medication.frequency
-        medication.comments = self.medication.comments
+        medication.commenttext = self.medication.comments
         medication.dosequantity = self.medication.dose_quantity
         medication.indication = self.medication.indication
         medication.encounternumber = self.medication.encounter_number
@@ -396,7 +397,7 @@ class SocialHistory:
         if self.social_history.social_habit:
             history.socialhabitcode = self.social_history.social_habit.code
             history.socialhabitcodestd = self.social_history.social_habit.coding_standard
-            history.socialhabitcodedesc = self.social_history.social_habit.description
+            history.socialhabitdesc = self.social_history.social_habit.description
 
         return history
 
@@ -867,7 +868,51 @@ class Encounter:
 
     def to_orm(self):
         encounter = orm.Encounter()
-        print("TODO: encounter")
+        if self.xml.encounter_number:
+            encounter.encounternumber = self.xml.encounter_number
+        if self.xml.encounter_type:
+            encounter.encountertype = self.xml.encounter_type
+        if self.xml.from_time:
+            encounter.fromtime = self.xml.from_time
+        if self.xml.to_time:
+            encounter.totime = self.xml.to_time
+        if self.xml.admitting_clinician:
+            encounter.admittingcliniciancode = self.xml.admitting_clinician.code
+            encounter.admittingcliniciancodestd = self.xml.admitting_clinician.coding_standard
+            encounter.admissionsourcedesc = self.xml.admitting_clinician.description
+        if self.xml.admit_reason:
+            encounter.admitreasoncode = self.xml.admit_reason.code
+            encounter.admitreasoncodestd = self.xml.admit_reason.coding_standard
+            encounter.admitreasondesc = self.xml.admit_reason.description
+        if self.xml.admission_source:
+            encounter.admissionsourcecode = self.xml.admission_source.code
+            encounter.admissionsourcecodestd = self.xml.admission_source.coding_standard
+            encounter.admissionsourcedesc = self.xml.admission_source.description
+        if self.xml.discharge_reason:
+            encounter.dischargereasoncode = self.xml.discharge_reason.code
+            encounter.dischargereasoncodestd = self.xml.discharge_reason.coding_standard
+            encounter.dischargereasondesc = self.xml.discharge_reason.description
+        if self.xml.discharge_location:
+            encounter.dischargelocationcode = self.xml.discharge_location.code
+            encounter.dischargereasoncodestd = self.xml.discharge_location.coding_standard
+            encounter.dischargelocationdesc = self.xml.discharge_location.description
+        if self.xml.health_care_facility:
+            encounter.healthcarefacilitycode = self.xml.health_care_facility.code
+            encounter.healthcarefacilitycodestd = self.xml.health_care_facility.coding_standard
+            encounter.healthcarefacilitydesc = self.xml.health_care_facility.description
+        if self.xml.entered_at:
+            encounter.enteredatcode = self.xml.entered_at.code
+            encounter.enteredatcodestd = self.xml.entered_at.coding_standard
+            encounter.enteredatdesc = self.xml.entered_at.description
+        if self.xml.visit_description:
+            encounter.visitdescription = self.xml.visit_description
+        if self.xml.updated_on:
+            encounter.updatedon = self.xml.updated_on
+        if self.xml.external_id:
+            encounter.externalid = self.xml.external_id
+        if self.xml.updated_on:
+            encounter.update_date = self.xml.updated_on
+
 
 
 class Treatment:
@@ -947,7 +992,58 @@ class TransplantList:
         self.xml = xml
 
     def to_orm(self):
-        print("TODO: transplant list")
+        transplant_list = orm.TransplantList()
+        if self.xml.updated_on:
+            transplant_list.updatedon = self.xml.updated_on
+
+        if self.xml.admission_source:
+            transplant_list.admissionsourcecode = self.xml.admission_source.code
+            transplant_list.admissionsourcecodestd = self.xml.admission_source.coding_standard
+            transplant_list.admissionsourcedesc = self.xml.admission_source.description
+
+        if self.xml.admit_reason:
+            transplant_list.admitreasoncode = self.xml.admit_reason.code
+            transplant_list.admitreasoncodestd = self.xml.admit_reason.coding_standard
+            transplant_list.admitreasondesc = self.xml.admit_reason.description
+
+        if self.xml.admitting_clinician:
+            transplant_list.admittingcliniciancode = self.xml.admitting_clinician.code
+            transplant_list.admittingcliniciancodestd = self.xml.admitting_clinician.coding_standard
+            transplant_list.admittingcliniciandesc = self.xml.admitting_clinician.description
+
+        if self.xml.discharge_location:
+            transplant_list.dischargelocationcode = self.xml.discharge_location.code
+            transplant_list.dischargereasoncodestd = self.xml.discharge_location.coding_standard
+            transplant_list.dischargelocationdesc = self.xml.discharge_location.description
+
+        if self.xml.discharge_reason:
+            transplant_list.dischargereasoncode = self.xml.discharge_reason.code
+            transplant_list.dischargereasoncodestd = self.xml.discharge_reason.coding_standard
+            transplant_list.dischargereasondesc = self.xml.discharge_reason.description
+
+        if self.xml.encounter_number:
+            transplant_list.encounternumber = self.xml.encounter_number
+
+        if self.xml.encounter_type:
+            transplant_list.encountertype = self.xml.encounter_type
+
+        if self.xml.entered_at:
+            transplant_list.enteredatcode = self.xml.entered_at.code
+            transplant_list.enteredatcodestd = self.xml.entered_at.coding_standard
+            transplant_list.enteredatdesc = self.xml.entered_at.description
+
+        if self.xml.from_time:
+            transplant_list.fromtime = self.xml.from_time
+
+        if self.xml.health_care_facility:
+            transplant_list.healthcarefacilitycode = self.xml.health_care_facility.code
+            transplant_list.healthcarefacilitycodestd = self.xml.health_care_facility.coding_standard 
+            transplant_list.healthcarefacilitydesc = self.xml.health_care_facility.description
+
+        if self.xml.to_time:
+            transplant_list.totime = self.xml.to_time
+
+        
 
 
 class ProgramMembership:
@@ -989,6 +1085,64 @@ class PVData:
     def to_orm(self):
         print("TODO: PVData")
 
+class Document:
+    def __init__(self, xml:xsd_documents.Document):
+        self.xml  = xml 
+    
+    def to_orm(self):
+        document = orm.Document()
+        if self.xml.clinician:
+            document.cliniciancode = self.xml.clinician.code
+            document.cliniciancodestd = self.xml.clinician.coding_standard
+            document.cliniciandesc = self.xml.clinician.description
+
+        if self.xml.document_name:
+            document.documentname = self.xml.document_name
+        
+        if self.xml.document_time:
+            document.documentname = self.xml.document_name
+        
+        if self.xml.document_type:
+            document.documenttypecode = self.xml.document_type.code
+            document.documenttypecodestd = self.xml.document_type.coding_standard
+            document.documenttypedesc = self.xml.document_type.description
+        
+        if self.xml.document_url:
+            document.documenturl = self.xml.document_url
+        
+        if self.xml.entered_at:
+            document.enteredatcode = self.xml.entered_at.code
+            document.enteredatcodestd = self.xml.entered_at.coding_standard
+            document.enteredatdesc = self.xml.entered_at.description
+        
+        if self.xml.entered_by:
+            document.enteredbycode = self.xml.entered_by.code
+            document.enteredbycodestd = self.xml.entered_by.coding_standard
+            document.enteredbydesc = self.xml.entered_by.description
+
+        if self.xml.external_id:
+            document.externalid = self.xml.external_id
+        
+        if self.xml.file_name:
+            document.filename = self.xml.file_name
+        
+        if self.xml.file_type:
+            document.filetype = self.xml.file_type
+        
+        if self.xml.note_text:
+            document.notetext = self.xml.note_text
+        
+        if self.xml.status:
+            document.statuscode = self.xml.status.code
+            document.statuscodestd = self.xml.status.coding_standard
+            document.statusdesc = self.xml.status.description
+        
+        if self.xml.stream:
+            document.stream = self.xml.stream
+        
+        if self.xml.updated_on:
+            document.updatedon = self.xml.updated_on
+
 
 class PatientRecord:
     def __init__(self, xml: xsd_ukrdc.PatientRecord):
@@ -1000,7 +1154,8 @@ class PatientRecord:
         # Basic columns
 
         record.sendingfacility = self.xml.sending_facility.value if self.xml.sending_facility else None
-        record.sendingextract = self.xml.sending_extract
+
+        record.sendingextract = self.xml.sending_extract.value
 
         # Relationships
 
@@ -1050,8 +1205,7 @@ class PatientRecord:
                 record.vascular_accesses = [VascularAccess(access).to_orm() for access in self.xml.procedures.vascular_access]
 
         if self.xml.documents:
-            # record.documents = [Document(document).to_orm() for document in self.xml.documents]
-            pass
+            record.documents = [Document(document).to_orm() for document in self.xml.documents.document]
 
         if self.xml.encounters:
             if self.xml.encounters.encounter:
