@@ -36,7 +36,8 @@ import ukrdc_xsdata.ukrdc.opt_outs as xsd_opt_outs
 import ukrdc_xsdata.ukrdc.clinical_relationships as xsd_clinical_relationships
 import ukrdc_xsdata.ukrdc.surveys as xsd_surveys
 import ukrdc_xsdata.ukrdc.documents as xsd_documents
-import ukrdc_xsdata.pv as xsd_pvdata
+import ukrdc_xsdata.pv.pv_2_0 as xsd_pvdata
+#import ukrdc_xsdata.pv.pv_2_0
 
 
 class DialysisSession:
@@ -390,7 +391,6 @@ class SocialHistory:
         history = orm.SocialHistory()
 
         # Basic columns
-
         history.updatedon = self.social_history.updated_on
         history.externalid = self.social_history.external_id
 
@@ -913,6 +913,8 @@ class Encounter:
         if self.xml.updated_on:
             encounter.update_date = self.xml.updated_on
 
+        return encounter
+
 
 
 class Treatment:
@@ -1043,6 +1045,7 @@ class TransplantList:
         if self.xml.to_time:
             transplant_list.totime = self.xml.to_time
 
+        return transplant_list
         
 
 
@@ -1051,15 +1054,58 @@ class ProgramMembership:
         self.xml = xml
 
     def to_orm(self):
-        print("TODO: program membership")
-
+        program_membership = orm.ProgramMembership()
+        if self.xml.entered_at:
+            program_membership.enteredatcode = self.xml.entered_at.code
+            program_membership.enteredatdesc = self.xml.entered_at.description
+            program_membership.enteredatcodestd = self.xml.entered_at.coding_standard
+        if self.xml.entered_by:
+            program_membership.enteredbycode = self.xml.entered_by.code
+            program_membership.enteredbycodestd = self.xml.entered_by.coding_standard
+            program_membership.enteredbydesc = self.xml.entered_by.description
+        if self.xml.external_id:
+            program_membership.externalid = self.xml.external_id
+        if self.xml.from_time:
+            program_membership.fromtime = self.xml.from_time
+        if self.xml.program_description:
+            program_membership.programdescription = self.xml.program_description
+        if self.xml.program_name:
+            program_membership.programname = self.xml.program_name
+        if self.xml.to_time:
+            program_membership.to_time = self.xml.to_time
+        if self.xml.updated_on:
+            program_membership.updatedon = self.xml.updated_on
+        
+        return program_membership
 
 class OptOut:
     def __init__(self, xml: xsd_opt_outs.OptOut):
         self.xml = xml
 
     def to_orm(self):
-        print("TODO: opt out")
+        opt_out = orm.OptOut()
+        if self.xml.entered_at:
+            opt_out.entered_at_code = self.xml.entered_at.code
+            opt_out.entered_at_code_std = self.xml.entered_at.coding_standard
+            opt_out.entered_at_desc = self.xml.entered_at.description
+        if self.xml.entered_by:
+            opt_out.entered_by_code = self.xml.entered_by.code
+            opt_out.entered_by_code_std = self.xml.entered_by.coding_standard
+            opt_out.entered_by_desc = self.xml.entered_by.description
+        if self.xml.external_id:
+            opt_out.external_id = self.xml.external_id
+        if self.xml.from_time:
+            opt_out.fromtime = self.xml.from_time 
+        if self.xml.program_description:
+            opt_out.program_description = self.xml.from_time
+        if self.xml.program_name:
+            opt_out.programname = self.xml.program_name
+        if self.xml.to_time:
+            opt_out.totime = self.xml.to_time
+        if self.xml.updated_on:
+            opt_out.updatedon = self.xml.updated_on
+
+        return opt_out
 
 
 class ClinicalRelationship:
@@ -1067,7 +1113,69 @@ class ClinicalRelationship:
         self.xml = xml
 
     def to_orm(self):
-        print("TODO: clinical relationship")
+        clinical_relationship = orm.ClinicalRelationship()
+        if self.xml.clinician:
+            clinical_relationship.cliniciancode = self.xml.clinician.code
+            clinical_relationship.cliniciancodestd = self.xml.clinician.coding_standard
+            clinical_relationship.cliniciandesc = self.xml.clinician.description
+        if self.xml.external_id:
+            clinical_relationship.externalid = self.xml.external_id
+        if self.xml.facility_code:
+            clinical_relationship.facilitycode = self.xml.facility_code 
+        if self.xml.from_time:
+            clinical_relationship.fromtime = self.xml.from_time
+        if self.xml.to_time:
+            clinical_relationship.totime = self.xml.to_time
+        if self.xml.updated_on:
+            clinical_relationship.updatedon = self.xml.updated_on
+
+        return clinical_relationship
+        
+class Level:
+    def __init__(self, xml:xsd_surveys.Level):
+        self.xml = xml
+
+    def to_orm(self):
+        level = orm.Level()
+        if self.xml.value:
+            level.value = self.xml.value
+        if self.xml.level_type:
+            level.leveltypecode = self.xml.level_type.code
+            level.leveltypecodestd = self.xml.level_type.coding_standard
+            level.leveltypedesc = self.xml.level_type.description
+        
+        return level
+
+class Question:
+    def __init__(self, xml: xsd_surveys.Question):
+        self.xml = xml
+    
+    def to_orm(self):
+        question = orm.Question()
+        if self.xml.question_text:
+            question.questiontext = self.xml.question_text
+        if self.xml.question_type:
+            question.questiontypecode = self.xml.question_type.code
+            question.questiontypecodestd = self.xml.question_type.description
+            question.questiontypedesc = self.xml.question_type.description
+        if self.xml.response:
+            question.response = self.xml.response
+        
+        return question
+
+class Score:
+    def __init__(self, xml:xsd_surveys.Score):
+        self.xml = xml
+
+    def to_orm(self):
+        score = orm.Score()
+        if self.xml.score_type:
+            score.scoretypecode = self.xml.score_type.code
+            score.scoretypecodestd = self.xml.score_type.coding_standard
+            score.scoretypedesc = self.xml.score_type.description
+        if self.xml.value:
+            score.value = self.xml.value
+        return score
 
 
 class Survey:
@@ -1075,7 +1183,29 @@ class Survey:
         self.xml = xml
 
     def to_orm(self):
-        print("TODO: survey")
+        survey = orm.Survey()
+        if self.xml.entered_at:
+            survey.enteredatcode =self.xml.entered_at.code
+            survey.enteredatcodestd = self.xml.entered_at.coding_standard
+            survey.enteredatdesc = self.xml.entered_at.description
+        if self.xml.entered_by:
+            survey.enteredbycode = self.xml.entered_by.code
+            survey.enteredbycodestd = self.xml.entered_by.coding_standard
+            survey.enteredbydesc = self.xml.entered_by.description
+        if self.xml.external_id:
+            survey.externalid = self.xml.external_id
+        if self.xml.hdlocation:
+            survey.hdlocation = self.xml.hdlocation
+        if self.xml.survey_time:
+            survey.surveytime = self.xml.survey_time
+        if self.xml.levels:
+            survey.levels = [Level(level) for level in self.xml.levels.level]
+        if self.xml.questions:
+            survey.questions = [Question(question) for question in self.xml.questions.question]
+        if self.xml.scores:
+            survey.scores = [Score(score) for score in self.xml.scores.score]    
+        return survey
+
 
 
 class PVData:
@@ -1083,7 +1213,8 @@ class PVData:
         self.xml = xml
 
     def to_orm(self):
-        print("TODO: PVData")
+        pvdata = orm.PVData()
+        return pvdata
 
 class Document:
     def __init__(self, xml:xsd_documents.Document):
