@@ -37,7 +37,8 @@ import ukrdc_xsdata.ukrdc.clinical_relationships as xsd_clinical_relationships
 import ukrdc_xsdata.ukrdc.surveys as xsd_surveys
 import ukrdc_xsdata.ukrdc.documents as xsd_documents
 import ukrdc_xsdata.pv.pv_2_0 as xsd_pvdata
-#import ukrdc_xsdata.pv.pv_2_0
+
+# import ukrdc_xsdata.pv.pv_2_0
 
 
 class DialysisSession:
@@ -52,30 +53,48 @@ class DialysisSession:
         dialysis_session.externalid = self.dialysis_session.external_id
 
         if self.dialysis_session.procedure_time:
-            dialysis_session.proceduretime = self.dialysis_session.procedure_time.to_datetime()
+            dialysis_session.proceduretime = (
+                self.dialysis_session.procedure_time.to_datetime()
+            )
 
         if self.dialysis_session.updated_on:
             dialysis_session.updatedon = self.dialysis_session.updated_on.to_datetime()
 
         if self.dialysis_session.procedure_type:
-            dialysis_session.proceduretypecode = self.dialysis_session.procedure_type.code
-            dialysis_session.proceduretypecodestd = self.dialysis_session.procedure_type.coding_standard
-            dialysis_session.proceduretypedesc = self.dialysis_session.procedure_type.description
+            dialysis_session.proceduretypecode = (
+                self.dialysis_session.procedure_type.code
+            )
+            dialysis_session.proceduretypecodestd = (
+                self.dialysis_session.procedure_type.coding_standard
+            )
+            dialysis_session.proceduretypedesc = (
+                self.dialysis_session.procedure_type.description
+            )
 
         if self.dialysis_session.clinician:
             dialysis_session.cliniciancode = self.dialysis_session.clinician.code
-            dialysis_session.cliniciancodestd = self.dialysis_session.clinician.coding_standard
+            dialysis_session.cliniciancodestd = (
+                self.dialysis_session.clinician.coding_standard
+            )
             dialysis_session.cliniciandesc = self.dialysis_session.clinician.description
 
         if self.dialysis_session.entered_by:
             dialysis_session.enteredbycode = self.dialysis_session.entered_by.code
-            dialysis_session.enteredbycodestd = self.dialysis_session.entered_by.coding_standard
-            dialysis_session.enteredbydesc = self.dialysis_session.entered_by.description
+            dialysis_session.enteredbycodestd = (
+                self.dialysis_session.entered_by.coding_standard
+            )
+            dialysis_session.enteredbydesc = (
+                self.dialysis_session.entered_by.description
+            )
 
         if self.dialysis_session.entered_at:
             dialysis_session.enteredatcode = self.dialysis_session.entered_at.code
-            dialysis_session.enteredatcodestd = self.dialysis_session.entered_at.coding_standard
-            dialysis_session.enteredatdesc = self.dialysis_session.entered_at.description
+            dialysis_session.enteredatcodestd = (
+                self.dialysis_session.entered_at.coding_standard
+            )
+            dialysis_session.enteredatdesc = (
+                self.dialysis_session.entered_at.description
+            )
 
         if self.dialysis_session.attributes:
             dialysis_session.qhd19 = self.dialysis_session.attributes.qhd19
@@ -109,7 +128,9 @@ class Procedure:
 
         if self.procedure.procedure_type:
             procedure.proceduretypecode = self.procedure.procedure_type.code
-            procedure.proceduretypecodestd = self.procedure.procedure_type.coding_standard
+            procedure.proceduretypecodestd = (
+                self.procedure.procedure_type.coding_standard
+            )
             procedure.proceduretypedesc = self.procedure.procedure_type.description
 
         if self.procedure.clinician:
@@ -152,7 +173,6 @@ class Medication:
             medication.fromtime = self.medication.from_time.to_datetime()
         if self.medication.to_time:
             medication.totime = self.medication.to_time.to_datetime()
-            
 
         if self.medication.ordered_by:
             medication.orderedbycode = self.medication.ordered_by.code
@@ -160,9 +180,15 @@ class Medication:
             medication.orderedbydesc = self.medication.ordered_by.description
 
         if self.medication.entering_organization:
-            medication.enteringorganizationcode = self.medication.entering_organization.code
-            medication.enteringorganizationcodestd = self.medication.entering_organization.coding_standard
-            medication.enteringorganizationdesc = self.medication.entering_organization.description
+            medication.enteringorganizationcode = (
+                self.medication.entering_organization.code
+            )
+            medication.enteringorganizationcodestd = (
+                self.medication.entering_organization.coding_standard
+            )
+            medication.enteringorganizationdesc = (
+                self.medication.entering_organization.description
+            )
 
         if self.medication.route:
             medication.routecode = self.medication.route.code
@@ -172,20 +198,36 @@ class Medication:
         if self.medication.drug_product:
             if self.medication.drug_product.id:
                 medication.drugproductidcode = self.medication.drug_product.id.code
-                medication.drugproductidcodestd = self.medication.drug_product.id.coding_standard
-                medication.drugproductiddesc = self.medication.drug_product.id.description
+                medication.drugproductidcodestd = (
+                    self.medication.drug_product.id.coding_standard
+                )
+                medication.drugproductiddesc = (
+                    self.medication.drug_product.id.description
+                )
             if self.medication.drug_product.generic:
                 medication.drugproductgeneric = self.medication.drug_product.generic
             if self.medication.drug_product.label_name:
-                medication.drugproductlabelname = self.medication.drug_product.label_name
+                medication.drugproductlabelname = (
+                    self.medication.drug_product.label_name
+                )
             if self.medication.drug_product.form:
                 medication.drugproductformcode = self.medication.drug_product.form.code
-                medication.drugproductformcodestd = self.medication.drug_product.form.coding_standard
-                medication.drugproductformdesc = self.medication.drug_product.form.description
+                medication.drugproductformcodestd = (
+                    self.medication.drug_product.form.coding_standard
+                )
+                medication.drugproductformdesc = (
+                    self.medication.drug_product.form.description
+                )
             if self.medication.drug_product.strength_units:
-                medication.drugproductstrengthunitscode = self.medication.drug_product.strength_units.code
-                medication.drugproductstrengthunitscodestd = self.medication.drug_product.strength_units.coding_standard
-                medication.drugproductstrengthunitsdesc = self.medication.drug_product.strength_units.description
+                medication.drugproductstrengthunitscode = (
+                    self.medication.drug_product.strength_units.code
+                )
+                medication.drugproductstrengthunitscodestd = (
+                    self.medication.drug_product.strength_units.coding_standard
+                )
+                medication.drugproductstrengthunitsdesc = (
+                    self.medication.drug_product.strength_units.description
+                )
 
         if self.medication.dose_uo_m:
             medication.doseuomcode = self.medication.dose_uo_m.code
@@ -209,7 +251,9 @@ class RenalDiagnosis:
         renal_diagnosis.externalid = self.renal_diagnosis.external_id
 
         if self.renal_diagnosis.identification_time:
-            renal_diagnosis.identificationtime = self.renal_diagnosis.identification_time.to_datetime()
+            renal_diagnosis.identificationtime = (
+                self.renal_diagnosis.identification_time.to_datetime()
+            )
         if self.renal_diagnosis.onset_time:
             renal_diagnosis.onsettime = self.renal_diagnosis.onset_time.to_datetime()
         if self.renal_diagnosis.entered_on:
@@ -218,13 +262,21 @@ class RenalDiagnosis:
             renal_diagnosis.updatedon = self.renal_diagnosis.updated_on.to_datetime()
 
         if self.renal_diagnosis.diagnosing_clinician:
-            renal_diagnosis.diagnosingcliniciancode = self.renal_diagnosis.diagnosing_clinician.code
-            renal_diagnosis.diagnosingcliniciancodestd = self.renal_diagnosis.diagnosing_clinician.coding_standard
-            renal_diagnosis.diagnosingcliniciandesc = self.renal_diagnosis.diagnosing_clinician.description
+            renal_diagnosis.diagnosingcliniciancode = (
+                self.renal_diagnosis.diagnosing_clinician.code
+            )
+            renal_diagnosis.diagnosingcliniciancodestd = (
+                self.renal_diagnosis.diagnosing_clinician.coding_standard
+            )
+            renal_diagnosis.diagnosingcliniciandesc = (
+                self.renal_diagnosis.diagnosing_clinician.description
+            )
 
         if self.renal_diagnosis.diagnosis:
             renal_diagnosis.diagnosiscode = self.renal_diagnosis.diagnosis.code
-            renal_diagnosis.diagnosiscodestd = self.renal_diagnosis.diagnosis.coding_standard
+            renal_diagnosis.diagnosiscodestd = (
+                self.renal_diagnosis.diagnosis.coding_standard
+            )
             renal_diagnosis.diagnosisdesc = self.renal_diagnosis.diagnosis.description
 
         return renal_diagnosis
@@ -249,13 +301,21 @@ class CauseOfDeath:
             cause_of_death.updatedon = self.cause_of_death.updated_on.to_datetime()
 
         if self.cause_of_death.diagnosing_clinician:
-            cause_of_death.diagnosingcliniciancode = self.cause_of_death.diagnosing_clinician.code
-            cause_of_death.diagnosingcliniciancodestd = self.cause_of_death.diagnosing_clinician.coding_standard
-            cause_of_death.diagnosingcliniciandesc = self.cause_of_death.diagnosing_clinician.description
+            cause_of_death.diagnosingcliniciancode = (
+                self.cause_of_death.diagnosing_clinician.code
+            )
+            cause_of_death.diagnosingcliniciancodestd = (
+                self.cause_of_death.diagnosing_clinician.coding_standard
+            )
+            cause_of_death.diagnosingcliniciandesc = (
+                self.cause_of_death.diagnosing_clinician.description
+            )
 
         if self.cause_of_death.diagnosis:
             cause_of_death.diagnosiscode = self.cause_of_death.diagnosis.code
-            cause_of_death.diagnosiscodestd = self.cause_of_death.diagnosis.coding_standard
+            cause_of_death.diagnosiscodestd = (
+                self.cause_of_death.diagnosis.coding_standard
+            )
             cause_of_death.diagnosisdesc = self.cause_of_death.diagnosis.description
 
         return cause_of_death
@@ -276,7 +336,9 @@ class Diagnosis:
         diagnosis.externalid = self.diagnosis.external_id
 
         if self.diagnosis.identification_time:
-            diagnosis.identificationtime = self.diagnosis.identification_time.to_datetime()
+            diagnosis.identificationtime = (
+                self.diagnosis.identification_time.to_datetime()
+            )
         if self.diagnosis.onset_time:
             diagnosis.onsettime = self.diagnosis.onset_time.to_datetime()
         if self.diagnosis.entered_on:
@@ -289,8 +351,12 @@ class Diagnosis:
 
         if self.diagnosis.diagnosing_clinician:
             diagnosis.diagnosingcliniciancode = self.diagnosis.diagnosing_clinician.code
-            diagnosis.diagnosingcliniciancodestd = self.diagnosis.diagnosing_clinician.coding_standard
-            diagnosis.diagnosingcliniciandesc = self.diagnosis.diagnosing_clinician.description
+            diagnosis.diagnosingcliniciancodestd = (
+                self.diagnosis.diagnosing_clinician.coding_standard
+            )
+            diagnosis.diagnosingcliniciandesc = (
+                self.diagnosis.diagnosing_clinician.description
+            )
 
         if self.diagnosis.diagnosis:
             diagnosis.diagnosiscode = self.diagnosis.diagnosis.code
@@ -334,7 +400,9 @@ class Allergy:
 
         if self.allergy.allergy_category:
             allergy.allergycategorycode = self.allergy.allergy_category.code
-            allergy.allergycategorycodestd = self.allergy.allergy_category.coding_standard
+            allergy.allergycategorycodestd = (
+                self.allergy.allergy_category.coding_standard
+            )
             allergy.allergycategorydesc = self.allergy.allergy_category.description
 
         if self.allergy.severity:
@@ -367,7 +435,9 @@ class FamilyHistory:
 
         if self.family_history.family_member:
             history.familymembercode = self.family_history.family_member.code
-            history.familymembercodestd = self.family_history.family_member.coding_standard
+            history.familymembercodestd = (
+                self.family_history.family_member.coding_standard
+            )
             history.familymemberdesc = self.family_history.family_member.description
 
         if self.family_history.diagnosis:
@@ -396,7 +466,9 @@ class SocialHistory:
 
         if self.social_history.social_habit:
             history.socialhabitcode = self.social_history.social_habit.code
-            history.socialhabitcodestd = self.social_history.social_habit.coding_standard
+            history.socialhabitcodestd = (
+                self.social_history.social_habit.coding_standard
+            )
             history.socialhabitdesc = self.social_history.social_habit.description
 
         return history
@@ -416,7 +488,9 @@ class ResultItem:
         if self.result_item.interpretation_codes:
             result.interpretationcodes = self.result_item.interpretation_codes.value
         if self.result_item.status:
-            result.status = self.result_item.status.value if self.result_item.status else None
+            result.status = (
+                self.result_item.status.value if self.result_item.status else None
+            )
 
         result.resulttype = self.result_item.result_type
         result.enteredon = self.result_item.entered_on
@@ -459,7 +533,9 @@ class LabOrder:
         if self.laborder.receiving_location:
             order.receivinglocationcode = self.laborder.receiving_location.code
             order.receivinglocationdesc = self.laborder.receiving_location.description
-            order.receivinglocationcodestd = self.laborder.receiving_location.coding_standard
+            order.receivinglocationcodestd = (
+                self.laborder.receiving_location.coding_standard
+            )
 
         if self.laborder.ordered_by:
             order.orderedbycode = self.laborder.ordered_by.code
@@ -493,13 +569,20 @@ class LabOrder:
 
         if self.laborder.entering_organization:
             order.enteringorganizationcode = self.laborder.entering_organization.code
-            order.enteringorganizationdesc = self.laborder.entering_organization.description
-            order.enteringorganizationcodestd = self.laborder.entering_organization.coding_standard
+            order.enteringorganizationdesc = (
+                self.laborder.entering_organization.description
+            )
+            order.enteringorganizationcodestd = (
+                self.laborder.entering_organization.coding_standard
+            )
 
         # Relationships
 
         if self.laborder.result_items:
-            order.result_items = [ResultItem(item).to_orm() for item in self.laborder.result_items.result_item]
+            order.result_items = [
+                ResultItem(item).to_orm()
+                for item in self.laborder.result_items.result_item
+            ]
 
         return order
 
@@ -528,7 +611,9 @@ class FamilyDoctor:
 
             if self.family_doctor.address.country:
                 doctor.countrycode = self.family_doctor.address.country.code
-                doctor.countrycodestd = self.family_doctor.address.country.coding_standard
+                doctor.countrycodestd = (
+                    self.family_doctor.address.country.coding_standard
+                )
                 doctor.countrydesc = self.family_doctor.address.country.description
 
         if self.family_doctor.contact_detail:
@@ -622,8 +707,12 @@ class Patient:
 
         # Basic columns
 
-        patient.birthtime = self.xml.birth_time.to_datetime() if self.xml.birth_time else None
-        patient.deathtime = self.xml.death_time.to_datetime() if self.xml.death_time else None
+        patient.birthtime = (
+            self.xml.birth_time.to_datetime() if self.xml.birth_time else None
+        )
+        patient.deathtime = (
+            self.xml.death_time.to_datetime() if self.xml.death_time else None
+        )
 
         patient.gender = self.xml.gender
         patient.countryofbirth = self.xml.country_of_birth
@@ -635,12 +724,20 @@ class Patient:
 
         if self.xml.person_to_contact:
             patient.persontocontactname = self.xml.person_to_contact.name
-            patient.persontocontact_relationship = self.xml.person_to_contact.relationship
+            patient.persontocontact_relationship = (
+                self.xml.person_to_contact.relationship
+            )
 
             if self.xml.person_to_contact.contact_details:
-                patient.persontocontact_contactnumber = self.xml.person_to_contact.contact_details[0].value
-                patient.persontocontact_contactnumbercomments = self.xml.person_to_contact.contact_details[0].comments
-                patient.persontocontact_contactnumbertype = self.xml.person_to_contact.contact_details[0].use
+                patient.persontocontact_contactnumber = (
+                    self.xml.person_to_contact.contact_details[0].value
+                )
+                patient.persontocontact_contactnumbercomments = (
+                    self.xml.person_to_contact.contact_details[0].comments
+                )
+                patient.persontocontact_contactnumbertype = (
+                    self.xml.person_to_contact.contact_details[0].use
+                )
 
         if self.xml.occupation:
             patient.occupationcode = self.xml.occupation.code
@@ -654,7 +751,9 @@ class Patient:
 
         patient.death = self.xml.death
 
-        patient.updatedon = self.xml.updated_on.to_datetime() if self.xml.updated_on else None
+        patient.updatedon = (
+            self.xml.updated_on.to_datetime() if self.xml.updated_on else None
+        )
 
         patient.bloodgroup = self.xml.blood_group
         patient.bloodrhesus = self.xml.blood_rhesus
@@ -662,16 +761,24 @@ class Patient:
         # Relationships
 
         if self.xml.patient_numbers:
-            patient.numbers = [PatientNumber(number).to_orm() for number in self.xml.patient_numbers.patient_number]
+            patient.numbers = [
+                PatientNumber(number).to_orm()
+                for number in self.xml.patient_numbers.patient_number
+            ]
 
         if self.xml.names:
             patient.names = [Name(name).to_orm() for name in self.xml.names.name]
 
         if self.xml.contact_details:
-            patient.contact_details = [ContactDetail(contact).to_orm() for contact in self.xml.contact_details.contact_detail]
+            patient.contact_details = [
+                ContactDetail(contact).to_orm()
+                for contact in self.xml.contact_details.contact_detail
+            ]
 
         if self.xml.addresses:
-            patient.addresses = [Address(address).to_orm() for address in self.xml.addresses.address]
+            patient.addresses = [
+                Address(address).to_orm() for address in self.xml.addresses.address
+            ]
 
         if self.xml.family_doctor:
             patient.familydoctor = FamilyDoctor(self.xml.family_doctor).to_orm()
@@ -813,7 +920,9 @@ class VascularAccess:
 
         if self.xml.procedure_type:
             vascular_access.proceduretypecode = self.xml.procedure_type.code
-            vascular_access.proceduretypecodestd = self.xml.procedure_type.coding_standard
+            vascular_access.proceduretypecodestd = (
+                self.xml.procedure_type.coding_standard
+            )
             vascular_access.proceduretypedesc = self.xml.procedure_type.description
 
         if self.xml.clinician:
@@ -878,7 +987,9 @@ class Encounter:
             encounter.totime = self.xml.to_time
         if self.xml.admitting_clinician:
             encounter.admittingcliniciancode = self.xml.admitting_clinician.code
-            encounter.admittingcliniciancodestd = self.xml.admitting_clinician.coding_standard
+            encounter.admittingcliniciancodestd = (
+                self.xml.admitting_clinician.coding_standard
+            )
             encounter.admissionsourcedesc = self.xml.admitting_clinician.description
         if self.xml.admit_reason:
             encounter.admitreasoncode = self.xml.admit_reason.code
@@ -894,11 +1005,15 @@ class Encounter:
             encounter.dischargereasondesc = self.xml.discharge_reason.description
         if self.xml.discharge_location:
             encounter.dischargelocationcode = self.xml.discharge_location.code
-            encounter.dischargereasoncodestd = self.xml.discharge_location.coding_standard
+            encounter.dischargereasoncodestd = (
+                self.xml.discharge_location.coding_standard
+            )
             encounter.dischargelocationdesc = self.xml.discharge_location.description
         if self.xml.health_care_facility:
             encounter.healthcarefacilitycode = self.xml.health_care_facility.code
-            encounter.healthcarefacilitycodestd = self.xml.health_care_facility.coding_standard
+            encounter.healthcarefacilitycodestd = (
+                self.xml.health_care_facility.coding_standard
+            )
             encounter.healthcarefacilitydesc = self.xml.health_care_facility.description
         if self.xml.entered_at:
             encounter.enteredatcode = self.xml.entered_at.code
@@ -914,7 +1029,6 @@ class Encounter:
             encounter.update_date = self.xml.updated_on
 
         return encounter
-
 
 
 class Treatment:
@@ -933,7 +1047,9 @@ class Treatment:
             treatment.totime = self.xml.to_time
         if self.xml.admitting_clinician:
             treatment.admittingcliniciancode = self.xml.admitting_clinician.code
-            treatment.admittingcliniciancodestd = self.xml.admitting_clinician.coding_standard
+            treatment.admittingcliniciancodestd = (
+                self.xml.admitting_clinician.coding_standard
+            )
             treatment.admittingcliniciandesc = self.xml.admitting_clinician.description
         if self.xml.admission_source:
             treatment.admissionsourcecode = self.xml.admission_source.code
@@ -945,11 +1061,15 @@ class Treatment:
             treatment.dischargereasondesc = self.xml.discharge_reason.description
         if self.xml.discharge_location:
             treatment.dischargelocationcode = self.xml.discharge_location.code
-            treatment.dischargelocationcodestd = self.xml.discharge_location.coding_standard
+            treatment.dischargelocationcodestd = (
+                self.xml.discharge_location.coding_standard
+            )
             treatment.dischargelocationdesc = self.xml.discharge_location.description
         if self.xml.health_care_facility:
             treatment.healthcarefacilitycode = self.xml.health_care_facility.code
-            treatment.healthcarefacilitycodestd = self.xml.health_care_facility.coding_standard
+            treatment.healthcarefacilitycodestd = (
+                self.xml.health_care_facility.coding_standard
+            )
             treatment.healthcarefacilitydesc = self.xml.health_care_facility.description
         if self.xml.entered_at:
             treatment.enteredatcode = self.xml.entered_at.code
@@ -1000,7 +1120,9 @@ class TransplantList:
 
         if self.xml.admission_source:
             transplant_list.admissionsourcecode = self.xml.admission_source.code
-            transplant_list.admissionsourcecodestd = self.xml.admission_source.coding_standard
+            transplant_list.admissionsourcecodestd = (
+                self.xml.admission_source.coding_standard
+            )
             transplant_list.admissionsourcedesc = self.xml.admission_source.description
 
         if self.xml.admit_reason:
@@ -1010,17 +1132,27 @@ class TransplantList:
 
         if self.xml.admitting_clinician:
             transplant_list.admittingcliniciancode = self.xml.admitting_clinician.code
-            transplant_list.admittingcliniciancodestd = self.xml.admitting_clinician.coding_standard
-            transplant_list.admittingcliniciandesc = self.xml.admitting_clinician.description
+            transplant_list.admittingcliniciancodestd = (
+                self.xml.admitting_clinician.coding_standard
+            )
+            transplant_list.admittingcliniciandesc = (
+                self.xml.admitting_clinician.description
+            )
 
         if self.xml.discharge_location:
             transplant_list.dischargelocationcode = self.xml.discharge_location.code
-            transplant_list.dischargereasoncodestd = self.xml.discharge_location.coding_standard
-            transplant_list.dischargelocationdesc = self.xml.discharge_location.description
+            transplant_list.dischargereasoncodestd = (
+                self.xml.discharge_location.coding_standard
+            )
+            transplant_list.dischargelocationdesc = (
+                self.xml.discharge_location.description
+            )
 
         if self.xml.discharge_reason:
             transplant_list.dischargereasoncode = self.xml.discharge_reason.code
-            transplant_list.dischargereasoncodestd = self.xml.discharge_reason.coding_standard
+            transplant_list.dischargereasoncodestd = (
+                self.xml.discharge_reason.coding_standard
+            )
             transplant_list.dischargereasondesc = self.xml.discharge_reason.description
 
         if self.xml.encounter_number:
@@ -1039,14 +1171,17 @@ class TransplantList:
 
         if self.xml.health_care_facility:
             transplant_list.healthcarefacilitycode = self.xml.health_care_facility.code
-            transplant_list.healthcarefacilitycodestd = self.xml.health_care_facility.coding_standard 
-            transplant_list.healthcarefacilitydesc = self.xml.health_care_facility.description
+            transplant_list.healthcarefacilitycodestd = (
+                self.xml.health_care_facility.coding_standard
+            )
+            transplant_list.healthcarefacilitydesc = (
+                self.xml.health_care_facility.description
+            )
 
         if self.xml.to_time:
             transplant_list.totime = self.xml.to_time
 
         return transplant_list
-        
 
 
 class ProgramMembership:
@@ -1075,8 +1210,9 @@ class ProgramMembership:
             program_membership.to_time = self.xml.to_time
         if self.xml.updated_on:
             program_membership.updatedon = self.xml.updated_on
-        
+
         return program_membership
+
 
 class OptOut:
     def __init__(self, xml: xsd_opt_outs.OptOut):
@@ -1095,7 +1231,7 @@ class OptOut:
         if self.xml.external_id:
             opt_out.external_id = self.xml.external_id
         if self.xml.from_time:
-            opt_out.fromtime = self.xml.from_time 
+            opt_out.fromtime = self.xml.from_time
         if self.xml.program_description:
             opt_out.program_description = self.xml.from_time
         if self.xml.program_name:
@@ -1121,7 +1257,7 @@ class ClinicalRelationship:
         if self.xml.external_id:
             clinical_relationship.externalid = self.xml.external_id
         if self.xml.facility_code:
-            clinical_relationship.facilitycode = self.xml.facility_code 
+            clinical_relationship.facilitycode = self.xml.facility_code
         if self.xml.from_time:
             clinical_relationship.fromtime = self.xml.from_time
         if self.xml.to_time:
@@ -1130,9 +1266,10 @@ class ClinicalRelationship:
             clinical_relationship.updatedon = self.xml.updated_on
 
         return clinical_relationship
-        
+
+
 class Level:
-    def __init__(self, xml:xsd_surveys.Level):
+    def __init__(self, xml: xsd_surveys.Level):
         self.xml = xml
 
     def to_orm(self):
@@ -1143,13 +1280,14 @@ class Level:
             level.leveltypecode = self.xml.level_type.code
             level.leveltypecodestd = self.xml.level_type.coding_standard
             level.leveltypedesc = self.xml.level_type.description
-        
+
         return level
+
 
 class Question:
     def __init__(self, xml: xsd_surveys.Question):
         self.xml = xml
-    
+
     def to_orm(self):
         question = orm.Question()
         if self.xml.question_text:
@@ -1160,11 +1298,12 @@ class Question:
             question.questiontypedesc = self.xml.question_type.description
         if self.xml.response:
             question.response = self.xml.response
-        
+
         return question
 
+
 class Score:
-    def __init__(self, xml:xsd_surveys.Score):
+    def __init__(self, xml: xsd_surveys.Score):
         self.xml = xml
 
     def to_orm(self):
@@ -1185,7 +1324,7 @@ class Survey:
     def to_orm(self):
         survey = orm.Survey()
         if self.xml.entered_at:
-            survey.enteredatcode =self.xml.entered_at.code
+            survey.enteredatcode = self.xml.entered_at.code
             survey.enteredatcodestd = self.xml.entered_at.coding_standard
             survey.enteredatdesc = self.xml.entered_at.description
         if self.xml.entered_by:
@@ -1201,11 +1340,12 @@ class Survey:
         if self.xml.levels:
             survey.levels = [Level(level) for level in self.xml.levels.level]
         if self.xml.questions:
-            survey.questions = [Question(question) for question in self.xml.questions.question]
+            survey.questions = [
+                Question(question) for question in self.xml.questions.question
+            ]
         if self.xml.scores:
-            survey.scores = [Score(score) for score in self.xml.scores.score]    
+            survey.scores = [Score(score) for score in self.xml.scores.score]
         return survey
-
 
 
 class PVData:
@@ -1216,10 +1356,11 @@ class PVData:
         pvdata = orm.PVData()
         return pvdata
 
+
 class Document:
-    def __init__(self, xml:xsd_documents.Document):
-        self.xml  = xml 
-    
+    def __init__(self, xml: xsd_documents.Document):
+        self.xml = xml
+
     def to_orm(self):
         document = orm.Document()
         if self.xml.clinician:
@@ -1229,23 +1370,23 @@ class Document:
 
         if self.xml.document_name:
             document.documentname = self.xml.document_name
-        
+
         if self.xml.document_time:
             document.documentname = self.xml.document_name
-        
+
         if self.xml.document_type:
             document.documenttypecode = self.xml.document_type.code
             document.documenttypecodestd = self.xml.document_type.coding_standard
             document.documenttypedesc = self.xml.document_type.description
-        
+
         if self.xml.document_url:
             document.documenturl = self.xml.document_url
-        
+
         if self.xml.entered_at:
             document.enteredatcode = self.xml.entered_at.code
             document.enteredatcodestd = self.xml.entered_at.coding_standard
             document.enteredatdesc = self.xml.entered_at.description
-        
+
         if self.xml.entered_by:
             document.enteredbycode = self.xml.entered_by.code
             document.enteredbycodestd = self.xml.entered_by.coding_standard
@@ -1253,28 +1394,29 @@ class Document:
 
         if self.xml.external_id:
             document.externalid = self.xml.external_id
-        
+
         if self.xml.file_name:
             document.filename = self.xml.file_name
-        
+
         if self.xml.file_type:
             document.filetype = self.xml.file_type
-        
+
         if self.xml.note_text:
             document.notetext = self.xml.note_text
-        
+
         if self.xml.status:
             document.statuscode = self.xml.status.code
             document.statuscodestd = self.xml.status.coding_standard
             document.statusdesc = self.xml.status.description
-        
+
         if self.xml.stream:
             document.stream = self.xml.stream
-        
+
         if self.xml.updated_on:
             document.updatedon = self.xml.updated_on
 
         return document
+
 
 class PatientRecord:
     def __init__(self, xml: xsd_ukrdc.PatientRecord):
@@ -1285,40 +1427,67 @@ class PatientRecord:
 
         # Basic columns
 
-        record.sendingfacility = self.xml.sending_facility.value if self.xml.sending_facility else None
+        record.sendingfacility = (
+            self.xml.sending_facility.value if self.xml.sending_facility else None
+        )
 
         record.sendingextract = self.xml.sending_extract.value
 
         # Relationships
 
-        record.patient = Patient(self.xml.patient).to_orm() if self.xml.patient else None
+        record.patient = (
+            Patient(self.xml.patient).to_orm() if self.xml.patient else None
+        )
 
         if self.xml.lab_orders:
-            record.lab_orders = [LabOrder(order).to_orm() for order in self.xml.lab_orders.lab_order]
+            record.lab_orders = [
+                LabOrder(order).to_orm() for order in self.xml.lab_orders.lab_order
+            ]
 
         if self.xml.social_histories:
-            record.social_histories = [SocialHistory(history).to_orm() for history in self.xml.social_histories.social_history]
+            record.social_histories = [
+                SocialHistory(history).to_orm()
+                for history in self.xml.social_histories.social_history
+            ]
 
         if self.xml.family_histories:
-            record.family_histories = [FamilyHistory(history).to_orm() for history in self.xml.family_histories.family_history]
+            record.family_histories = [
+                FamilyHistory(history).to_orm()
+                for history in self.xml.family_histories.family_history
+            ]
 
         if self.xml.allergies:
-            record.allergies = [Allergy(allergy).to_orm() for allergy in self.xml.allergies.allergy]
+            record.allergies = [
+                Allergy(allergy).to_orm() for allergy in self.xml.allergies.allergy
+            ]
 
         if self.xml.diagnoses:
             if self.xml.diagnoses.diagnosis:
-                record.diagnoses = [Diagnosis(diagnosis).to_orm() for diagnosis in self.xml.diagnoses.diagnosis]
+                record.diagnoses = [
+                    Diagnosis(diagnosis).to_orm()
+                    for diagnosis in self.xml.diagnoses.diagnosis
+                ]
             if self.xml.diagnoses.cause_of_death:
-                record.cause_of_death = [CauseOfDeath(self.xml.diagnoses.cause_of_death).to_orm()]
+                record.cause_of_death = [
+                    CauseOfDeath(self.xml.diagnoses.cause_of_death).to_orm()
+                ]
             if self.xml.diagnoses.renal_diagnosis:
-                record.renaldiagnoses = [RenalDiagnosis(self.xml.diagnoses.renal_diagnosis).to_orm()]
+                record.renaldiagnoses = [
+                    RenalDiagnosis(self.xml.diagnoses.renal_diagnosis).to_orm()
+                ]
 
         if self.xml.medications:
-            record.medications = [Medication(medication).to_orm() for medication in self.xml.medications.medication]
+            record.medications = [
+                Medication(medication).to_orm()
+                for medication in self.xml.medications.medication
+            ]
 
         if self.xml.procedures:
             if self.xml.procedures.procedure:
-                record.procedures = [Procedure(procedure).to_orm() for procedure in self.xml.procedures.procedure]
+                record.procedures = [
+                    Procedure(procedure).to_orm()
+                    for procedure in self.xml.procedures.procedure
+                ]
             if self.xml.procedures.dialysis_sessions:
                 # DialysisSessions list can be split into multiple elements with different start and stop values.
                 # In the XML files, this simply corresponds to multiple <DialysisSessions start=... stop=...> elements,
@@ -1331,35 +1500,62 @@ class PatientRecord:
                     for session in dialysis_sessions.dialysis_session
                 ]
             if self.xml.procedures.transplant:
-                record.transplants = [Transplant(transplant).to_orm() for transplant in self.xml.procedures.transplant]
+                record.transplants = [
+                    Transplant(transplant).to_orm()
+                    for transplant in self.xml.procedures.transplant
+                ]
 
             if self.xml.procedures.vascular_access:
-                record.vascular_accesses = [VascularAccess(access).to_orm() for access in self.xml.procedures.vascular_access]
+                record.vascular_accesses = [
+                    VascularAccess(access).to_orm()
+                    for access in self.xml.procedures.vascular_access
+                ]
 
         if self.xml.documents:
-            record.documents = [Document(document).to_orm() for document in self.xml.documents.document]
+            record.documents = [
+                Document(document).to_orm() for document in self.xml.documents.document
+            ]
 
         if self.xml.encounters:
             if self.xml.encounters.encounter:
-                record.encounters = [Encounter(encounter).to_orm() for encounter in self.xml.encounters.encounter]
+                record.encounters = [
+                    Encounter(encounter).to_orm()
+                    for encounter in self.xml.encounters.encounter
+                ]
 
             if self.xml.encounters.treatment:
-                record.treatments = [Treatment(treatment).to_orm() for treatment in self.xml.encounters.treatment]
+                record.treatments = [
+                    Treatment(treatment).to_orm()
+                    for treatment in self.xml.encounters.treatment
+                ]
 
             if self.xml.encounters.transplant_list:
-                record.transplantlists = [TransplantList(tplist).to_orm() for tplist in self.xml.encounters.transplant_list]
+                record.transplantlists = [
+                    TransplantList(tplist).to_orm()
+                    for tplist in self.xml.encounters.transplant_list
+                ]
 
         if self.xml.program_memberships:
-            record.program_memberships = [ProgramMembership(membership).to_orm() for membership in self.xml.program_memberships.program_membership]
+            record.program_memberships = [
+                ProgramMembership(membership).to_orm()
+                for membership in self.xml.program_memberships.program_membership
+            ]
 
         if self.xml.opt_outs:
-            record.opt_outs = [OptOut(optout).to_orm() for optout in self.xml.opt_outs.opt_out]
+            record.opt_outs = [
+                OptOut(optout).to_orm() for optout in self.xml.opt_outs.opt_out
+            ]
 
         if self.xml.clinical_relationships:
-            record.clinical_relationships = [ClinicalRelationship(relationship).to_orm() for relationship in self.xml.clinical_relationships.clinical_relationship]
+            record.clinical_relationships = [
+                ClinicalRelationship(relationship).to_orm()
+                for relationship in self.xml.clinical_relationships.clinical_relationship
+            ]
 
         if self.xml.surveys:
-            record.surveys = [Survey(survey).to_orm() for survey in self.xml.surveys.survey]
+            record.surveys = [
+                Survey(survey).to_orm() for survey in self.xml.surveys.survey
+            ]
 
         if self.xml.pvdata:
             record.pvdata = [PVData(pvdata).to_orm() for pvdata in self.xml.pvdata]
