@@ -20,3 +20,8 @@ bandit = "^1.7.5"
 [build-system]
 build-backend = "poetry.core.masonry.api"
 requires = ["poetry-core"]
+
+[tool.ruff]
+ignore = [
+  "E501", # Line too long (let Black handle this)
+]
