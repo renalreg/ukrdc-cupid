@@ -13,7 +13,9 @@ ukrdc-xsdata = "^3.3.0.post1"
 
 [tool.poetry.group.dev.dependencies]
 black = {version = "^22.10.0", allow-prereleases = true}
-pylint = "^2.15.4"
+ruff = "^0.0.263"
+tox = "^4.5.1"
+bandit = "^1.7.5"
 
 [build-system]
 build-backend = "poetry.core.masonry.api"
