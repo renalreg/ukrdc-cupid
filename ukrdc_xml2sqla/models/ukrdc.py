@@ -17,6 +17,8 @@ THE PLAN:
 
 from typing import Optional
 
+from ukrdc_xml2sqla.utils import mint_new_ids
+
 import ukrdc_sqla.ukrdc as orm
 import ukrdc_xsdata.ukrdc.types as xsd_types
 import ukrdc_xsdata.ukrdc as xsd_ukrdc
@@ -38,63 +40,44 @@ import ukrdc_xsdata.ukrdc.surveys as xsd_surveys
 import ukrdc_xsdata.ukrdc.documents as xsd_documents
 import ukrdc_xsdata.pv.pv_2_0 as xsd_pvdata
 
-# import ukrdc_xsdata.pv.pv_2_0
-
 
 class DialysisSession:
-    def __init__(self, dialysis_session: xsd_dialysis_session.DialysisSession) -> None:
+    def __init__(self, dialysis_session: xsd_dialysis_session.DialysisSession, pid: str = None, id: str = None) -> None:
         self.dialysis_session = dialysis_session
+        self.pid = pid
+        self.id = id
 
     def to_orm(self) -> orm.DialysisSession:
-        dialysis_session = orm.DialysisSession()
+        dialysis_session = orm.DialysisSession(pid=self.pid, id=self.id)
 
         # Basic columns
-
         dialysis_session.externalid = self.dialysis_session.external_id
 
         if self.dialysis_session.procedure_time:
-            dialysis_session.proceduretime = (
-                self.dialysis_session.procedure_time.to_datetime()
-            )
+            dialysis_session.proceduretime = self.dialysis_session.procedure_time.to_datetime()
 
         if self.dialysis_session.updated_on:
             dialysis_session.updatedon = self.dialysis_session.updated_on.to_datetime()
 
         if self.dialysis_session.procedure_type:
-            dialysis_session.proceduretypecode = (
-                self.dialysis_session.procedure_type.code
-            )
-            dialysis_session.proceduretypecodestd = (
-                self.dialysis_session.procedure_type.coding_standard
-            )
-            dialysis_session.proceduretypedesc = (
-                self.dialysis_session.procedure_type.description
-            )
+            dialysis_session.proceduretypecode = self.dialysis_session.procedure_type.code
+            dialysis_session.proceduretypecodestd = self.dialysis_session.procedure_type.coding_standard
+            dialysis_session.proceduretypedesc = self.dialysis_session.procedure_type.description
 
         if self.dialysis_session.clinician:
             dialysis_session.cliniciancode = self.dialysis_session.clinician.code
-            dialysis_session.cliniciancodestd = (
-                self.dialysis_session.clinician.coding_standard
-            )
+            dialysis_session.cliniciancodestd = self.dialysis_session.clinician.coding_standard
             dialysis_session.cliniciandesc = self.dialysis_session.clinician.description
 
         if self.dialysis_session.entered_by:
             dialysis_session.enteredbycode = self.dialysis_session.entered_by.code
-            dialysis_session.enteredbycodestd = (
-                self.dialysis_session.entered_by.coding_standard
-            )
-            dialysis_session.enteredbydesc = (
-                self.dialysis_session.entered_by.description
-            )
+            dialysis_session.enteredbycodestd = self.dialysis_session.entered_by.coding_standard
+            dialysis_session.enteredbydesc = self.dialysis_session.entered_by.description
 
         if self.dialysis_session.entered_at:
             dialysis_session.enteredatcode = self.dialysis_session.entered_at.code
-            dialysis_session.enteredatcodestd = (
-                self.dialysis_session.entered_at.coding_standard
-            )
-            dialysis_session.enteredatdesc = (
-                self.dialysis_session.entered_at.description
-            )
+            dialysis_session.enteredatcodestd = self.dialysis_session.entered_at.coding_standard
+            dialysis_session.enteredatdesc = self.dialysis_session.entered_at.description
 
         if self.dialysis_session.attributes:
             dialysis_session.qhd19 = self.dialysis_session.attributes.qhd19
@@ -110,12 +93,14 @@ class DialysisSession:
 
 
 class Procedure:
-    def __init__(self, procedure: xsd_procedure.Procedure) -> None:
+    def __init__(self, procedure: xsd_procedure.Procedure, pid: str = None, id: str = None) -> None:
         self.procedure = procedure
+        self.pid = pid
+        self.id = id
 
     def to_orm(self) -> orm.Procedure:
-        procedure = orm.Procedure()
-
+        procedure = orm.Procedure(pid=self.pid, id=self.id)
+        procedure.pid = self.pid
         # Basic columns
 
         procedure.externalid = self.procedure.external_id
@@ -128,9 +113,7 @@ class Procedure:
 
         if self.procedure.procedure_type:
             procedure.proceduretypecode = self.procedure.procedure_type.code
-            procedure.proceduretypecodestd = (
-                self.procedure.procedure_type.coding_standard
-            )
+            procedure.proceduretypecodestd = self.procedure.procedure_type.coding_standard
             procedure.proceduretypedesc = self.procedure.procedure_type.description
 
         if self.procedure.clinician:
@@ -152,11 +135,13 @@ class Procedure:
 
 
 class Medication:
-    def __init__(self, medication: xsd_medication.Medication) -> None:
+    def __init__(self, medication: xsd_medication.Medication, pid: str = None) -> None:
         self.medication = medication
+        self.pid = pid
 
     def to_orm(self) -> orm.Medication:
         medication = orm.Medication()
+        medication.pid = self.pid
 
         # Basic columns
         medication.prescriptionnumber = self.medication.prescription_number
@@ -180,15 +165,9 @@ class Medication:
             medication.orderedbydesc = self.medication.ordered_by.description
 
         if self.medication.entering_organization:
-            medication.enteringorganizationcode = (
-                self.medication.entering_organization.code
-            )
-            medication.enteringorganizationcodestd = (
-                self.medication.entering_organization.coding_standard
-            )
-            medication.enteringorganizationdesc = (
-                self.medication.entering_organization.description
-            )
+            medication.enteringorganizationcode = self.medication.entering_organization.code
+            medication.enteringorganizationcodestd = self.medication.entering_organization.coding_standard
+            medication.enteringorganizationdesc = self.medication.entering_organization.description
 
         if self.medication.route:
             medication.routecode = self.medication.route.code
@@ -198,36 +177,20 @@ class Medication:
         if self.medication.drug_product:
             if self.medication.drug_product.id:
                 medication.drugproductidcode = self.medication.drug_product.id.code
-                medication.drugproductidcodestd = (
-                    self.medication.drug_product.id.coding_standard
-                )
-                medication.drugproductiddesc = (
-                    self.medication.drug_product.id.description
-                )
+                medication.drugproductidcodestd = self.medication.drug_product.id.coding_standard
+                medication.drugproductiddesc = self.medication.drug_product.id.description
             if self.medication.drug_product.generic:
                 medication.drugproductgeneric = self.medication.drug_product.generic
             if self.medication.drug_product.label_name:
-                medication.drugproductlabelname = (
-                    self.medication.drug_product.label_name
-                )
+                medication.drugproductlabelname = self.medication.drug_product.label_name
             if self.medication.drug_product.form:
                 medication.drugproductformcode = self.medication.drug_product.form.code
-                medication.drugproductformcodestd = (
-                    self.medication.drug_product.form.coding_standard
-                )
-                medication.drugproductformdesc = (
-                    self.medication.drug_product.form.description
-                )
+                medication.drugproductformcodestd = self.medication.drug_product.form.coding_standard
+                medication.drugproductformdesc = self.medication.drug_product.form.description
             if self.medication.drug_product.strength_units:
-                medication.drugproductstrengthunitscode = (
-                    self.medication.drug_product.strength_units.code
-                )
-                medication.drugproductstrengthunitscodestd = (
-                    self.medication.drug_product.strength_units.coding_standard
-                )
-                medication.drugproductstrengthunitsdesc = (
-                    self.medication.drug_product.strength_units.description
-                )
+                medication.drugproductstrengthunitscode = self.medication.drug_product.strength_units.code
+                medication.drugproductstrengthunitscodestd = self.medication.drug_product.strength_units.coding_standard
+                medication.drugproductstrengthunitsdesc = self.medication.drug_product.strength_units.description
 
         if self.medication.dose_uo_m:
             medication.doseuomcode = self.medication.dose_uo_m.code
@@ -238,11 +201,13 @@ class Medication:
 
 
 class RenalDiagnosis:
-    def __init__(self, renal_diagnosis: xsd_diagnosis.RenalDiagnosis) -> None:
+    def __init__(self, renal_diagnosis: xsd_diagnosis.RenalDiagnosis, pid: str = None) -> None:
         self.renal_diagnosis = renal_diagnosis
+        self.pid = pid
 
     def to_orm(self) -> orm.RenalDiagnosis:
         renal_diagnosis = orm.RenalDiagnosis()
+        renal_diagnosis.pid = self.pid
 
         # Basic columns
 
@@ -251,9 +216,7 @@ class RenalDiagnosis:
         renal_diagnosis.externalid = self.renal_diagnosis.external_id
 
         if self.renal_diagnosis.identification_time:
-            renal_diagnosis.identificationtime = (
-                self.renal_diagnosis.identification_time.to_datetime()
-            )
+            renal_diagnosis.identificationtime = self.renal_diagnosis.identification_time.to_datetime()
         if self.renal_diagnosis.onset_time:
             renal_diagnosis.onsettime = self.renal_diagnosis.onset_time.to_datetime()
         if self.renal_diagnosis.entered_on:
@@ -262,33 +225,26 @@ class RenalDiagnosis:
             renal_diagnosis.updatedon = self.renal_diagnosis.updated_on.to_datetime()
 
         if self.renal_diagnosis.diagnosing_clinician:
-            renal_diagnosis.diagnosingcliniciancode = (
-                self.renal_diagnosis.diagnosing_clinician.code
-            )
-            renal_diagnosis.diagnosingcliniciancodestd = (
-                self.renal_diagnosis.diagnosing_clinician.coding_standard
-            )
-            renal_diagnosis.diagnosingcliniciandesc = (
-                self.renal_diagnosis.diagnosing_clinician.description
-            )
+            renal_diagnosis.diagnosingcliniciancode = self.renal_diagnosis.diagnosing_clinician.code
+            renal_diagnosis.diagnosingcliniciancodestd = self.renal_diagnosis.diagnosing_clinician.coding_standard
+            renal_diagnosis.diagnosingcliniciandesc = self.renal_diagnosis.diagnosing_clinician.description
 
         if self.renal_diagnosis.diagnosis:
             renal_diagnosis.diagnosiscode = self.renal_diagnosis.diagnosis.code
-            renal_diagnosis.diagnosiscodestd = (
-                self.renal_diagnosis.diagnosis.coding_standard
-            )
+            renal_diagnosis.diagnosiscodestd = self.renal_diagnosis.diagnosis.coding_standard
             renal_diagnosis.diagnosisdesc = self.renal_diagnosis.diagnosis.description
 
         return renal_diagnosis
 
 
 class CauseOfDeath:
-    def __init__(self, cause_of_death: xsd_diagnosis.CauseOfDeath) -> None:
+    def __init__(self, cause_of_death: xsd_diagnosis.CauseOfDeath, pid: str = None) -> None:
         self.cause_of_death = cause_of_death
+        self.pid = pid
 
     def to_orm(self) -> orm.CauseOfDeath:
         cause_of_death = orm.CauseOfDeath()
-
+        cause_of_death.pid = self.pid
         # Basic columns
 
         cause_of_death.diagnosistype = self.cause_of_death.diagnosis_type
@@ -301,33 +257,26 @@ class CauseOfDeath:
             cause_of_death.updatedon = self.cause_of_death.updated_on.to_datetime()
 
         if self.cause_of_death.diagnosing_clinician:
-            cause_of_death.diagnosingcliniciancode = (
-                self.cause_of_death.diagnosing_clinician.code
-            )
-            cause_of_death.diagnosingcliniciancodestd = (
-                self.cause_of_death.diagnosing_clinician.coding_standard
-            )
-            cause_of_death.diagnosingcliniciandesc = (
-                self.cause_of_death.diagnosing_clinician.description
-            )
+            cause_of_death.diagnosingcliniciancode = self.cause_of_death.diagnosing_clinician.code
+            cause_of_death.diagnosingcliniciancodestd = self.cause_of_death.diagnosing_clinician.coding_standard
+            cause_of_death.diagnosingcliniciandesc = self.cause_of_death.diagnosing_clinician.description
 
         if self.cause_of_death.diagnosis:
             cause_of_death.diagnosiscode = self.cause_of_death.diagnosis.code
-            cause_of_death.diagnosiscodestd = (
-                self.cause_of_death.diagnosis.coding_standard
-            )
+            cause_of_death.diagnosiscodestd = self.cause_of_death.diagnosis.coding_standard
             cause_of_death.diagnosisdesc = self.cause_of_death.diagnosis.description
 
         return cause_of_death
 
 
 class Diagnosis:
-    def __init__(self, diagnosis: xsd_diagnosis.Diagnosis) -> None:
+    def __init__(self, diagnosis: xsd_diagnosis.Diagnosis, pid: str = None) -> None:
         self.diagnosis = diagnosis
+        self.pid = pid
 
     def to_orm(self) -> orm.Diagnosis:
         diagnosis = orm.Diagnosis()
-
+        diagnosis.pid = self.pid
         # Basic columns
 
         diagnosis.diagnosistype = self.diagnosis.diagnosis_type
@@ -336,9 +285,7 @@ class Diagnosis:
         diagnosis.externalid = self.diagnosis.external_id
 
         if self.diagnosis.identification_time:
-            diagnosis.identificationtime = (
-                self.diagnosis.identification_time.to_datetime()
-            )
+            diagnosis.identificationtime = self.diagnosis.identification_time.to_datetime()
         if self.diagnosis.onset_time:
             diagnosis.onsettime = self.diagnosis.onset_time.to_datetime()
         if self.diagnosis.entered_on:
@@ -351,12 +298,8 @@ class Diagnosis:
 
         if self.diagnosis.diagnosing_clinician:
             diagnosis.diagnosingcliniciancode = self.diagnosis.diagnosing_clinician.code
-            diagnosis.diagnosingcliniciancodestd = (
-                self.diagnosis.diagnosing_clinician.coding_standard
-            )
-            diagnosis.diagnosingcliniciandesc = (
-                self.diagnosis.diagnosing_clinician.description
-            )
+            diagnosis.diagnosingcliniciancodestd = self.diagnosis.diagnosing_clinician.coding_standard
+            diagnosis.diagnosingcliniciandesc = self.diagnosis.diagnosing_clinician.description
 
         if self.diagnosis.diagnosis:
             diagnosis.diagnosiscode = self.diagnosis.diagnosis.code
@@ -372,12 +315,13 @@ class Diagnosis:
 
 
 class Allergy:
-    def __init__(self, allergy: xsd_allergy.Allergy) -> None:
+    def __init__(self, allergy: xsd_allergy.Allergy, pid: str = None) -> None:
         self.allergy = allergy
+        self.pid = pid
 
     def to_orm(self) -> orm.Allergy:
         allergy = orm.Allergy()
-
+        allergy.pid = self.pid
         # Basic columns
 
         if self.allergy.discovery_time:
@@ -400,9 +344,7 @@ class Allergy:
 
         if self.allergy.allergy_category:
             allergy.allergycategorycode = self.allergy.allergy_category.code
-            allergy.allergycategorycodestd = (
-                self.allergy.allergy_category.coding_standard
-            )
+            allergy.allergycategorycodestd = self.allergy.allergy_category.coding_standard
             allergy.allergycategorydesc = self.allergy.allergy_category.description
 
         if self.allergy.severity:
@@ -419,12 +361,13 @@ class Allergy:
 
 
 class FamilyHistory:
-    def __init__(self, family_history: xsd_family_history.FamilyHistory):
+    def __init__(self, family_history: xsd_family_history.FamilyHistory, pid: str = None):
         self.family_history = family_history
+        self.pid = pid
 
     def to_orm(self) -> orm.FamilyHistory:
         history = orm.FamilyHistory()
-
+        history.pid = self.pid
         # Basic columns
 
         history.notetext = self.family_history.note_text
@@ -435,9 +378,7 @@ class FamilyHistory:
 
         if self.family_history.family_member:
             history.familymembercode = self.family_history.family_member.code
-            history.familymembercodestd = (
-                self.family_history.family_member.coding_standard
-            )
+            history.familymembercodestd = self.family_history.family_member.coding_standard
             history.familymemberdesc = self.family_history.family_member.description
 
         if self.family_history.diagnosis:
@@ -454,11 +395,13 @@ class FamilyHistory:
 
 
 class SocialHistory:
-    def __init__(self, social_history: xsd_social_history.SocialHistory):
+    def __init__(self, social_history: xsd_social_history.SocialHistory, pid: str = None):
         self.social_history = social_history
+        self.pid = pid
 
     def to_orm(self) -> orm.SocialHistory:
         history = orm.SocialHistory()
+        history.pid = self.pid
 
         # Basic columns
         history.updatedon = self.social_history.updated_on
@@ -466,31 +409,27 @@ class SocialHistory:
 
         if self.social_history.social_habit:
             history.socialhabitcode = self.social_history.social_habit.code
-            history.socialhabitcodestd = (
-                self.social_history.social_habit.coding_standard
-            )
+            history.socialhabitcodestd = self.social_history.social_habit.coding_standard
             history.socialhabitdesc = self.social_history.social_habit.description
 
         return history
 
 
 class ResultItem:
-    def __init__(self, result_item: xsd_lab_orders.ResultItem):
+    def __init__(self, result_item: xsd_lab_orders.ResultItem, id: str = None):
         self.result_item = result_item
+        self.id = id
 
     def to_orm(self) -> orm.ResultItem:
-        result = orm.ResultItem()
+        result = orm.ResultItem(id=self.id)
 
         # Basic columns
-
         if self.result_item.pre_post:
             result.prepost = self.result_item.pre_post.value
         if self.result_item.interpretation_codes:
             result.interpretationcodes = self.result_item.interpretation_codes.value
         if self.result_item.status:
-            result.status = (
-                self.result_item.status.value if self.result_item.status else None
-            )
+            result.status = self.result_item.status.value if self.result_item.status else None
 
         result.resulttype = self.result_item.result_type
         result.enteredon = self.result_item.entered_on
@@ -511,14 +450,15 @@ class ResultItem:
 
 
 class LabOrder:
-    def __init__(self, laborder: xsd_lab_orders.LabOrder):
+    def __init__(self, laborder: xsd_lab_orders.LabOrder, pid: str = None, id: str = None):
         self.laborder = laborder
+        self.pid = pid
+        self.id = id
 
     def to_orm(self) -> orm.LabOrder:
-        order = orm.LabOrder()
+        order = orm.LabOrder(pid=self.pid, id=self.id)
 
         # Basic columns
-
         order.placerid = self.laborder.placer_id
         order.fillerid = self.laborder.filler_id
         order.specimencollectedtime = self.laborder.specimen_collected_time
@@ -533,9 +473,7 @@ class LabOrder:
         if self.laborder.receiving_location:
             order.receivinglocationcode = self.laborder.receiving_location.code
             order.receivinglocationdesc = self.laborder.receiving_location.description
-            order.receivinglocationcodestd = (
-                self.laborder.receiving_location.coding_standard
-            )
+            order.receivinglocationcodestd = self.laborder.receiving_location.coding_standard
 
         if self.laborder.ordered_by:
             order.orderedbycode = self.laborder.ordered_by.code
@@ -569,31 +507,27 @@ class LabOrder:
 
         if self.laborder.entering_organization:
             order.enteringorganizationcode = self.laborder.entering_organization.code
-            order.enteringorganizationdesc = (
-                self.laborder.entering_organization.description
-            )
-            order.enteringorganizationcodestd = (
-                self.laborder.entering_organization.coding_standard
-            )
+            order.enteringorganizationdesc = self.laborder.entering_organization.description
+            order.enteringorganizationcodestd = self.laborder.entering_organization.coding_standard
 
         # Relationships
 
         if self.laborder.result_items:
-            order.result_items = [
-                ResultItem(item).to_orm()
-                for item in self.laborder.result_items.result_item
-            ]
+            result_items = [ResultItem(item) for item in self.laborder.result_items.result_item]
+            mint_new_ids(order.result_items, order.id)
+            order.result_items = [item.to_orm() for item in result_items]
 
         return order
 
 
 class FamilyDoctor:
-    def __init__(self, family_doctor: xsd_types.FamilyDoctor):
+    def __init__(self, family_doctor: xsd_types.FamilyDoctor, pid: str = None):
         self.family_doctor = family_doctor
+        self.pid = pid
 
     def to_orm(self) -> orm.FamilyDoctor:
         doctor = orm.FamilyDoctor()
-
+        doctor.id = self.pid
         doctor.gpname = self.family_doctor.gpname
         doctor.gpid = self.family_doctor.gpid
         doctor.gppracticeid = self.family_doctor.gppractice_id
@@ -611,9 +545,7 @@ class FamilyDoctor:
 
             if self.family_doctor.address.country:
                 doctor.countrycode = self.family_doctor.address.country.code
-                doctor.countrycodestd = (
-                    self.family_doctor.address.country.coding_standard
-                )
+                doctor.countrycodestd = self.family_doctor.address.country.coding_standard
                 doctor.countrydesc = self.family_doctor.address.country.description
 
         if self.family_doctor.contact_detail:
@@ -625,12 +557,13 @@ class FamilyDoctor:
 
 
 class Address:
-    def __init__(self, address: xsd_types.Address):
+    def __init__(self, address: xsd_types.Address, pid: str = None):
         self.address = address
+        self.pid = pid
 
     def to_orm(self) -> orm.Address:
         address = orm.Address()
-
+        address.pid = self.pid
         address.addressuse = self.address.use
         address.fromtime = self.address.from_time
         address.totime = self.address.to_time
@@ -648,12 +581,13 @@ class Address:
 
 
 class ContactDetail:
-    def __init__(self, xsd_contact: xsd_types.ContactDetail):
+    def __init__(self, xsd_contact: xsd_types.ContactDetail, pid: str = None):
         self.xsd_contact = xsd_contact
+        self.pid = None
 
     def to_orm(self) -> orm.ContactDetail:
         detail = orm.ContactDetail()
-
+        detail.pid = self.pid
         detail.contactuse = self.xsd_contact.use
         detail.contactvalue = self.xsd_contact.value
         detail.commenttext = self.xsd_contact.comments
@@ -662,12 +596,13 @@ class ContactDetail:
 
 
 class Name:
-    def __init__(self, xml: xsd_types.Name):
+    def __init__(self, xml: xsd_types.Name, pid: str = None):
         self.xml = xml
+        self.pid = pid
 
     def to_orm(self):
         name = orm.Name()
-
+        name.pid = self.pid
         name.nameuse = self.xml.use
         name.prefix = self.xml.prefix
         name.family = self.xml.family
@@ -679,12 +614,13 @@ class Name:
 
 
 class PatientNumber:
-    def __init__(self, xml: xsd_types.PatientNumber):
+    def __init__(self, xml: xsd_types.PatientNumber, pid: str = None):
         self.xml = xml
+        self.pid = pid
 
     def to_orm(self):
         number = orm.PatientNumber()
-
+        number.pid = self.pid
         number.patientid = self.xml.number
         number.organization = self.xml.organization
         number.numbertype = self.xml.number_type
@@ -693,8 +629,9 @@ class PatientNumber:
 
 
 class Patient:
-    def __init__(self, xml: xsd_ukrdc.Patient):
+    def __init__(self, xml: xsd_ukrdc.Patient, pid: str = None):
         self.xml = xml
+        self.pid = pid
 
     @property
     def _first_person_to_contact(self) -> Optional[xsd_types.ContactDetail]:
@@ -706,13 +643,10 @@ class Patient:
         patient = orm.Patient()
 
         # Basic columns
+        patient.pid = self.pid
 
-        patient.birthtime = (
-            self.xml.birth_time.to_datetime() if self.xml.birth_time else None
-        )
-        patient.deathtime = (
-            self.xml.death_time.to_datetime() if self.xml.death_time else None
-        )
+        patient.birthtime = self.xml.birth_time.to_datetime() if self.xml.birth_time else None
+        patient.deathtime = self.xml.death_time.to_datetime() if self.xml.death_time else None
 
         patient.gender = self.xml.gender
         patient.countryofbirth = self.xml.country_of_birth
@@ -724,20 +658,12 @@ class Patient:
 
         if self.xml.person_to_contact:
             patient.persontocontactname = self.xml.person_to_contact.name
-            patient.persontocontact_relationship = (
-                self.xml.person_to_contact.relationship
-            )
+            patient.persontocontact_relationship = self.xml.person_to_contact.relationship
 
             if self.xml.person_to_contact.contact_details:
-                patient.persontocontact_contactnumber = (
-                    self.xml.person_to_contact.contact_details[0].value
-                )
-                patient.persontocontact_contactnumbercomments = (
-                    self.xml.person_to_contact.contact_details[0].comments
-                )
-                patient.persontocontact_contactnumbertype = (
-                    self.xml.person_to_contact.contact_details[0].use
-                )
+                patient.persontocontact_contactnumber = self.xml.person_to_contact.contact_details[0].value
+                patient.persontocontact_contactnumbercomments = self.xml.person_to_contact.contact_details[0].comments
+                patient.persontocontact_contactnumbertype = self.xml.person_to_contact.contact_details[0].use
 
         if self.xml.occupation:
             patient.occupationcode = self.xml.occupation.code
@@ -751,9 +677,7 @@ class Patient:
 
         patient.death = self.xml.death
 
-        patient.updatedon = (
-            self.xml.updated_on.to_datetime() if self.xml.updated_on else None
-        )
+        patient.updatedon = self.xml.updated_on.to_datetime() if self.xml.updated_on else None
 
         patient.bloodgroup = self.xml.blood_group
         patient.bloodrhesus = self.xml.blood_rhesus
@@ -761,37 +685,31 @@ class Patient:
         # Relationships
 
         if self.xml.patient_numbers:
-            patient.numbers = [
-                PatientNumber(number).to_orm()
-                for number in self.xml.patient_numbers.patient_number
-            ]
+            patient.numbers = [PatientNumber(number, pid=self.pid).to_orm() for number in self.xml.patient_numbers.patient_number]
 
         if self.xml.names:
-            patient.names = [Name(name).to_orm() for name in self.xml.names.name]
+            patient.names = [Name(name, pid=self.pid).to_orm() for name in self.xml.names.name]
 
         if self.xml.contact_details:
-            patient.contact_details = [
-                ContactDetail(contact).to_orm()
-                for contact in self.xml.contact_details.contact_detail
-            ]
+            patient.contact_details = [ContactDetail(contact, pid=self.pid).to_orm() for contact in self.xml.contact_details.contact_detail]
 
         if self.xml.addresses:
-            patient.addresses = [
-                Address(address).to_orm() for address in self.xml.addresses.address
-            ]
+            patient.addresses = [Address(address, pid=self.pid).to_orm() for address in self.xml.addresses.address]
 
         if self.xml.family_doctor:
-            patient.familydoctor = FamilyDoctor(self.xml.family_doctor).to_orm()
+            patient.familydoctor = FamilyDoctor(self.xml.family_doctor, pid=self.pid).to_orm()
 
         return patient
 
 
 class Transplant:
-    def __init__(self, xml: xsd_transplants.TransplantProcedure):
+    def __init__(self, xml: xsd_transplants.TransplantProcedure, pid: str = None):
         self.xml = xml
+        self.pid = pid
 
     def to_orm(self):
         transplant = orm.Transplant()
+        transplant.pid = self.pid
         if self.xml.procedure_type:
             transplant.proceduretypecode = self.xml.procedure_type.code
             transplant.proceduretypecodestd = self.xml.procedure_type.coding_standard
@@ -912,17 +830,16 @@ class Transplant:
 
 
 class VascularAccess:
-    def __init__(self, xml: xsd_vascular_accesses.VascularAccess):
+    def __init__(self, xml: xsd_vascular_accesses.VascularAccess, pid: str = None):
         self.xml = xml
+        self.pid = pid
 
     def to_orm(self):
         vascular_access = orm.VascularAccess()
-
+        vascular_access.pid = self.pid
         if self.xml.procedure_type:
             vascular_access.proceduretypecode = self.xml.procedure_type.code
-            vascular_access.proceduretypecodestd = (
-                self.xml.procedure_type.coding_standard
-            )
+            vascular_access.proceduretypecodestd = self.xml.procedure_type.coding_standard
             vascular_access.proceduretypedesc = self.xml.procedure_type.description
 
         if self.xml.clinician:
@@ -972,11 +889,13 @@ class VascularAccess:
 
 
 class Encounter:
-    def __init__(self, xml: xsd_encounters.Encounter):
+    def __init__(self, xml: xsd_encounters.Encounter, pid: str = None):
         self.xml = xml
+        self.pid = pid
 
     def to_orm(self):
         encounter = orm.Encounter()
+        encounter.pid = self.pid
         if self.xml.encounter_number:
             encounter.encounternumber = self.xml.encounter_number
         if self.xml.encounter_type:
@@ -987,9 +906,7 @@ class Encounter:
             encounter.totime = self.xml.to_time
         if self.xml.admitting_clinician:
             encounter.admittingcliniciancode = self.xml.admitting_clinician.code
-            encounter.admittingcliniciancodestd = (
-                self.xml.admitting_clinician.coding_standard
-            )
+            encounter.admittingcliniciancodestd = self.xml.admitting_clinician.coding_standard
             encounter.admissionsourcedesc = self.xml.admitting_clinician.description
         if self.xml.admit_reason:
             encounter.admitreasoncode = self.xml.admit_reason.code
@@ -1005,15 +922,11 @@ class Encounter:
             encounter.dischargereasondesc = self.xml.discharge_reason.description
         if self.xml.discharge_location:
             encounter.dischargelocationcode = self.xml.discharge_location.code
-            encounter.dischargereasoncodestd = (
-                self.xml.discharge_location.coding_standard
-            )
+            encounter.dischargereasoncodestd = self.xml.discharge_location.coding_standard
             encounter.dischargelocationdesc = self.xml.discharge_location.description
         if self.xml.health_care_facility:
             encounter.healthcarefacilitycode = self.xml.health_care_facility.code
-            encounter.healthcarefacilitycodestd = (
-                self.xml.health_care_facility.coding_standard
-            )
+            encounter.healthcarefacilitycodestd = self.xml.health_care_facility.coding_standard
             encounter.healthcarefacilitydesc = self.xml.health_care_facility.description
         if self.xml.entered_at:
             encounter.enteredatcode = self.xml.entered_at.code
@@ -1032,11 +945,13 @@ class Encounter:
 
 
 class Treatment:
-    def __init__(self, xml: xsd_encounters.Treatment):
+    def __init__(self, xml: xsd_encounters.Treatment, pid: str = None):
         self.xml = xml
+        self.pid = pid
 
     def to_orm(self):
         treatment = orm.Treatment()
+        treatment.pid = self.pid
         if self.xml.encounter_number:
             treatment.encounternumber = self.xml.encounter_number
         if self.xml.encounter_type:
@@ -1047,9 +962,7 @@ class Treatment:
             treatment.totime = self.xml.to_time
         if self.xml.admitting_clinician:
             treatment.admittingcliniciancode = self.xml.admitting_clinician.code
-            treatment.admittingcliniciancodestd = (
-                self.xml.admitting_clinician.coding_standard
-            )
+            treatment.admittingcliniciancodestd = self.xml.admitting_clinician.coding_standard
             treatment.admittingcliniciandesc = self.xml.admitting_clinician.description
         if self.xml.admission_source:
             treatment.admissionsourcecode = self.xml.admission_source.code
@@ -1061,15 +974,11 @@ class Treatment:
             treatment.dischargereasondesc = self.xml.discharge_reason.description
         if self.xml.discharge_location:
             treatment.dischargelocationcode = self.xml.discharge_location.code
-            treatment.dischargelocationcodestd = (
-                self.xml.discharge_location.coding_standard
-            )
+            treatment.dischargelocationcodestd = self.xml.discharge_location.coding_standard
             treatment.dischargelocationdesc = self.xml.discharge_location.description
         if self.xml.health_care_facility:
             treatment.healthcarefacilitycode = self.xml.health_care_facility.code
-            treatment.healthcarefacilitycodestd = (
-                self.xml.health_care_facility.coding_standard
-            )
+            treatment.healthcarefacilitycodestd = self.xml.health_care_facility.coding_standard
             treatment.healthcarefacilitydesc = self.xml.health_care_facility.description
         if self.xml.entered_at:
             treatment.enteredatcode = self.xml.entered_at.code
@@ -1110,19 +1019,19 @@ class Treatment:
 
 
 class TransplantList:
-    def __init__(self, xml: xsd_encounters.TransplantList):
+    def __init__(self, xml: xsd_encounters.TransplantList, pid: str = None):
         self.xml = xml
+        self.pid = pid
 
     def to_orm(self):
         transplant_list = orm.TransplantList()
+        transplant_list.pid = self.pid
         if self.xml.updated_on:
             transplant_list.updatedon = self.xml.updated_on
 
         if self.xml.admission_source:
             transplant_list.admissionsourcecode = self.xml.admission_source.code
-            transplant_list.admissionsourcecodestd = (
-                self.xml.admission_source.coding_standard
-            )
+            transplant_list.admissionsourcecodestd = self.xml.admission_source.coding_standard
             transplant_list.admissionsourcedesc = self.xml.admission_source.description
 
         if self.xml.admit_reason:
@@ -1132,27 +1041,17 @@ class TransplantList:
 
         if self.xml.admitting_clinician:
             transplant_list.admittingcliniciancode = self.xml.admitting_clinician.code
-            transplant_list.admittingcliniciancodestd = (
-                self.xml.admitting_clinician.coding_standard
-            )
-            transplant_list.admittingcliniciandesc = (
-                self.xml.admitting_clinician.description
-            )
+            transplant_list.admittingcliniciancodestd = self.xml.admitting_clinician.coding_standard
+            transplant_list.admittingcliniciandesc = self.xml.admitting_clinician.description
 
         if self.xml.discharge_location:
             transplant_list.dischargelocationcode = self.xml.discharge_location.code
-            transplant_list.dischargereasoncodestd = (
-                self.xml.discharge_location.coding_standard
-            )
-            transplant_list.dischargelocationdesc = (
-                self.xml.discharge_location.description
-            )
+            transplant_list.dischargereasoncodestd = self.xml.discharge_location.coding_standard
+            transplant_list.dischargelocationdesc = self.xml.discharge_location.description
 
         if self.xml.discharge_reason:
             transplant_list.dischargereasoncode = self.xml.discharge_reason.code
-            transplant_list.dischargereasoncodestd = (
-                self.xml.discharge_reason.coding_standard
-            )
+            transplant_list.dischargereasoncodestd = self.xml.discharge_reason.coding_standard
             transplant_list.dischargereasondesc = self.xml.discharge_reason.description
 
         if self.xml.encounter_number:
@@ -1171,12 +1070,8 @@ class TransplantList:
 
         if self.xml.health_care_facility:
             transplant_list.healthcarefacilitycode = self.xml.health_care_facility.code
-            transplant_list.healthcarefacilitycodestd = (
-                self.xml.health_care_facility.coding_standard
-            )
-            transplant_list.healthcarefacilitydesc = (
-                self.xml.health_care_facility.description
-            )
+            transplant_list.healthcarefacilitycodestd = self.xml.health_care_facility.coding_standard
+            transplant_list.healthcarefacilitydesc = self.xml.health_care_facility.description
 
         if self.xml.to_time:
             transplant_list.totime = self.xml.to_time
@@ -1185,11 +1080,13 @@ class TransplantList:
 
 
 class ProgramMembership:
-    def __init__(self, xml: xsd_program_memberships.ProgramMembership):
+    def __init__(self, xml: xsd_program_memberships.ProgramMembership, pid: str = None):
         self.xml = xml
+        self.pid = pid
 
     def to_orm(self):
         program_membership = orm.ProgramMembership()
+        program_membership.pid = self.pid
         if self.xml.entered_at:
             program_membership.enteredatcode = self.xml.entered_at.code
             program_membership.enteredatdesc = self.xml.entered_at.description
@@ -1215,11 +1112,13 @@ class ProgramMembership:
 
 
 class OptOut:
-    def __init__(self, xml: xsd_opt_outs.OptOut):
+    def __init__(self, xml: xsd_opt_outs.OptOut, pid: str = None):
         self.xml = xml
+        self.pid = pid
 
     def to_orm(self):
         opt_out = orm.OptOut()
+        opt_out.pid = self.pid
         if self.xml.entered_at:
             opt_out.entered_at_code = self.xml.entered_at.code
             opt_out.entered_at_code_std = self.xml.entered_at.coding_standard
@@ -1245,11 +1144,13 @@ class OptOut:
 
 
 class ClinicalRelationship:
-    def __init__(self, xml: xsd_clinical_relationships.ClinicalRelationship):
+    def __init__(self, xml: xsd_clinical_relationships.ClinicalRelationship, pid: str = None):
         self.xml = xml
+        self.pid = pid
 
     def to_orm(self):
         clinical_relationship = orm.ClinicalRelationship()
+        clinical_relationship.pid = self.pid
         if self.xml.clinician:
             clinical_relationship.cliniciancode = self.xml.clinician.code
             clinical_relationship.cliniciancodestd = self.xml.clinician.coding_standard
@@ -1318,8 +1219,9 @@ class Score:
 
 
 class Survey:
-    def __init__(self, xml: xsd_surveys.Survey):
+    def __init__(self, xml: xsd_surveys.Survey, pid: str = None):
         self.xml = xml
+        self.pid = pid
 
     def to_orm(self):
         survey = orm.Survey()
@@ -1340,29 +1242,31 @@ class Survey:
         if self.xml.levels:
             survey.levels = [Level(level) for level in self.xml.levels.level]
         if self.xml.questions:
-            survey.questions = [
-                Question(question) for question in self.xml.questions.question
-            ]
+            survey.questions = [Question(question) for question in self.xml.questions.question]
         if self.xml.scores:
             survey.scores = [Score(score) for score in self.xml.scores.score]
         return survey
 
 
 class PVData:
-    def __init__(self, xml: xsd_pvdata):
+    def __init__(self, xml: xsd_pvdata, pid: str = None):
         self.xml = xml
+        self.pid = pid
 
     def to_orm(self):
         pvdata = orm.PVData()
+        pvdata.pid = self.pid
         return pvdata
 
 
 class Document:
-    def __init__(self, xml: xsd_documents.Document):
+    def __init__(self, xml: xsd_documents.Document, pid: str = None):
         self.xml = xml
+        self.pid = pid
 
     def to_orm(self):
         document = orm.Document()
+        document.pid = self.pid
         if self.xml.clinician:
             document.cliniciancode = self.xml.clinician.code
             document.cliniciancodestd = self.xml.clinician.coding_standard
@@ -1419,75 +1323,67 @@ class Document:
 
 
 class PatientRecord:
-    def __init__(self, xml: xsd_ukrdc.PatientRecord):
+    def __init__(self, xml: xsd_ukrdc.PatientRecord, pid: str = None):
         self.xml = xml
+        self.pid = pid
 
     def to_orm(self):
         record = orm.PatientRecord()
 
         # Basic columns
-
-        record.sendingfacility = (
-            self.xml.sending_facility.value if self.xml.sending_facility else None
-        )
+        record.sendingfacility = self.xml.sending_facility.value if self.xml.sending_facility else None
 
         record.sendingextract = self.xml.sending_extract.value
 
-        # Relationships
+        record.pid = self.pid
 
-        record.patient = (
-            Patient(self.xml.patient).to_orm() if self.xml.patient else None
-        )
+        # Relationships
+        record.patient = Patient(self.xml.patient, pid=self.pid).to_orm() if self.xml.patient else None
 
         if self.xml.lab_orders:
-            record.lab_orders = [
-                LabOrder(order).to_orm() for order in self.xml.lab_orders.lab_order
-            ]
+            lab_orders = [LabOrder(order, pid=self.pid) for order in self.xml.lab_orders.lab_order]
+
+            # mint new keys before converting to orm
+            # this is required because the resultitem key
+            # depends on the lab_order key
+            mint_new_ids(lab_orders, self.pid)
+            record.lab_orders = [order.to_orm() for order in lab_orders]
 
         if self.xml.social_histories:
-            record.social_histories = [
-                SocialHistory(history).to_orm()
-                for history in self.xml.social_histories.social_history
-            ]
+            record.social_histories = [SocialHistory(history, pid=self.pid).to_orm() for history in self.xml.social_histories.social_history]
+            mint_new_ids(record.social_histories, self.pid)
 
         if self.xml.family_histories:
-            record.family_histories = [
-                FamilyHistory(history).to_orm()
-                for history in self.xml.family_histories.family_history
-            ]
+            record.family_histories = [FamilyHistory(history, pid=self.pid).to_orm() for history in self.xml.family_histories.family_history]
+            mint_new_ids(record.family_histories, self.pid)
 
         if self.xml.allergies:
-            record.allergies = [
-                Allergy(allergy).to_orm() for allergy in self.xml.allergies.allergy
-            ]
+            record.allergies = [Allergy(allergy, pid=self.pid).to_orm() for allergy in self.xml.allergies.allergy]
+            mint_new_ids(record.family_histories, self.pid)
 
         if self.xml.diagnoses:
             if self.xml.diagnoses.diagnosis:
-                record.diagnoses = [
-                    Diagnosis(diagnosis).to_orm()
-                    for diagnosis in self.xml.diagnoses.diagnosis
-                ]
+                record.diagnoses = [Diagnosis(diagnosis, pid=self.pid).to_orm() for diagnosis in self.xml.diagnoses.diagnosis]
+                record.diagnoses
+                mint_new_ids(record.diagnoses, self.pid)
+
             if self.xml.diagnoses.cause_of_death:
-                record.cause_of_death = [
-                    CauseOfDeath(self.xml.diagnoses.cause_of_death).to_orm()
-                ]
+                record.cause_of_death = [CauseOfDeath(self.xml.diagnoses.cause_of_death, pid=self.pid).to_orm()]
+                mint_new_ids(record.cause_of_death, self.pid)
+
             if self.xml.diagnoses.renal_diagnosis:
-                record.renaldiagnoses = [
-                    RenalDiagnosis(self.xml.diagnoses.renal_diagnosis).to_orm()
-                ]
+                record.renaldiagnoses = [RenalDiagnosis(self.xml.diagnoses.renal_diagnosis, pid=self.pid).to_orm()]
+                mint_new_ids(record.renaldiagnoses, self.pid)
 
         if self.xml.medications:
-            record.medications = [
-                Medication(medication).to_orm()
-                for medication in self.xml.medications.medication
-            ]
+            record.medications = [Medication(medication, pid=self.pid).to_orm() for medication in self.xml.medications.medication]
+            mint_new_ids(record.medications, self.pid)
 
         if self.xml.procedures:
             if self.xml.procedures.procedure:
-                record.procedures = [
-                    Procedure(procedure).to_orm()
-                    for procedure in self.xml.procedures.procedure
-                ]
+                record.procedures = [Procedure(procedure, pid=self.pid).to_orm() for procedure in self.xml.procedures.procedure]
+                mint_new_ids(record.procedures, self.pid)
+
             if self.xml.procedures.dialysis_sessions:
                 # DialysisSessions list can be split into multiple elements with different start and stop values.
                 # In the XML files, this simply corresponds to multiple <DialysisSessions start=... stop=...> elements,
@@ -1495,69 +1391,58 @@ class PatientRecord:
                 # In the Python XSData objects though, this corresponds to a two-deep nested list which we need to unpack.
                 # Currently, the start and stop values of each outer element are ignored.
                 record.dialysis_sessions = [
-                    DialysisSession(session).to_orm()
+                    DialysisSession(session, pid=self.pid).to_orm()
                     for dialysis_sessions in self.xml.procedures.dialysis_sessions
                     for session in dialysis_sessions.dialysis_session
                 ]
+                mint_new_ids(record.dialysis_sessions, self.pid)
+
             if self.xml.procedures.transplant:
-                record.transplants = [
-                    Transplant(transplant).to_orm()
-                    for transplant in self.xml.procedures.transplant
-                ]
+                record.transplants = [Transplant(transplant, pid=self.pid).to_orm() for transplant in self.xml.procedures.transplant]
+                mint_new_ids(record.transplants, self.pid)
 
             if self.xml.procedures.vascular_access:
-                record.vascular_accesses = [
-                    VascularAccess(access).to_orm()
-                    for access in self.xml.procedures.vascular_access
-                ]
+                record.vascular_accesses = [VascularAccess(access, pid=self.pid).to_orm() for access in self.xml.procedures.vascular_access]
+                mint_new_ids(record.vascular_accesses, self.pid)
 
         if self.xml.documents:
-            record.documents = [
-                Document(document).to_orm() for document in self.xml.documents.document
-            ]
+            record.documents = [Document(document, pid=self.pid).to_orm() for document in self.xml.documents.document]
+            mint_new_ids(record.documents, self.pid)
 
         if self.xml.encounters:
             if self.xml.encounters.encounter:
-                record.encounters = [
-                    Encounter(encounter).to_orm()
-                    for encounter in self.xml.encounters.encounter
-                ]
+                record.encounters = [Encounter(encounter, pid=self.pid).to_orm() for encounter in self.xml.encounters.encounter]
+                mint_new_ids(record.encounters, self.pid)
 
             if self.xml.encounters.treatment:
-                record.treatments = [
-                    Treatment(treatment).to_orm()
-                    for treatment in self.xml.encounters.treatment
-                ]
+                record.treatments = [Treatment(treatment, pid=self.pid).to_orm() for treatment in self.xml.encounters.treatment]
+                mint_new_ids(record.treatments, self.pid)
 
             if self.xml.encounters.transplant_list:
-                record.transplantlists = [
-                    TransplantList(tplist).to_orm()
-                    for tplist in self.xml.encounters.transplant_list
-                ]
+                record.transplantlists = [TransplantList(tplist, pid=self.pid).to_orm() for tplist in self.xml.encounters.transplant_list]
+                mint_new_ids(record.transplantlists, self.pid)
 
         if self.xml.program_memberships:
             record.program_memberships = [
-                ProgramMembership(membership).to_orm()
-                for membership in self.xml.program_memberships.program_membership
+                ProgramMembership(membership, pid=self.pid).to_orm() for membership in self.xml.program_memberships.program_membership
             ]
+            mint_new_ids(record.program_memberships, self.pid)
 
         if self.xml.opt_outs:
-            record.opt_outs = [
-                OptOut(optout).to_orm() for optout in self.xml.opt_outs.opt_out
-            ]
+            record.opt_outs = [OptOut(optout, pid=self.pid).to_orm() for optout in self.xml.opt_outs.opt_out]
+            mint_new_ids(record.opt_outs, self.pid)
 
         if self.xml.clinical_relationships:
             record.clinical_relationships = [
-                ClinicalRelationship(relationship).to_orm()
-                for relationship in self.xml.clinical_relationships.clinical_relationship
+                ClinicalRelationship(relationship, pid=self.pid).to_orm() for relationship in self.xml.clinical_relationships.clinical_relationship
             ]
+            mint_new_ids(record.clinical_relationships, self.pid)
 
         if self.xml.surveys:
-            record.surveys = [
-                Survey(survey).to_orm() for survey in self.xml.surveys.survey
-            ]
+            record.surveys = [Survey(survey, pid=self.pid).to_orm() for survey in self.xml.surveys.survey]
+            mint_new_ids(record.surveys, self.pid)
 
         if self.xml.pvdata:
-            record.pvdata = [PVData(pvdata).to_orm() for pvdata in self.xml.pvdata]
-
+            record.pvdata = [PVData(pvdata, pid=self.pid).to_orm() for pvdata in self.xml.pvdata]
+            mint_new_ids(record.pvdata, self.pid)
         return record
