@@ -4,12 +4,11 @@ Returns:
     _type_: _description_
 """
 
-from ukrdc_xml2sqla.models.ukrdc import PatientRecord, PatientNumber
 import ukrdc_sqla.ukrdc as orm
 
 import ukrdc_xsdata.ukrdc as xsd_ukrdc
 from sqlalchemy.orm import Session
-from sqlalchemy import and_, or_, select
+from sqlalchemy import and_, select
 import pandas as pd
 
 

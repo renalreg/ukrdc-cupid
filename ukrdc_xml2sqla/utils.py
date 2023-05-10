@@ -1,5 +1,4 @@
 import time
-import hashlib
 
 import ukrdc_sqla.ukrdc as orm
 import ukrdc_xsdata.ukrdc as xsd_ukrdc
