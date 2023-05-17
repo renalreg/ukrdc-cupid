@@ -17,7 +17,8 @@ THE PLAN:
 
 from typing import Optional
 
-from ukrdc_xml2sqla.utils import mint_new_ids
+# from ukrdc_xml2sqla.generate_keys import mint_new_ids
+from ukrdc_xml2sqla.transform_orm import transform_laborder, transform_generic_item
 
 import ukrdc_sqla.ukrdc as orm
 import ukrdc_xsdata.ukrdc.types as xsd_types
@@ -513,9 +514,7 @@ class LabOrder:
         # Relationships
 
         if self.laborder.result_items:
-            result_items = [ResultItem(item) for item in self.laborder.result_items.result_item]
-            mint_new_ids(order.result_items, order.id)
-            order.result_items = [item.to_orm() for item in result_items]
+            order.result_items = [ResultItem(item).to_orm() for item in self.laborder.result_items.result_item]
 
         return order
 
@@ -1341,48 +1340,53 @@ class PatientRecord:
         record.patient = Patient(self.xml.patient, pid=self.pid).to_orm() if self.xml.patient else None
 
         if self.xml.lab_orders:
-            lab_orders = [LabOrder(order, pid=self.pid) for order in self.xml.lab_orders.lab_order]
-
-            # mint new keys before converting to orm
-            # this is required because the resultitem key
-            # depends on the lab_order key
-            mint_new_ids(lab_orders, self.pid)
-            record.lab_orders = [order.to_orm() for order in lab_orders]
+            record.lab_orders = [transform_laborder(LabOrder(order, self.pid).to_orm(), pid=self.pid) for order in self.xml.lab_orders.lab_order]
 
         if self.xml.social_histories:
-            record.social_histories = [SocialHistory(history, pid=self.pid).to_orm() for history in self.xml.social_histories.social_history]
-            mint_new_ids(record.social_histories, self.pid)
+            record.social_histories = [
+                transform_generic_item(SocialHistory(history, pid=self.pid).to_orm(), self.pid, seq_no)
+                for seq_no, history in enumerate(self.xml.social_histories.social_history)
+            ]
 
         if self.xml.family_histories:
-            record.family_histories = [FamilyHistory(history, pid=self.pid).to_orm() for history in self.xml.family_histories.family_history]
-            mint_new_ids(record.family_histories, self.pid)
+            record.family_histories = [
+                transform_generic_item(FamilyHistory(history, pid=self.pid).to_orm(), self.pid, seq_no)
+                for seq_no, history in enumerate(self.xml.family_histories.family_history)
+            ]
 
         if self.xml.allergies:
-            record.allergies = [Allergy(allergy, pid=self.pid).to_orm() for allergy in self.xml.allergies.allergy]
-            mint_new_ids(record.family_histories, self.pid)
+            record.allergies = [
+                transform_generic_item(Allergy(allergy, pid=self.pid).to_orm(), self.pid, seq_no) for seq_no, allergy in enumerate(self.xml.allergies.allergy)
+            ]
 
         if self.xml.diagnoses:
             if self.xml.diagnoses.diagnosis:
-                record.diagnoses = [Diagnosis(diagnosis, pid=self.pid).to_orm() for diagnosis in self.xml.diagnoses.diagnosis]
-                record.diagnoses
-                mint_new_ids(record.diagnoses, self.pid)
+                record.allergies = [
+                    transform_generic_item(Diagnosis(diagnosis, pid=self.pid).to_orm(), self.pid, seq_no)
+                    for seq_no, diagnosis in enumerate(self.xml.diagnoses.diagnosis)
+                ]
 
             if self.xml.diagnoses.cause_of_death:
-                record.cause_of_death = [CauseOfDeath(self.xml.diagnoses.cause_of_death, pid=self.pid).to_orm()]
-                mint_new_ids(record.cause_of_death, self.pid)
+                print("replace logic walking down the tree")
+                # record.cause_of_death = [CauseOfDeath(self.xml.diagnoses.cause_of_death, pid=self.pid).to_orm()]
+            #                record.cause_of_death = [transform_generic_pr_item(Diagnosis(diagnosis, pid=self.pid).to_orm(), self.pid,seq_no) for seq_no, diagnosis in enumerate(self.xml.diagnoses.diagnosis)]
+            #                mint_new_ids(record.cause_of_death, self.pid)
 
             if self.xml.diagnoses.renal_diagnosis:
-                record.renaldiagnoses = [RenalDiagnosis(self.xml.diagnoses.renal_diagnosis, pid=self.pid).to_orm()]
-                mint_new_ids(record.renaldiagnoses, self.pid)
+                print("replace logic to walk down the tree")
+                # record.renaldiagnoses = [RenalDiagnosis(self.xml.diagnoses.renal_diagnosis, pid=self.pid).to_orm()]
+                # mint_new_ids(record.renaldiagnoses, self.pid)
 
         if self.xml.medications:
-            record.medications = [Medication(medication, pid=self.pid).to_orm() for medication in self.xml.medications.medication]
-            mint_new_ids(record.medications, self.pid)
+            print("replace logic to walk down the tree")
+            # record.medications = [Medication(medication, pid=self.pid).to_orm() for medication in self.xml.medications.medication]
+            # mint_new_ids(record.medications, self.pid)
 
         if self.xml.procedures:
             if self.xml.procedures.procedure:
-                record.procedures = [Procedure(procedure, pid=self.pid).to_orm() for procedure in self.xml.procedures.procedure]
-                mint_new_ids(record.procedures, self.pid)
+                print("replace logic to walk down the tree")
+                # record.procedures = [Procedure(procedure, pid=self.pid).to_orm() for procedure in self.xml.procedures.procedure]
+                # mint_new_ids(record.procedures, self.pid)
 
             if self.xml.procedures.dialysis_sessions:
                 # DialysisSessions list can be split into multiple elements with different start and stop values.
@@ -1390,59 +1394,72 @@ class PatientRecord:
                 # each containing a list of DialysisSession elements.
                 # In the Python XSData objects though, this corresponds to a two-deep nested list which we need to unpack.
                 # Currently, the start and stop values of each outer element are ignored.
-                record.dialysis_sessions = [
-                    DialysisSession(session, pid=self.pid).to_orm()
-                    for dialysis_sessions in self.xml.procedures.dialysis_sessions
-                    for session in dialysis_sessions.dialysis_session
-                ]
-                mint_new_ids(record.dialysis_sessions, self.pid)
+
+                print("update logic")
+                # record.dialysis_sessions = [
+                #    DialysisSession(session, pid=self.pid).to_orm()
+                #    for dialysis_sessions in self.xml.procedures.dialysis_sessions
+                #    for session in dialysis_sessions.dialysis_session
+                # ]
+                # mint_new_ids(record.dialysis_sessions, self.pid)
 
             if self.xml.procedures.transplant:
-                record.transplants = [Transplant(transplant, pid=self.pid).to_orm() for transplant in self.xml.procedures.transplant]
-                mint_new_ids(record.transplants, self.pid)
+                print("update logic")
+                # record.transplants = [Transplant(transplant, pid=self.pid).to_orm() for transplant in self.xml.procedures.transplant]
+                # mint_new_ids(record.transplants, self.pid)
 
             if self.xml.procedures.vascular_access:
-                record.vascular_accesses = [VascularAccess(access, pid=self.pid).to_orm() for access in self.xml.procedures.vascular_access]
-                mint_new_ids(record.vascular_accesses, self.pid)
+                print("update logic ")
+                # record.vascular_accesses = [VascularAccess(access, pid=self.pid).to_orm() for access in self.xml.procedures.vascular_access]
+                # mint_new_ids(record.vascular_accesses, self.pid)
 
         if self.xml.documents:
-            record.documents = [Document(document, pid=self.pid).to_orm() for document in self.xml.documents.document]
-            mint_new_ids(record.documents, self.pid)
+            print("update logic ")
+            # record.documents = [Document(document, pid=self.pid).to_orm() for document in self.xml.documents.document]
+            # mint_new_ids(record.documents, self.pid)
 
         if self.xml.encounters:
             if self.xml.encounters.encounter:
-                record.encounters = [Encounter(encounter, pid=self.pid).to_orm() for encounter in self.xml.encounters.encounter]
-                mint_new_ids(record.encounters, self.pid)
+                print("update logic ")
+                # record.encounters = [Encounter(encounter, pid=self.pid).to_orm() for encounter in self.xml.encounters.encounter]
+                # mint_new_ids(record.encounters, self.pid)
 
             if self.xml.encounters.treatment:
-                record.treatments = [Treatment(treatment, pid=self.pid).to_orm() for treatment in self.xml.encounters.treatment]
-                mint_new_ids(record.treatments, self.pid)
+                print("update logic ")
+                # record.treatments = [Treatment(treatment, pid=self.pid).to_orm() for treatment in self.xml.encounters.treatment]
+                # mint_new_ids(record.treatments, self.pid)
 
             if self.xml.encounters.transplant_list:
-                record.transplantlists = [TransplantList(tplist, pid=self.pid).to_orm() for tplist in self.xml.encounters.transplant_list]
-                mint_new_ids(record.transplantlists, self.pid)
+                print("update logic ")
+                # record.transplantlists = [TransplantList(tplist, pid=self.pid).to_orm() for tplist in self.xml.encounters.transplant_list]
+                # mint_new_ids(record.transplantlists, self.pid)
 
         if self.xml.program_memberships:
-            record.program_memberships = [
-                ProgramMembership(membership, pid=self.pid).to_orm() for membership in self.xml.program_memberships.program_membership
-            ]
-            mint_new_ids(record.program_memberships, self.pid)
+            print("update logic ")
+            # record.program_memberships = [
+            #    ProgramMembership(membership, pid=self.pid).to_orm() for membership in self.xml.program_memberships.program_membership
+            # ]
+            # mint_new_ids(record.program_memberships, self.pid)
 
         if self.xml.opt_outs:
-            record.opt_outs = [OptOut(optout, pid=self.pid).to_orm() for optout in self.xml.opt_outs.opt_out]
-            mint_new_ids(record.opt_outs, self.pid)
+            print("update logic ")
+            # record.opt_outs = [OptOut(optout, pid=self.pid).to_orm() for optout in self.xml.opt_outs.opt_out]
+            # mint_new_ids(record.opt_outs, self.pid)
 
         if self.xml.clinical_relationships:
-            record.clinical_relationships = [
-                ClinicalRelationship(relationship, pid=self.pid).to_orm() for relationship in self.xml.clinical_relationships.clinical_relationship
-            ]
-            mint_new_ids(record.clinical_relationships, self.pid)
+            print("update logic ")
+            # record.clinical_relationships = [
+            #    ClinicalRelationship(relationship, pid=self.pid).to_orm() for relationship in self.xml.clinical_relationships.clinical_relationship
+            # ]
+            # mint_new_ids(record.clinical_relationships, self.pid)
 
         if self.xml.surveys:
-            record.surveys = [Survey(survey, pid=self.pid).to_orm() for survey in self.xml.surveys.survey]
-            mint_new_ids(record.surveys, self.pid)
+            print("update logic ")
+            # record.surveys = [Survey(survey, pid=self.pid).to_orm() for survey in self.xml.surveys.survey]
+            # mint_new_ids(record.surveys, self.pid)
 
         if self.xml.pvdata:
-            record.pvdata = [PVData(pvdata, pid=self.pid).to_orm() for pvdata in self.xml.pvdata]
-            mint_new_ids(record.pvdata, self.pid)
+            print("update logic ")
+            # record.pvdata = [PVData(pvdata, pid=self.pid).to_orm() for pvdata in self.xml.pvdata]
+            # mint_new_ids(record.pvdata, self.pid)
         return record
