@@ -1,12 +1,7 @@
-import time
-
-import ukrdc_sqla.ukrdc as orm
-import ukrdc_xsdata.ukrdc as xsd_ukrdc
 from xsdata.formats.dataclass.parsers import XmlParser
 from xsdata.exceptions import ParserError
 from sqlalchemy.orm import Session
-from sqlalchemy import select, Sequence
-import pandas as pd
+from sqlalchemy import Sequence
 
 
 def load_xml_from_path(filepath: str):
@@ -28,7 +23,7 @@ def mint_new_pid(session: Session):
     """
     new_pid_seq = Sequence("generate_new_pid")
     new_pid = str(session.execute(new_pid_seq))
-    
+
     return new_pid
 
 
