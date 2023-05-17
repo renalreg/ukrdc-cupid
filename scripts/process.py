@@ -12,11 +12,14 @@ from ukrdc_xml2sqla.models.ukrdc import PatientRecord
 from sqlalchemy.orm import sessionmaker, scoped_session
 from ukrdc.database import Connection
 from xsdata.exceptions import ParserError
-
+from sqlalchemy import create_engine
     
-engine = Connection.get_engine_from_file(key="ukrdc_staging")
-session = scoped_session(sessionmaker(engine))
-
+#engine = Connection.get_engine_from_file(key="ukrdc_staging")
+#session = scoped_session(sessionmaker(engine))
+url = "postgresql://postgres:postgres@localhost:5432/dummy_ukrdc"
+engine = create_engine(url, echo = True)
+ukrdc3_sessionmaker = sessionmaker(bind=engine)
+session = ukrdc3_sessionmaker()
 
 # load xml file as python object 
 #xml_file = r"Q:\UKRDC\UKRDC Feed Development\RFBAK Leicester\RFBAK_00082_4165311820.xml"
@@ -31,7 +34,7 @@ else:
 
     if len(linked_patients) == 0: 
         # create new pid and load into sqla
-        pid = mint_new_pid(session=session, patient=xml_object)
+        pid = mint_new_pid(session=session)
         patient_record = PatientRecord(xml=xml_object, pid = pid).to_orm()
 
     elif len(linked_patients) == 1:

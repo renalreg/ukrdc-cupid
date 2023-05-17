@@ -5,7 +5,7 @@ import ukrdc_xsdata.ukrdc as xsd_ukrdc
 from xsdata.formats.dataclass.parsers import XmlParser
 from xsdata.exceptions import ParserError
 from sqlalchemy.orm import Session
-from sqlalchemy import select
+from sqlalchemy import select, Sequence
 import pandas as pd
 
 
@@ -22,23 +22,13 @@ def load_xml_from_path(filepath: str):
         return e
 
 
-def mint_new_pid(session: Session, patient: xsd_ukrdc.PatientRecord):
+def mint_new_pid(session: Session):
     """
-    Function to mint new pid. Requires a patient number.
+    Function to mint new pid. This sequence doesn't currently exist in the ukrdc, create by running script make_pid_generation_sequence.py
     """
-
-    for patient_number in patient.patient.patient_numbers.patient_number:
-        if patient_number.organization.value == "NHS":
-            while True:
-                # hashed_nhs_no = hashlib.sha256(patient_number.number.encode('utf-8')).hexdigest()
-                hashed_nhs_no = patient_number.number  # don't hash
-                new_pid = f"{hashed_nhs_no}:{str(time.time())[-5:]}"
-                query_pid = select(orm.PatientRecord.pid).where(orm.PatientRecord.pid == new_pid)
-                pid_lookup = pd.read_sql(query_pid, session.bind)
-                if len(pid_lookup) == 0:
-                    break
-
-    # print(new_pid)
+    new_pid_seq = Sequence("generate_new_pid")
+    new_pid = str(session.execute(new_pid_seq))
+    
     return new_pid
 
 
