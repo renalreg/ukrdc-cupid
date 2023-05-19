@@ -25,3 +25,9 @@ If we find in the future that this is causing issues for developers, we will con
 For now, we effectively disable the line length limit by setting it to a large number:
 
 `black --line-length=160 .`
+
+### Build ARCHITECTURE.md
+
+- Install `pipx`
+- `pipx install archmd`
+- `archmd src/ukrdc_cupid --out "ARCHITECTURE.md" --title="UKRDC-CUPID Architecture"`
