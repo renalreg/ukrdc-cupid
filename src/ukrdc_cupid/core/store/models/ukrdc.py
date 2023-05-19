@@ -3,7 +3,7 @@ import ukrdc_xsdata.ukrdc as xsd_ukrdc
 import ukrdc_xsdata.ukrdc.lab_orders as xsd_lab_orders
 import ukrdc_xsdata.ukrdc.types as xsd_types
 import ukrdc_sqla.ukrdc as sqla
-import ukrdc_xml2sqla.generate_keys as key_gen
+import ukrdc_cupid.core.store.keygen as key_gen
 
 from abc import ABC, abstractmethod
 from typing import Optional
