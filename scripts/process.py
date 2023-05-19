@@ -3,18 +3,15 @@ JTrace replacement. The aim here is not to handle any of the merging. Simply
 to load an xml file into a sqla object with all the correct keys.     
 """
 
+from ukrdc_cupid.core.parse.utils import load_xml_from_path
+from ukrdc_cupid.core.match.identify import link_patient_number 
+from ukrdc_cupid.core.store.models.ukrdc import PatientRecord
 
-import glob
-
-from ukrdc_xml2sqla.utils import load_xml_from_path, mint_new_pid
-from ukrdc_xml2sqla.models.ukrdc_identify import link_patient_number 
-from ukrdc_xml2sqla.models.ukrdc import PatientRecord
-import ukrdc_sqla.ukrdc as sqla
-
-from sqlalchemy.orm import sessionmaker, scoped_session
-from ukrdc.database import Connection
+from sqlalchemy.orm import sessionmaker
 from xsdata.exceptions import ParserError
 from sqlalchemy import create_engine
+
+from ukrdc_cupid.core.store.keygen import mint_new_pid
     
 #engine = Connection.get_engine_from_file(key="ukrdc_staging")
 #session = scoped_session(sessionmaker(engine))
@@ -27,7 +24,7 @@ session = ukrdc3_sessionmaker()
 
 # load xml file as python object 
 #xml_file = r"Q:\UKRDC\UKRDC Feed Development\RFBAK Leicester\RFBAK_00082_4165311820.xml"
-xml_file = r"xml_examples\UKRDC.xml"
+xml_file = r"./xml_examples/UKRDC.xml"
 xml_object = load_xml_from_path(xml_file)
 
 if isinstance(xml_object, ParserError):

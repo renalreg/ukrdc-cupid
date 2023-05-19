@@ -1,8 +1,10 @@
 [tool.poetry]
-authors = ["Joel Collins <joel.collins@renalregistry.nhs.uk>"]
-description = "A barebones library to convert RDA XML files to UKRDC SQLAlchemy objects"
-name = "ukrdc-xml-to-sqla"
-packages = [{include = "ukrdc_xml2sqla"}]
+authors = [
+  "Joel Collins <joel.collins@ukkidney.org>",
+  "Phil Main <philip.main@ukkidney.org>" 
+]
+description = "An application to convert, match, and store RDA XML files"
+name = "ukrdc-cupid"
 readme = "README.md"
 version = "0.1.0"
 

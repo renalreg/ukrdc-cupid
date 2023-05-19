@@ -26,7 +26,10 @@ def link_demographics(session: Session, xml: xsd_ukrdc.PatientRecord):
         select(orm.PatientRecord.pid, orm.PatientRecord.ukrdcid)
         .join(orm.Patient, orm.Patient.pid == orm.PatientRecord.pid)
         .join(orm.Name, orm.Name.pid == orm.PatientRecord.pid)
-        .filter(orm.Patient.birth_time == xml.patient.birth_time, and_(orm.Name.given.in_(given_names), orm.Name.family.in_(family_names)))
+        .filter(
+            orm.Patient.birth_time == xml.patient.birth_time,
+            and_(orm.Name.given.in_(given_names), orm.Name.family.in_(family_names)),
+        )
     )
 
     return pd.read_sql(patient_demog_query, session.bind).drop_duplicates()
@@ -47,8 +50,13 @@ def link_patient_number(session: Session, xml: xsd_ukrdc.PatientRecord):
         to add this step in?
         """
 
-        patient_ids = [number.number for number in xml.patient.patient_numbers.patient_number]
-        patient_id_types = [number.number_type.value for number in xml.patient.patient_numbers.patient_number]
+        patient_ids = [
+            number.number for number in xml.patient.patient_numbers.patient_number
+        ]
+        patient_id_types = [
+            number.number_type.value
+            for number in xml.patient.patient_numbers.patient_number
+        ]
 
         patient_number_query = (
             select(orm.PatientRecord.pid, orm.PatientRecord.ukrdcid)
@@ -56,7 +64,10 @@ def link_patient_number(session: Session, xml: xsd_ukrdc.PatientRecord):
             .filter(
                 orm.PatientRecord.sendingextract == xml.sending_extract.value,
                 orm.PatientRecord.sendingfacility == xml.sending_facility.value,
-                and_(orm.PatientNumber.patientid.in_(patient_ids), orm.PatientNumber.numbertype.in_(patient_id_types)),
+                and_(
+                    orm.PatientNumber.patientid.in_(patient_ids),
+                    orm.PatientNumber.numbertype.in_(patient_id_types),
+                ),
             )
         )
         return pd.read_sql(patient_number_query, session.bind).drop_duplicates()
