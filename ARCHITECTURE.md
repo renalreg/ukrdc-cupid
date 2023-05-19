@@ -6,6 +6,7 @@
     - [core/store/models](#core-store-models)
   - [core/parse](#core-parse)
   - [core/modify](#core-modify)
+  - [core/inquire](#core-inquire)
 - [api](#api)
 
 <a name="core"></a>
@@ -23,9 +24,11 @@ Essentially everything in `core` should, in principle, be able to operate as a u
 | 1   | `parse`  | RDA XML string | `ukrdc_xsdata.ukrdc.PatientRecord` object | None |
 | 2   | `match`  | `ukrdc_xsdata.ukrdc.PatientRecord` object | PID<br>UKRDCID<br>`ukrdc_xsdata.ukrdc.PatientRecord` object | Work items for matching issues added to database |
 | 3   | `store`  | PID<br>UKRDCID<br>`ukrdc_xsdata.ukrdc.PatientRecord` object | None | Insersion/updating of the incoming file into the UKRDC database | 
-| (4) | `modify` | Varies | None | Varies |
 
-Stage 4 is not part of the standard data flow, but rather handles logic for post-storage operations. See [`modify/README.md`](modify/README.md) for more information.
+We additionally include `modify` and `inquire` submodules, not part of the standard data flow.
+
+The `modify` submodule handles logic for post-storage operations. See [`modify/README.md`](./modify/README.md) for more information.
+The `inquire` submodule handles logic for auditing operations, and raising and resolving issues during the standard data flow. See [`inquire/README.md`](./inquire/README.md) for more information.
 
 <a name="core-match"></a>
 
@@ -47,9 +50,6 @@ Code relating to record _matching_ specifically. In essence, given an RDA `xsdat
 - Database rows for work items raised during matching
   - **Note:** The exact form of these new work items is TBD, however they will be entirely different in form and meaning to our existing work items, requiring new tables (or an entirely separate database). Perhaps we should consider calling them something new, to make this clearer?
 
-#### Additional functionality
-
-We may consider adding in logic code for _handling_ work items in this submodule too. See our [Confluence docs](https://renalregistry.atlassian.net/wiki/spaces/SP/pages/2213249114/JTRACE+Replacement#2.3-Work-Item:-Reject-file-for-existing-patient-record) for more information on what this will specifically involve.
 
 <a name="core-store"></a>
 
@@ -90,6 +90,8 @@ Contains *only* class definitions for our storage models, all subclassing `ukrdc
 
 Code relating to parsing incoming RDA XML strings. This submodule is likely to be minimal in functionality as `ukrdc_xsdata` does most of the heavy lifting here.
 
+Down the line, we may want to move the basic RDA Validation functionality currently handled by `webapi`/`services` into this stage of the CUPID flow. This may then also lead onto more complex validation functionality such as warning and modifying, but not rejecting, files with minor issues like invalid postcodes.
+
 #### Input
 
 - RDA XML string
@@ -110,6 +112,21 @@ Logic code for several post-storage operations, including:
 - Convert patient record to opt-out
   - See our [Confluence docs](https://renalregistry.atlassian.net/wiki/spaces/SP/pages/2213249114/JTRACE+Replacement#Convert-patient-record-to-opt-out) for more specific information.
 - *Likely more things in future*
+
+<a name="core-inquire"></a>
+
+### CUPID Inquire
+
+The `inquire` submodule holds any logic relating to the inquiry and resolution of issues throughout the matching and storage process.
+
+This includes (but may not be limited to):
+
+- Raising and resolving matching issues (previously referred to as "Work Items")
+  - See our [Confluence docs](https://renalregistry.atlassian.net/wiki/spaces/SP/pages/2213249114/JTRACE+Replacement#2.3-Work-Item:-Reject-file-for-existing-patient-record) for more information on what this will specifically involve.
+- Raising and resolving validation _warnings_
+  - This functionality has not yet been confirmed, but warnings raised by future validation rules in the `parse` submodule may be handled here. This is an open discussion.
+- Audit records
+  - As in `jtrace` and `data-repository`, we need to _strictly_ audit matching and storage of records. Raising and querying audit items may be handled here.
 
 <a name="api"></a>
 

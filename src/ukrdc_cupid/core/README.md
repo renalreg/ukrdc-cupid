@@ -11,6 +11,8 @@ Essentially everything in `core` should, in principle, be able to operate as a u
 | 1   | `parse`  | RDA XML string | `ukrdc_xsdata.ukrdc.PatientRecord` object | None |
 | 2   | `match`  | `ukrdc_xsdata.ukrdc.PatientRecord` object | PID<br>UKRDCID<br>`ukrdc_xsdata.ukrdc.PatientRecord` object | Work items for matching issues added to database |
 | 3   | `store`  | PID<br>UKRDCID<br>`ukrdc_xsdata.ukrdc.PatientRecord` object | None | Insersion/updating of the incoming file into the UKRDC database | 
-| (4) | `modify` | Varies | None | Varies |
 
-Stage 4 is not part of the standard data flow, but rather handles logic for post-storage operations. See [`modify/README.md`](modify/README.md) for more information.
+We additionally include `modify` and `inquire` submodules, not part of the standard data flow.
+
+The `modify` submodule handles logic for post-storage operations. See [`modify/README.md`](./modify/README.md) for more information.
+The `inquire` submodule handles logic for auditing operations, and raising and resolving issues during the standard data flow. See [`inquire/README.md`](./inquire/README.md) for more information.
