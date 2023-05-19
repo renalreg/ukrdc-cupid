@@ -15,13 +15,3 @@ Very much WIP. Proper docs and tests to come.
 - [ ] Add docs
 
 ## Developer notes
-
-### Line length
-
-For this repository (and _only_ this repository), we allow extra long lines.
-This is because the schema maps are more readable if we have one element per line.
-If we find in the future that this is causing issues for developers, we will consider re-introducing the line length limit.
-
-For now, we effectively disable the line length limit by setting it to a large number:
-
-`black --line-length=160 .`
