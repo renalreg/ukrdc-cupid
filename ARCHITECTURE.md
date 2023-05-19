@@ -4,9 +4,10 @@
   - [core/match](#core-match)
   - [core/store](#core-store)
     - [core/store/models](#core-store-models)
+  - [core/investigate](#core-investigate)
   - [core/parse](#core-parse)
+  - [core/audit](#core-audit)
   - [core/modify](#core-modify)
-  - [core/inquire](#core-inquire)
 - [api](#api)
 
 <a name="core"></a>
@@ -25,10 +26,11 @@ Essentially everything in `core` should, in principle, be able to operate as a u
 | 2   | `match`  | `ukrdc_xsdata.ukrdc.PatientRecord` object | PID<br>UKRDCID<br>`ukrdc_xsdata.ukrdc.PatientRecord` object | Work items for matching issues added to database |
 | 3   | `store`  | PID<br>UKRDCID<br>`ukrdc_xsdata.ukrdc.PatientRecord` object | None | Insersion/updating of the incoming file into the UKRDC database | 
 
-We additionally include `modify` and `inquire` submodules, not part of the standard data flow.
+We additionally include `modify`, `investigate`, and `audit` submodules, not part of the standard data flow.
 
-The `modify` submodule handles logic for post-storage operations. See [`modify/README.md`](./modify/README.md) for more information.
-The `inquire` submodule handles logic for auditing operations, and raising and resolving issues during the standard data flow. See [`inquire/README.md`](./inquire/README.md) for more information.
+- The `modify` submodule handles logic for post-storage operations. See [`modify/README.md`](./modify/README.md) for more information.
+- The `investigate` submodule handles logic for raising and resolving issues during the standard data flow. See [`investigate/README.md`](./investigate/README.md) for more information.
+- The `audit` submodule handles logic for storing and querying audit records for data matching and storage operations.
 
 <a name="core-match"></a>
 
@@ -84,6 +86,19 @@ Contains *only* class definitions for our storage models, all subclassing `ukrdc
 
 *This may not need to be a whole directory if the models end up in a single file, however I'm structuring like this for now so we have the option to break the models file into smaller, domain-specific files if that ends up being useful.*
 
+<a name="core-investigate"></a>
+
+### CUPID Investigate
+
+The `investigate` submodule holds any logic relating to the inquiry and resolution of issues throughout the matching and storage process.
+
+This includes (but may not be limited to):
+
+- Raising and resolving matching issues (previously referred to as "Work Items")
+  - See our [Confluence docs](https://renalregistry.atlassian.net/wiki/spaces/SP/pages/2213249114/JTRACE+Replacement#2.3-Work-Item:-Reject-file-for-existing-patient-record) for more information on what this will specifically involve.
+- Raising and resolving validation _warnings_
+  - This functionality has not yet been confirmed, but warnings raised by future validation rules in the `parse` submodule may be handled here. This is an open discussion.
+
 <a name="core-parse"></a>
 
 ### CUPID Parse
@@ -100,6 +115,14 @@ Down the line, we may want to move the basic RDA Validation functionality curren
 
 - A single top-level `ukrdc_xsdata.ukrdc.PatientRecord` object
 
+<a name="core-audit"></a>
+
+### CUPID Audit
+
+The `audit` submodule holds any logic relating to storing and querying audit records for data matching and storage operations.
+
+As in `jtrace` and `data-repository`, we need to _strictly_ audit matching and storage of records. Raising and querying audit items should be handled here.
+
 <a name="core-modify"></a>
 
 ### CUPID Modify
@@ -112,21 +135,6 @@ Logic code for several post-storage operations, including:
 - Convert patient record to opt-out
   - See our [Confluence docs](https://renalregistry.atlassian.net/wiki/spaces/SP/pages/2213249114/JTRACE+Replacement#Convert-patient-record-to-opt-out) for more specific information.
 - *Likely more things in future*
-
-<a name="core-inquire"></a>
-
-### CUPID Inquire
-
-The `inquire` submodule holds any logic relating to the inquiry and resolution of issues throughout the matching and storage process.
-
-This includes (but may not be limited to):
-
-- Raising and resolving matching issues (previously referred to as "Work Items")
-  - See our [Confluence docs](https://renalregistry.atlassian.net/wiki/spaces/SP/pages/2213249114/JTRACE+Replacement#2.3-Work-Item:-Reject-file-for-existing-patient-record) for more information on what this will specifically involve.
-- Raising and resolving validation _warnings_
-  - This functionality has not yet been confirmed, but warnings raised by future validation rules in the `parse` submodule may be handled here. This is an open discussion.
-- Audit records
-  - As in `jtrace` and `data-repository`, we need to _strictly_ audit matching and storage of records. Raising and querying audit items may be handled here.
 
 <a name="api"></a>
 

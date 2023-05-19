@@ -12,7 +12,8 @@ Essentially everything in `core` should, in principle, be able to operate as a u
 | 2   | `match`  | `ukrdc_xsdata.ukrdc.PatientRecord` object | PID<br>UKRDCID<br>`ukrdc_xsdata.ukrdc.PatientRecord` object | Work items for matching issues added to database |
 | 3   | `store`  | PID<br>UKRDCID<br>`ukrdc_xsdata.ukrdc.PatientRecord` object | None | Insersion/updating of the incoming file into the UKRDC database | 
 
-We additionally include `modify` and `inquire` submodules, not part of the standard data flow.
+We additionally include `modify`, `investigate`, and `audit` submodules, not part of the standard data flow.
 
-The `modify` submodule handles logic for post-storage operations. See [`modify/README.md`](./modify/README.md) for more information.
-The `inquire` submodule handles logic for auditing operations, and raising and resolving issues during the standard data flow. See [`inquire/README.md`](./inquire/README.md) for more information.
+- The `modify` submodule handles logic for post-storage operations. See [`modify/README.md`](./modify/README.md) for more information.
+- The `investigate` submodule handles logic for raising and resolving issues during the standard data flow. See [`investigate/README.md`](./investigate/README.md) for more information.
+- The `audit` submodule handles logic for storing and querying audit records for data matching and storage operations.
