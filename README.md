@@ -1,6 +1,4 @@
-# UKRDC XML to SQLAlchemy
-
-A barebones library to convert RDA XML files to UKRDC SQLAlchemy objects
+# UKRDC-CUPID
 
 ## Status
 
@@ -31,3 +29,26 @@ For now, we effectively disable the line length limit by setting it to a large n
 - Install `pipx`
 - `pipx install archmd`
 - `archmd src/ukrdc_cupid --out "ARCHITECTURE.md" --title="UKRDC-CUPID Architecture"`
+
+
+## Naming
+
+### Canonical name 1
+
+**Consolidated Universal Patient Identification** 
+
+*Consildated* - Doesn't rely on a separate EMPI database, all matching uses live UKRDC data
+
+*Universal* - Matches across both systems within and between hospitals and feeds
+
+*Patient Identification* - Handles matching files to records, and grouping records into patients
+
+### Canonical name 1
+
+**CUPID Universal Patient Identification** 
+
+*CUPID* - This is the name of the application, and the application does some recursion
+
+*Universal* - Matches across both systems within and between hospitals and feeds
+
+*Patient Identification* - Handles matching files to records, and grouping records into patients
