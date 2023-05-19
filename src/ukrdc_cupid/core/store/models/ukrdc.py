@@ -50,7 +50,13 @@ class Node(ABC):
                 node.map_xml_to_tree()
                 self.mapped_classes.append(node)
 
-    def add_code(property_code, property_description, property_std, xml_code: xsd_types.CodedField, optional=True):
+    def add_code(
+        property_code,
+        property_description,
+        property_std,
+        xml_code: xsd_types.CodedField,
+        optional=True,
+    ):
         # add properties which are coded fields
         if optional is True:
             if xml_code:
@@ -91,7 +97,9 @@ class ResultItem(Node):
         print("ting")
 
     def transformer(self, order_id: str, seq_no: int):
-        self.orm_object.id = key_gen.generate_key_resultitem(self.orm_object, order_id=order_id, seq_no=seq_no)
+        self.orm_object.id = key_gen.generate_key_resultitem(
+            self.orm_object, order_id=order_id, seq_no=seq_no
+        )
 
 
 class LabOrder(Node):
@@ -109,7 +117,11 @@ class LabOrder(Node):
     def transform(self, pid):
         self.transformer(pid)
         for child_class in self.mapped_classes:
-            child_class.transformer(child_class.orm_object, order_id=self.orm_object.order_id, seq_no=child_class.seq_no)
+            child_class.transformer(
+                child_class.orm_object,
+                order_id=self.orm_object.order_id,
+                seq_no=child_class.seq_no,
+            )
 
     def transformer(self, pid):
         # we overwrite the base class because we result item needs extra info

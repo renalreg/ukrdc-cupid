@@ -11,6 +11,7 @@ def mint_new_pid(session: Session):
 
     return new_pid
 
+
 def generate_key_laborder(laborder, pid: str):
     # generate lab_order consitant with: https://github.com/renalreg/Data-Repository/blob/44d0b9af3eb73705de800fd52fe5a6b847219b31/src/main/java/org/ukrdc/repository/RepositoryManager.java#L679
     return f"{pid}:{laborder.placerid}"
