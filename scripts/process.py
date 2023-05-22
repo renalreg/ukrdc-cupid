@@ -24,7 +24,7 @@ session = ukrdc3_sessionmaker()
 
 # load xml file as python object 
 #xml_file = r"Q:\UKRDC\UKRDC Feed Development\RFBAK Leicester\RFBAK_00082_4165311820.xml"
-xml_file = r"./xml_examples/UKRDC.xml"
+xml_file = r"scripts/xml_examples/UKRDC.xml"
 xml_object = load_xml_from_path(xml_file)
 
 if isinstance(xml_object, ParserError):

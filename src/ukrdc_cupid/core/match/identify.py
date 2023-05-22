@@ -9,7 +9,6 @@ import ukrdc_sqla.ukrdc as orm
 import ukrdc_xsdata.ukrdc as xsd_ukrdc
 from sqlalchemy.orm import Session
 from sqlalchemy import and_, select
-import pandas as pd
 
 
 def link_demographics(session: Session, xml: xsd_ukrdc.PatientRecord):
@@ -32,7 +31,7 @@ def link_demographics(session: Session, xml: xsd_ukrdc.PatientRecord):
         )
     )
 
-    return pd.read_sql(patient_demog_query, session.bind).drop_duplicates()
+    return [row for row in session.execute(patient_demog_query)]
 
 
 def link_patient_number(session: Session, xml: xsd_ukrdc.PatientRecord):
@@ -70,7 +69,8 @@ def link_patient_number(session: Session, xml: xsd_ukrdc.PatientRecord):
                 ),
             )
         )
-        return pd.read_sql(patient_number_query, session.bind).drop_duplicates()
+
+        return [row for row in session.execute(patient_number_query)]
     else:
         # try to match using the demographic data
         demog_match = link_demographics(session, xml)
