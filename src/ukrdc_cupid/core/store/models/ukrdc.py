@@ -49,19 +49,34 @@ class Node(ABC):
         self.orm_object = orm_class()
 
     def add_item(
-        self, property: str, value: Union[str, XmlDateTime], is_optional: bool = True
+        self,
+        property: str,
+        value: Union[str, XmlDateTime, xsd_types.Gender],
+        is_optional: bool = True,
     ):
         # add properties which constitute a single value
         if is_optional:
             if value:
                 if isinstance(value, XmlDateTime):
-                    setattr(self.orm_object, property, value.to_datetime())
+                    datetime = value.to_datetime()
+                    setattr(self.orm_object, property, datetime)
+
+                elif (
+                    isinstance(value, (xsd_types.Gender, xsd_types.SendingExtract))
+                    or property == "sendingfacility"
+                ):
+                    setattr(self.orm_object, property, value.value)
                 else:
                     setattr(self.orm_object, property, value)
         else:
             # TODO: flag an error/workitem if it doesn't exist?
             if isinstance(value, XmlDateTime):
                 setattr(self.orm_object, property, value.to_datetime())
+            if (
+                isinstance(value, (xsd_types.Gender, xsd_types.SendingExtract))
+                or property == "sendingfacility"
+            ):
+                setattr(self.orm_object, property, value.value)
             else:
                 setattr(self.orm_object, property, value)
 
@@ -405,8 +420,8 @@ class PatientRecord(Node):
         super().__init__(xml, sqla.PatientRecord)
 
     def map_xml_to_tree(self):
-        self.add_item("sendingfacility", self.xml.sending_facility.value)
-        self.add_item("sendingextract", self.xml.sending_extract.value)
+        self.add_item("sendingfacility", self.xml.sending_facility)
+        self.add_item("sendingextract", self.xml.sending_extract)
 
         # map child objects
         self.add_children(Patient, self.xml.patient)
