@@ -39,14 +39,8 @@ else:
         patient_record = PatientRecord(xml_object)
         patient_record.map_xml_to_tree()
         patient_record.transform(pid)
-        pr_orm = patient_record.assemble_orm_tree()
+        pr_orm = patient_record.get_orm_list()
         print(pr_orm)
-        #print(pr_orm.pid)
-        for item in pr_orm.lab_orders:
-            print(item.pid)
-            print(item.id)
-            for result in item.result_items:
-                print(result)
 
     elif len(linked_patients) == 1:
         # assign existing pid and ukrdcid 
