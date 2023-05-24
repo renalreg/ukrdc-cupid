@@ -54,10 +54,10 @@ class Node(ABC):
         value: Union[str, XmlDateTime, XmlDate, bool],
         is_optional: bool = True,
     ):
-        """Function to update and item the ORM class instance based on xml. 
-        TODO: Do we need to think about type conversion to orm objects to the xml 
-        which are mostly strings? maybe this is most straightforwardly handled where 
-        it occurs in the xml_matching function.  
+        """Function to update and item the ORM class instance based on xml.
+        TODO: Do we need to think about type conversion to orm objects to the xml
+        which are mostly strings? maybe this is most straightforwardly handled where
+        it occurs in the xml_matching function.
 
         Args:
             property (str): _description_
@@ -68,10 +68,10 @@ class Node(ABC):
         # add properties which constitute a single value
         if is_optional:
             if value:
-                if isinstance(value, (XmlDateTime,XmlDate)):
+                if isinstance(value, (XmlDateTime, XmlDate)):
                     datetime = value.to_datetime()
                     setattr(self.orm_object, property, datetime)
-                elif isinstance(value,(str, bool)):
+                elif isinstance(value, (str, bool)):
                     setattr(self.orm_object, property, value)
                 else:
                     setattr(self.orm_object, property, value.value)
@@ -79,7 +79,7 @@ class Node(ABC):
             # TODO: flag an error/workitem if it doesn't exist?
             if isinstance(value, XmlDateTime):
                 setattr(self.orm_object, property, value.to_datetime())
-            elif isinstance(value,(str, bool)):
+            elif isinstance(value, (str, bool)):
                 setattr(self.orm_object, property, value)
             else:
                 setattr(self.orm_object, property, value.value)
@@ -209,16 +209,10 @@ class LabOrder(Node):
             self.xml.receiving_location,
         )
         self.add_code(
-            "orderedbycode", 
-            "orderedbydesc", 
-            "orderedbycodestd", 
-            self.xml.ordered_by
+            "orderedbycode", "orderedbydesc", "orderedbycodestd", self.xml.ordered_by
         )
         self.add_code(
-            "orderitemcode", 
-            "orderitemdesc", 
-            "orderitemcodestd", 
-            self.xml.order_item
+            "orderitemcode", "orderitemdesc", "orderitemcodestd", self.xml.order_item
         )
         self.add_code(
             "ordercategorycode",
@@ -228,10 +222,7 @@ class LabOrder(Node):
         )
 
         self.add_code(
-            "prioritycode", 
-            "prioritydesc", 
-            "prioritycodestd", 
-            self.xml.priority
+            "prioritycode", "prioritydesc", "prioritycodestd", self.xml.priority
         )
         self.add_code(
             "patientclasscode",
@@ -240,10 +231,7 @@ class LabOrder(Node):
             self.xml.patient_class,
         )
         self.add_code(
-            "enteredatcode", 
-            "enteredatdesc", 
-            "enteredatcodestd", 
-            self.xml.entered_at
+            "enteredatcode", "enteredatdesc", "enteredatcodestd", self.xml.entered_at
         )
         self.add_code(
             "enteringorganizationcode",
@@ -281,13 +269,13 @@ class PatientNumber(Node):
 
     def transformer(self, pid):
         # TODO: look in java to find the correct way of generating the keys
-        # figure out what to do with creation_date, idx, updatedon, actioncode, 
-        # externalid, update_date    
+        # figure out what to do with creation_date, idx, updatedon, actioncode,
+        # externalid, update_date
         self.orm_object.pid = pid
 
 
 class Name(Node):
-    def __init__(self, xml:xsd_types.Name):
+    def __init__(self, xml: xsd_types.Name):
         super().__init__(xml, sqla.Name)
 
     def map_xml_to_tree(self):
@@ -303,7 +291,7 @@ class Name(Node):
 
 
 class ContactDetail(Node):
-    def __init__(self, xml:xsd_types.ContactDetail):
+    def __init__(self, xml: xsd_types.ContactDetail):
         super().__init__(xml, sqla.ContactDetail)
 
     def map_xml_to_tree(self):
@@ -316,7 +304,7 @@ class ContactDetail(Node):
 
 
 class Address(Node):
-    def __init__(self, xml:xsd_types.Address):
+    def __init__(self, xml: xsd_types.Address):
         super().__init__(xml, sqla.Address)
 
     def map_xml_to_tree(self):
