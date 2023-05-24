@@ -9,7 +9,7 @@ import ukrdc_sqla.ukrdc as sqla
 
 
 import ukrdc_xsdata as xsd_all
-from xsdata.models.datatype import XmlDateTime
+from xsdata.models.datatype import XmlDateTime, XmlDate
 import ukrdc_xsdata.ukrdc.types as xsd_types
 import ukrdc_xsdata.ukrdc.social_histories as xsd_social_history  # noqa: F401
 import ukrdc_xsdata.ukrdc.family_histories as xsd_family_history  # noqa: F401
@@ -51,34 +51,38 @@ class Node(ABC):
     def add_item(
         self,
         property: str,
-        value: Union[str, XmlDateTime, xsd_types.Gender],
+        value: Union[str, XmlDateTime, XmlDate, bool],
         is_optional: bool = True,
     ):
+        """Function to update and item the ORM class instance based on xml. 
+        TODO: Do we need to think about type conversion to orm objects to the xml 
+        which are mostly strings? maybe this is most straightforwardly handled where 
+        it occurs in the xml_matching function.  
+
+        Args:
+            property (str): _description_
+            value (Union[str, XmlDateTime, xsd_types.Gender]): _description_
+            is_optional (bool, optional): _description_. Defaults to True.
+        """
+
         # add properties which constitute a single value
         if is_optional:
             if value:
-                if isinstance(value, XmlDateTime):
+                if isinstance(value, (XmlDateTime,XmlDate)):
                     datetime = value.to_datetime()
                     setattr(self.orm_object, property, datetime)
-
-                elif (
-                    isinstance(value, (xsd_types.Gender, xsd_types.SendingExtract))
-                    or property == "sendingfacility"
-                ):
-                    setattr(self.orm_object, property, value.value)
-                else:
+                elif isinstance(value,(str, bool)):
                     setattr(self.orm_object, property, value)
+                else:
+                    setattr(self.orm_object, property, value.value)
         else:
             # TODO: flag an error/workitem if it doesn't exist?
             if isinstance(value, XmlDateTime):
                 setattr(self.orm_object, property, value.to_datetime())
-            if (
-                isinstance(value, (xsd_types.Gender, xsd_types.SendingExtract))
-                or property == "sendingfacility"
-            ):
-                setattr(self.orm_object, property, value.value)
-            else:
+            elif isinstance(value,(str, bool)):
                 setattr(self.orm_object, property, value)
+            else:
+                setattr(self.orm_object, property, value.value)
 
     def add_code(
         self,
@@ -205,10 +209,16 @@ class LabOrder(Node):
             self.xml.receiving_location,
         )
         self.add_code(
-            "orderedbycode", "orderedbydesc", "orderedbycodestd", self.xml.ordered_by
+            "orderedbycode", 
+            "orderedbydesc", 
+            "orderedbycodestd", 
+            self.xml.ordered_by
         )
         self.add_code(
-            "orderitemcode", "orderitemdesc", "orderitemcodestd", self.xml.order_item
+            "orderitemcode", 
+            "orderitemdesc", 
+            "orderitemcodestd", 
+            self.xml.order_item
         )
         self.add_code(
             "ordercategorycode",
@@ -218,7 +228,10 @@ class LabOrder(Node):
         )
 
         self.add_code(
-            "prioritycode", "prioritydesc", "prioritycodestd", self.xml.priority
+            "prioritycode", 
+            "prioritydesc", 
+            "prioritycodestd", 
+            self.xml.priority
         )
         self.add_code(
             "patientclasscode",
@@ -227,7 +240,10 @@ class LabOrder(Node):
             self.xml.patient_class,
         )
         self.add_code(
-            "enteredatcode", "enteredatdesc", "enteredatcodestd", self.xml.entered_at
+            "enteredatcode", 
+            "enteredatdesc", 
+            "enteredatcodestd", 
+            self.xml.entered_at
         )
         self.add_code(
             "enteringorganizationcode",
@@ -264,11 +280,14 @@ class PatientNumber(Node):
         self.add_item("numbertype", self.xml.number_type)
 
     def transformer(self, pid):
+        # TODO: look in java to find the correct way of generating the keys
+        # figure out what to do with creation_date, idx, updatedon, actioncode, 
+        # externalid, update_date    
         self.orm_object.pid = pid
 
 
 class Name(Node):
-    def __init__(self, xml):
+    def __init__(self, xml:xsd_types.Name):
         super().__init__(xml, sqla.Name)
 
     def map_xml_to_tree(self):
@@ -284,7 +303,7 @@ class Name(Node):
 
 
 class ContactDetail(Node):
-    def __init__(self, xml):
+    def __init__(self, xml:xsd_types.ContactDetail):
         super().__init__(xml, sqla.ContactDetail)
 
     def map_xml_to_tree(self):
@@ -297,7 +316,7 @@ class ContactDetail(Node):
 
 
 class Address(Node):
-    def __init__(self, xml):
+    def __init__(self, xml:xsd_types.Address):
         super().__init__(xml, sqla.Address)
 
     def map_xml_to_tree(self):
@@ -397,7 +416,7 @@ class Patient(Node):
             "primarylanguagedesc",
             self.xml.primary_language,
         )
-        self.add_item("death", self.xml.death)  # should this be optional?
+        self.add_item("death", bool(self.xml.death))  # should this be optional?
         self.add_item(
             "updatedon", self.xml.updated_on
         )  # should this be automatically filled in by transform?
