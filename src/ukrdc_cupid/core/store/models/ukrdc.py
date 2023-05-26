@@ -95,10 +95,10 @@ class Node(ABC):
         # add properties which are coded fields
         # TODO: flag an error/workitem if it doesn't exist?
         if (optional and xml_code) or (not optional):
-                self.add_item(property_code,xml_code.code)
-                self.add_item(property_description, xml_code.description)
-                self.add_item(property_std, xml_code.coding_standard)
- 
+            self.add_item(property_code, xml_code.code)
+            self.add_item(property_description, xml_code.description)
+            self.add_item(property_std, xml_code.coding_standard)
+
     def add_children(
         self, child_node: Node, xml_items: xsd_ukrdc, attr_name: str = None
     ):
@@ -206,8 +206,10 @@ class LabOrder(Node):
         self.add_code(
             "orderedbycode", "orderedbycodestd", "orderedbydesc", self.xml.ordered_by
         )
-        
-        self.add_code("orderitemcode", "orderitemcodestd", "orderitemdesc", self.xml.order_item)
+
+        self.add_code(
+            "orderitemcode", "orderitemcodestd", "orderitemdesc", self.xml.order_item
+        )
         self.add_code(
             "ordercategorycode",
             "ordercategorycodestd",
@@ -216,11 +218,16 @@ class LabOrder(Node):
         )
 
         self.add_code(
-            "prioritycode", "prioritycodestd",  "prioritydesc", self.xml.priority
+            "prioritycode", "prioritycodestd", "prioritydesc", self.xml.priority
         )
 
-        #self.add_patient_class(self.xml.patient_class)
-        self.add_code("patientclasscode", "pateintclassdesc", "patientclasscodestd", self.xml.patient_class)
+        # self.add_patient_class(self.xml.patient_class)
+        self.add_code(
+            "patientclasscode",
+            "pateintclassdesc",
+            "patientclasscodestd",
+            self.xml.patient_class,
+        )
 
         self.add_code(
             "enteredatcode", "enteredatdesc", "enteredatcodestd", self.xml.entered_at
