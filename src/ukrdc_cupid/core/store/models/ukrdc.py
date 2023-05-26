@@ -93,17 +93,12 @@ class Node(ABC):
         optional=True,
     ):
         # add properties which are coded fields
-        if optional is True:
-            if xml_code:
-                setattr(self.orm_object, property_code, xml_code.code)
-                setattr(self.orm_object, property_description, xml_code.description)
-                setattr(self.orm_object, property_std, xml_code.coding_standard)
-        else:
-            # TODO: flag an error/workitem if it doesn't exist?
-            setattr(self.orm_object, property_code, xml_code.code)
-            setattr(self.orm_object, property_description, xml_code.description)
-            setattr(self.orm_object, property_std, xml_code.coding_standard)
-
+        # TODO: flag an error/workitem if it doesn't exist?
+        if (optional and xml_code) or (not optional):
+                self.add_item(property_code,xml_code.code)
+                self.add_item(property_description, xml_code.description)
+                self.add_item(property_std, xml_code.coding_standard)
+ 
     def add_children(
         self, child_node: Node, xml_items: xsd_ukrdc, attr_name: str = None
     ):
@@ -209,34 +204,31 @@ class LabOrder(Node):
             self.xml.receiving_location,
         )
         self.add_code(
-            "orderedbycode", "orderedbydesc", "orderedbycodestd", self.xml.ordered_by
+            "orderedbycode", "orderedbycodestd", "orderedbydesc", self.xml.ordered_by
         )
-        self.add_code(
-            "orderitemcode", "orderitemdesc", "orderitemcodestd", self.xml.order_item
-        )
+        
+        self.add_code("orderitemcode", "orderitemcodestd", "orderitemdesc", self.xml.order_item)
         self.add_code(
             "ordercategorycode",
-            "ordercategorydesc",
             "ordercategorycodestd",
+            "ordercategorydesc",
             self.xml.order_category,
         )
 
         self.add_code(
-            "prioritycode", "prioritydesc", "prioritycodestd", self.xml.priority
+            "prioritycode", "prioritycodestd",  "prioritydesc", self.xml.priority
         )
-        self.add_code(
-            "patientclasscode",
-            "patientclassdesc",
-            "patientclasscodestd",
-            self.xml.patient_class,
-        )
+
+        #self.add_patient_class(self.xml.patient_class)
+        self.add_code("patientclasscode", "pateintclassdesc", "patientclasscodestd", self.xml.patient_class)
+
         self.add_code(
             "enteredatcode", "enteredatdesc", "enteredatcodestd", self.xml.entered_at
         )
         self.add_code(
             "enteringorganizationcode",
-            "enteringorganizationdesc",
             "enteringorganizationcodestd",
+            "enteringorganizationdesc",
             self.xml.entering_organization,
         )
 

@@ -5,7 +5,9 @@ TODO: I see problems arising from "null" files this should be integrated into te
 
 import ukrdc_xsdata.ukrdc as xsd_ukrdc
 import ukrdc_xsdata as xsd_all
+
 import ukrdc_xsdata.ukrdc.types as xsd_types
+import ukrdc_xsdata.ukrdc.lab_orders as xsd_lab_orders
 import ukrdc_xsdata.ukrdc.social_histories as xsd_social_history  # noqa: F401
 import ukrdc_xsdata.ukrdc.family_histories as xsd_family_history  # noqa: F401
 import ukrdc_xsdata.ukrdc.allergies as xsd_allergy  # noqa: F401
@@ -237,6 +239,102 @@ def test_family_doctor():
     assert family_doctor.orm_object.gpid == gpid 
     assert family_doctor.orm_object.gppracticeid == gppracticeid
 
-#test_name()
-#test_contact_detail()
-#test_address()
+def test_lab_orders():
+
+    placer_id = "2002-07-16 12:00:00_B,02.0543718.Q"
+    filler_id = "B,02.0543718.Q"
+
+    order_item_std = "RENAL1"
+    order_item_code = "DEFAULT1_1"
+    order_item_desc = "DEFAULT1_2"
+
+    order_cat_std = "RENAL2"
+    order_cat_code = "DEFAULT2_1"
+    order_cat_desc = "DEFAULT2_2"
+    status = "E"
+
+    priority_code = "R"
+    priority_desc = "J"
+    patient_class_code = "O"
+
+    xml = XmlParser().from_string(
+        f"""<LabOrder>
+                <PlacerId>{placer_id}</PlacerId>
+                <FillerId>{filler_id}</FillerId>
+                <OrderItem>
+                    <CodingStandard>{order_item_std}</CodingStandard>
+                    <Code>{order_item_code}</Code>
+                    <Description>{order_item_desc}</Description>
+                </OrderItem>
+                <OrderCategory>
+                    <CodingStandard>{order_cat_std}</CodingStandard>
+                    <Code>{order_cat_code}</Code>
+                    <Description>{order_cat_desc}</Description>
+                </OrderCategory>
+                <Status>{status}</Status>
+                <Priority>
+                    <Code>{priority_code}</Code>
+                    <Description>{priority_desc}</Description>
+                </Priority>
+                <PatientClass>
+                    <Code>{patient_class_code}</Code>
+                </PatientClass>
+                <EnteredAt/>
+            </LabOrder>""",
+        xsd_lab_orders.LabOrder  
+    )
+ 
+    
+    # set up model
+    lab_order = models.LabOrder(xml)
+    assert isinstance(lab_order.orm_object, sqla.LabOrder)
+    assert lab_order.xml == xml 
+
+    # map xml 
+    lab_order.map_xml_to_tree()
+    assert lab_order.orm_object.placerid == placer_id
+    assert lab_order.orm_object.fillerid == filler_id
+
+    assert lab_order.orm_object.orderitemcodestd == order_item_std
+    assert lab_order.orm_object.orderitemcode == order_item_code
+    assert lab_order.orm_object.orderitemdesc == order_item_desc
+
+    assert lab_order.orm_object.ordercategorycodestd == order_cat_std
+    assert lab_order.orm_object.ordercategorycode == order_cat_code
+    assert lab_order.orm_object.ordercategorydesc == order_cat_desc
+    assert lab_order.orm_object.status == status
+
+    assert lab_order.orm_object.prioritycode == priority_code
+    assert lab_order.orm_object.prioritydesc == priority_desc
+    assert lab_order.orm_object.patientclasscode == patient_class_code
+
+
+
+def test_result_items():
+    
+    result_type = "AT"
+    code = "ALB"
+    result_value = "38.00000000"
+
+    xml = XmlParser().from_string(
+        f"""<ResultItem>
+                <ResultType>{result_type}</ResultType>
+                <ServiceId>
+                    <Code>{code}</Code>
+                </ServiceId>
+                <ResultValue>{result_value}</ResultValue>
+            </ResultItem>""",
+        xsd_lab_orders.ResultItem
+    )
+    
+    # set up model
+    result_item = models.ResultItem(xml)
+    assert isinstance(result_item.orm_object, sqla.ResultItem)
+    assert result_item.xml == xml 
+
+    # check values 
+    result_item.map_xml_to_tree()
+    assert result_item.orm_object.resulttype == result_type
+    assert result_item.orm_object.serviceidcode == code
+
+test_result_items()
