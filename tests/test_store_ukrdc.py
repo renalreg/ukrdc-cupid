@@ -46,6 +46,8 @@ def test_patient_record_xml_mapping():
     assert patient_record.orm_object.sendingfacility == "ABC123"
     assert patient_record.orm_object.sendingextract == "UKRDC"
 
+test_patient_record_xml_mapping()
+
 def test_patient():
     """
     test load a patient xml object
@@ -336,46 +338,248 @@ def test_result_items():
     assert result_item.orm_object.serviceidcode == code
 
 def test_social_history():
-    print("need example xml for social history")
+    """Test social history class using example xml file
+    """
+    
+    social_habit_coding_standard = "Some Coding Standard"
+    social_habit_code = "123"
+    social_habit_description = "Some description"
+    updated_on = dt.datetime(2023,5,26) 
+    external_id = "ABC123"
+
+    xml = XmlParser().from_string( 
+        f'''<SocialHistory>
+                <SocialHabit>
+                    <CodingStandard>{social_habit_coding_standard}</CodingStandard>
+                    <Code>{social_habit_code}</Code>
+                    <Description>{social_habit_description}</Description>
+                </SocialHabit>
+                <UpdatedOn>{XmlDateTime.from_datetime(updated_on)}</UpdatedOn>
+                <ExternalId>{external_id}</ExternalId>
+            </SocialHistory>''',
+            xsd_social_history.SocialHistory
+    )
+
+    # set up model 
+    social_history = models.SocialHistory(xml)
+    assert isinstance(social_history.orm_object, sqla.SocialHistory)
+    assert social_history.xml == xml
+
+    # check values are propagated to orm
+    social_history.map_xml_to_tree()
+    assert social_history.orm_object.socialhabitcode == social_habit_code
+    assert social_history.orm_object.socialhabitcodestd == social_habit_coding_standard
+    assert social_history.orm_object.socialhabitdesc == social_habit_description
+    assert social_history.orm_object.updatedon == updated_on
+    assert social_history.orm_object.externalid == external_id
 
 def test_family_history():
-    print("need example xml for family history")
-
-def test_allery():
-    pass 
-
-def test_diagnosis():
-    # TODO: weirdly the action code doesn't appear in the schema
-    # but it does appear in the xml example
-    updated_on = dt.datetime(2000,1,1)
+    """Test family history class using example xml file
+    """
+    family_member_coding_standard = "LOCAL"
+    family_member_code = "FM123"
+    family_member_description = "Family Member Description"
     diagnosis_coding_standard = "SNOMED"
-    diagnosis_code = "46635009"
-    diagnosis_description = "Type 1 Diabetes"
-    #action_code = "A"
+    diagnosis_code = "12345678"
+    diagnosis_description = "Diagnosis Description"
+    note_text = "Some note"
+    entered_at_coding_standard = "ODS"
+    entered_at_code = "ENTERED123"
+    entered_at_description = "Entered At Description"
+    from_time = dt.datetime(2023, 1, 1)
+    to_time = dt.datetime(2023, 12, 31)
+    updated_on = dt.datetime(2023, 5, 26)
+    external_id = "ABC123"
+
     xml = XmlParser().from_string(
-        f"""<Diagnosis>
-                <UpdatedOn>{XmlDateTime.from_datetime(updated_on)}</UpdatedOn>
+        f"""<FamilyHistory>
+                <FamilyMember>
+                    <CodingStandard>{family_member_coding_standard}</CodingStandard>
+                    <Code>{family_member_code}</Code>
+                    <Description>{family_member_description}</Description>
+                </FamilyMember>
                 <Diagnosis>
                     <CodingStandard>{diagnosis_coding_standard}</CodingStandard>
                     <Code>{diagnosis_code}</Code>
                     <Description>{diagnosis_description}</Description>
                 </Diagnosis>
-                <IdentificationTime/>
-                <OnsetTime/>
-                <EnteredOn/>
-                <ExternalId/>
-            </Diagnosis>""",
-            xsd_diagnosis.Diagnosis
-        )
+                <NoteText>{note_text}</NoteText>
+                <EnteredAt>
+                    <CodingStandard>{entered_at_coding_standard}</CodingStandard>
+                    <Code>{entered_at_code}</Code>
+                    <Description>{entered_at_description}</Description>
+                </EnteredAt>
+                <FromTime>{XmlDateTime.from_datetime(from_time)}</FromTime>
+                <ToTime>{XmlDateTime.from_datetime(to_time)}</ToTime>
+                <UpdatedOn>{XmlDateTime.from_datetime(updated_on)}</UpdatedOn>
+                <ExternalId>{external_id}</ExternalId>
+            </FamilyHistory>""",
+        xsd_family_history.FamilyHistory
+    )
 
-    # load model
+    # set up model
+    family_history = models.FamilyHistory(xml)
+    assert isinstance(family_history.orm_object, sqla.FamilyHistory)
+    assert family_history.xml == xml
+
+    # check values are propagated to orm
+    family_history.map_xml_to_tree()
+    assert family_history.orm_object.familymembercode == family_member_code
+    assert family_history.orm_object.familymembercodestd == family_member_coding_standard
+    assert family_history.orm_object.familymemberdesc == family_member_description
+    assert family_history.orm_object.diagnosiscodingstandard == diagnosis_coding_standard
+    assert family_history.orm_object.diagnosiscode == diagnosis_code
+    assert family_history.orm_object.diagnosisdesc == diagnosis_description
+    assert family_history.orm_object.notetext == note_text
+    assert family_history.orm_object.enteredatcode == entered_at_code
+    assert family_history.orm_object.enteredatcodestd == entered_at_coding_standard
+    assert family_history.orm_object.enteredatdesc == entered_at_description
+    assert family_history.orm_object.fromtime == from_time
+    assert family_history.orm_object.totime == to_time
+    assert family_history.orm_object.updatedon == updated_on
+    assert family_history.orm_object.externalid == external_id
+
+
+def test_allergy():
+    """Test allergy class using example xml file
+    """
+    allergy_coding_standard = "SNOMED"
+    allergy_code = "12345678"
+    allergy_description = "Substance to which the patient is allergic"
+    allergy_category_coding_standard = "HL7_00204"
+    allergy_category_code = "DA"
+    allergy_category_description = "Drug Allergy"
+    severity_coding_standard = "HL7_00206"
+    severity_code = "SV"
+    severity_description = "Severe"
+    discovery_time = dt.datetime(2023, 1, 1)
+    confirmed_time = dt.datetime(2023, 1, 2)
+    comments = "Some comments"
+    inactive_time = dt.datetime(2023, 1, 3)
+    free_text_allergy = "Free text allergy"
+    qualifying_details = "Qualifying details"
+    clinician_code = "CL123"
+    clinician_code_std = "LOCAL"
+    clinician_code_desc = "Primary Care Physician"
+
+    xml = XmlParser().from_string(
+        f"""<Allergy>
+                <Allergy>
+                    <CodingStandard>{allergy_coding_standard}</CodingStandard>
+                    <Code>{allergy_code}</Code>
+                    <Description>{allergy_description}</Description>
+                </Allergy>
+                <AllergyCategory>
+                    <CodingStandard>{allergy_category_coding_standard}</CodingStandard>
+                    <Code>{allergy_category_code}</Code>
+                    <Description>{allergy_category_description}</Description>
+                </AllergyCategory>
+                <Severity>
+                    <CodingStandard>{severity_coding_standard}</CodingStandard>
+                    <Code>{severity_code}</Code>
+                    <Description>{severity_description}</Description>
+                </Severity>
+                <Clinician>
+                    <CodingStandard>{clinician_code_std}</CodingStandard>
+                    <Code>{clinician_code}</Code>
+                    <Description>{clinician_code_desc}</Description>
+                </Clinician>
+                <DiscoveryTime>{XmlDateTime.from_datetime(discovery_time)}</DiscoveryTime>
+                <ConfirmedTime>{XmlDateTime.from_datetime(confirmed_time)}</ConfirmedTime>
+                <Comments>{comments}</Comments>
+                <InactiveTime>{XmlDateTime.from_datetime(inactive_time)}</InactiveTime>
+                <FreeTextAllergy>{free_text_allergy}</FreeTextAllergy>
+                <QualifyingDetails>{qualifying_details}</QualifyingDetails>
+            </Allergy>""",
+        xsd_allergy.Allergy
+    )
+
+    # set up model
+    allergy = models.Allergy(xml)
+    assert isinstance(allergy.orm_object, sqla.Allergy)
+    assert allergy.xml == xml
+
+    # check values are propagated to orm
+    allergy.map_xml_to_tree()
+    assert allergy.orm_object.allergycode == allergy_code
+    assert allergy.orm_object.allergycodestd == allergy_coding_standard
+    assert allergy.orm_object.allergydesc == allergy_description
+    assert allergy.orm_object.allergycategorycode == allergy_category_code
+    assert allergy.orm_object.allergycategorycodestd == allergy_category_coding_standard
+    assert allergy.orm_object.allergycategorydesc == allergy_category_description
+    assert allergy.orm_object.severitycode == severity_code
+    assert allergy.orm_object.severitycodestd == severity_coding_standard
+    assert allergy.orm_object.severitydesc == severity_description
+    assert allergy.orm_object.discoverytime == discovery_time
+    assert allergy.orm_object.cliniciancode == clinician_code
+    assert allergy.orm_object.cliniciancodestd == clinician_code_std
+    assert allergy.orm_object.cliniciandesc == clinician_code_desc
+
+def test_diagnosis():
+    diagnosis_type = "Type 1 Diabetes"
+    diagnosing_clinician_coding_standard = "LOCAL"
+    diagnosing_clinician_code = "CL123"
+    diagnosing_clinician_description = "Primary Care Physician"
+    diagnosis_coding_standard = "SNOMED"
+    diagnosis_code = "12345678"
+    diagnosis_description = "Diabetes Mellitus"
+    comments = "Some comments"
+    identification_time = dt.datetime(2023, 1, 1)
+    onset_time = dt.datetime(2023, 1, 2)
+    verification_status = "confirmed"
+    entered_on = dt.datetime(2023, 1, 3)
+    encounter_number = "ENC123"
+    entered_at_coding_standard = "LOCAL"
+    entered_at_code = "Hospital123"
+    entered_at_description = "Hospital"
+
+    xml = XmlParser().from_string(
+        f"""<Diagnosis>
+                <DiagnosisType>{diagnosis_type}</DiagnosisType>
+                <DiagnosingClinician>
+                    <CodingStandard>{diagnosing_clinician_coding_standard}</CodingStandard>
+                    <Code>{diagnosing_clinician_code}</Code>
+                    <Description>{diagnosing_clinician_description}</Description>
+                </DiagnosingClinician>
+                <Diagnosis>
+                    <CodingStandard>{diagnosis_coding_standard}</CodingStandard>
+                    <Code>{diagnosis_code}</Code>
+                    <Description>{diagnosis_description}</Description>
+                </Diagnosis>
+                <Comments>{comments}</Comments>
+                <IdentificationTime>{XmlDateTime.from_datetime(identification_time)}</IdentificationTime>
+                <OnsetTime>{XmlDateTime.from_datetime(onset_time)}</OnsetTime>
+                <VerificationStatus>{verification_status}</VerificationStatus>
+                <EnteredOn>{XmlDateTime.from_datetime(entered_on)}</EnteredOn>
+                <EncounterNumber>{encounter_number}</EncounterNumber>
+                <EnteredAt>
+                    <CodingStandard>{entered_at_coding_standard}</CodingStandard>
+                    <Code>{entered_at_code}</Code>
+                    <Description>{entered_at_description}</Description>
+                </EnteredAt>
+            </Diagnosis>""",
+        xsd_diagnosis.Diagnosis
+    )
+
+    # Set up model
     diagnosis = models.Diagnosis(xml)
-    assert isinstance(diagnosis.orm_object, models.Diagnosis)
+    assert isinstance(diagnosis.orm_object, sqla.Diagnosis)
     assert diagnosis.xml == xml
 
-    # check values 
+    # Check values are propagated to ORM
     diagnosis.map_xml_to_tree()
-
-
-#test_result_items()
-test_diagnosis()
+    assert diagnosis.orm_object.diagnosistype == diagnosis_type
+    assert diagnosis.orm_object.diagnosingcliniciancode == diagnosing_clinician_code
+    assert diagnosis.orm_object.diagnosingcliniciancodestd == diagnosing_clinician_coding_standard
+    assert diagnosis.orm_object.diagnosingcliniciandesc == diagnosing_clinician_description
+    assert diagnosis.orm_object.diagnosiscode == diagnosis_code
+    assert diagnosis.orm_object.diagnosiscodestd == diagnosis_coding_standard
+    assert diagnosis.orm_object.diagnosisdesc == diagnosis_description
+    assert diagnosis.orm_object.comments == comments
+    assert diagnosis.orm_object.identificationtime == identification_time
+    assert diagnosis.orm_object.onsettime == onset_time
+    assert diagnosis.orm_object.verificationstatus == verification_status
+    assert diagnosis.orm_object.enteredon == entered_on
+    assert diagnosis.orm_object.encounternumber == encounter_number
+    assert diagnosis.orm_object.enteredatcode == entered_at_code
+    assert diagnosis.orm_object.enteredatcodestd == entered_at_coding_standard
