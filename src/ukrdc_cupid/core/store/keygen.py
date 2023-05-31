@@ -1,5 +1,6 @@
 from sqlalchemy.orm import Session
 from sqlalchemy import Sequence
+import ukrdc_sqla.ukrdc as sqla
 
 
 def mint_new_pid(session: Session):
@@ -12,12 +13,17 @@ def mint_new_pid(session: Session):
     return new_pid
 
 
-def generate_key_laborder(laborder, pid: str):
+def generate_generic_key(parent: str, seqno: int):
+    # not sure there is much point in this function
+    return f"{parent}:{seqno}"
+
+
+def generate_key_laborder(laborder: sqla.LabOrder, pid: str):
     # generate lab_order consitant with: https://github.com/renalreg/Data-Repository/blob/44d0b9af3eb73705de800fd52fe5a6b847219b31/src/main/java/org/ukrdc/repository/RepositoryManager.java#L679
     return f"{pid}:{laborder.placerid}"
 
 
-def generate_key_resultitem(resultitem, order_id: str, seq_no: int):
+def generate_key_resultitem(resultitem: sqla.ResultItem, order_id: str, seq_no: int):
     """generates result item key. This is somewhat more complicated than some.
     https://github.com/renalreg/Data-Repository/blob/44d0b9af3eb73705de800fd52fe5a6b847219b31/src/main/java/org/ukrdc/repository/RepositoryManager.java#LL693C5-L693C5
 
@@ -27,8 +33,6 @@ def generate_key_resultitem(resultitem, order_id: str, seq_no: int):
         seq_no (int): _description_
     """
     if resultitem.prepost == "PRE":
-        prepost = ""
+        return f"{order_id}:{resultitem.service_id}:{seq_no}"
     else:
-        prepost = resultitem.prepost
-
-    return f"{order_id}:{prepost}:{resultitem.service_id}:{seq_no}"
+        return f"{order_id}:{resultitem.prepost}:{resultitem.service_id}:{seq_no}"

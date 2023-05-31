@@ -216,8 +216,6 @@ def test_address():
     
     # this isn't a simple code needs updating 
     #assert address.orm_object.countrycodestd == countrystd
-
-
         
 
 def test_family_doctor():
@@ -337,4 +335,47 @@ def test_result_items():
     assert result_item.orm_object.resulttype == result_type
     assert result_item.orm_object.serviceidcode == code
 
-test_result_items()
+def test_social_history():
+    print("need example xml for social history")
+
+def test_family_history():
+    print("need example xml for family history")
+
+def test_allery():
+    pass 
+
+def test_diagnosis():
+    # TODO: weirdly the action code doesn't appear in the schema
+    # but it does appear in the xml example
+    updated_on = dt.datetime(2000,1,1)
+    diagnosis_coding_standard = "SNOMED"
+    diagnosis_code = "46635009"
+    diagnosis_description = "Type 1 Diabetes"
+    #action_code = "A"
+    xml = XmlParser().from_string(
+        f"""<Diagnosis>
+                <UpdatedOn>{XmlDateTime.from_datetime(updated_on)}</UpdatedOn>
+                <Diagnosis>
+                    <CodingStandard>{diagnosis_coding_standard}</CodingStandard>
+                    <Code>{diagnosis_code}</Code>
+                    <Description>{diagnosis_description}</Description>
+                </Diagnosis>
+                <IdentificationTime/>
+                <OnsetTime/>
+                <EnteredOn/>
+                <ExternalId/>
+            </Diagnosis>""",
+            xsd_diagnosis.Diagnosis
+        )
+
+    # load model
+    diagnosis = models.Diagnosis(xml)
+    assert isinstance(diagnosis.orm_object, models.Diagnosis)
+    assert diagnosis.xml == xml
+
+    # check values 
+    diagnosis.map_xml_to_tree()
+
+
+#test_result_items()
+test_diagnosis()

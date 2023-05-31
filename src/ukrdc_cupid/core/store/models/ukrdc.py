@@ -421,6 +421,192 @@ class Patient(Node):
         self.orm_object.pid = pid
 
 
+class SocialHistory(Node):
+    def __init__(self, xml: xsd_social_history.SocialHistory):
+        super().__init__(xml, sqla.SocialHistory)
+
+    def map_xml_to_tree(self):
+        pass
+
+    def transformer(self):
+        pass
+
+
+class FamilyHistory(Node):
+    def __init__(self, xml: xsd_family_history.FamilyHistory):
+        super().__init__(xml, sqla.FamilyHistory)
+
+    def map_xml_to_tree(self):
+        pass
+
+    def transformer(self):
+        pass
+
+
+class Allergy(Node):
+    def __init__(self, xml: xsd_allergy.Allergy):
+        super().__init__(xml, sqla.Allergy)
+
+    def map_xml_to_tree(self):
+        pass
+
+    def transformer(self):
+        pass
+
+
+class Diagnosis(Node):
+    def __init__(self, xml: xsd_diagnosis.Diagnosis):
+        super().__init__(xml, sqla.Diagnosis)
+
+    def map_xml_to_tree(self):
+        print("add items")
+
+    def transformer(self):
+        pass
+
+class CauseOfDeath(Node):
+    def __init__(self, xml:xsd_diagnosis.CauseOfDeath)
+        super().__init__(xml, sqla.CauseOfDeath)
+    
+    def map_xml_to_tree(self):
+        pass 
+
+    def transformer(self):
+        pass
+
+class RenalDiagnosis(Node):
+    def __init__(self, xml: xsd_diagnosis.RenalDiagnosis):
+        super().__init__(xml, sqla.RenalDiagnosis)
+    
+    def map_xml_to_tree(self):
+        pass
+
+    def transformer(self):
+        pass
+
+
+class Medication(Node):
+    def __init__(self, xml: xsd_diagnosis.RenalDiagnosis):
+        super().__init__(xml, sqla.RenalDiagnosis)
+    
+    def map_xml_to_tree(self):
+        pass
+
+    def transformer(self):
+        pass    
+
+class Procedure(Node):
+    def __init__(self, xml: xsd_diagnosis.RenalDiagnosis):
+        super().__init__(xml, sqla.RenalDiagnosis)
+    
+    def map_xml_to_tree(self):
+        pass
+
+    def transformer(self):
+        pass
+
+class DialysisSession(Node):
+    def __init__(self, xml: xsd_diagnosis.RenalDiagnosis):
+        super().__init__(xml, sqla.RenalDiagnosis)
+    
+    def map_xml_to_tree(self):
+        pass
+
+    def transformer(self):
+        pass
+
+class VascularAccess(Node):
+    def __init__(self, xml: xsd_diagnosis.RenalDiagnosis):
+        super().__init__(xml, sqla.RenalDiagnosis)
+    
+    def map_xml_to_tree(self):
+        pass
+
+    def transformer(self):
+        pass
+
+class Document(Node):
+    def __init__(self, xml: xsd_diagnosis.RenalDiagnosis):
+        super().__init__(xml, sqla.RenalDiagnosis)
+    
+    def map_xml_to_tree(self):
+        pass
+
+    def transformer(self):
+        pass
+
+class Encounter(Node):
+    def __init__(self, xml: xsd_diagnosis.RenalDiagnosis):
+        super().__init__(xml, sqla.RenalDiagnosis)
+    
+    def map_xml_to_tree(self):
+        pass
+
+    def transformer(self):
+        pass
+
+class Treatment(Node):
+    def __init__(self, xml: xsd_encounters.Treatment):
+        super().__init__(xml, sqla.Treatment)
+    
+    def map_xml_to_tree(self):
+        pass
+
+    def transformer(self):
+        pass
+
+class TransplantList(Node):
+    def __init__(self, xml: xsd_encounters.TransplantList):
+        super().__init__(xml, sqla.TransplantList)
+    
+    def map_xml_to_tree(self):
+        pass
+
+    def transformer(self):
+        pass
+
+class ProgramMembership(Node):
+    def __init__(self, xml: xsd_program_memberships.ProgramMembership):
+        super().__init__(xml, sqla.ProgramMembership)
+    
+    def map_xml_to_tree(self):
+        pass
+
+    def transformer(self):
+        pass
+
+class OptOut(Node):
+    def __init__(self, xml: xsd_opt_outs.OptOut):
+        super().__init__(xml, sqla.OptOut)
+    
+    def map_xml_to_tree(self):
+        pass
+
+    def transformer(self):
+        pass
+
+class ClinicalRelationship(Node):
+    def __init__(self, xml: xsd_clinical_relationships.ClinicalRelationship):
+        super().__init__(xml, sqla.ClinicalRelationship)
+    
+    def map_xml_to_tree(self):
+        pass
+
+    def transformer(self):
+        pass
+
+class PVData(Node):
+    def __init__(self, xml):
+        super().__init__(xml, sqla.PVData)
+    
+    def map_xml_to_tree(self):
+        pass
+
+    def transformer(self):
+        pass
+
+
+
 class PatientRecord(Node):
     def __init__(self, xml: xsd_ukrdc.PatientRecord):
         super().__init__(xml, sqla.PatientRecord)
@@ -432,26 +618,26 @@ class PatientRecord(Node):
         # map child objects
         self.add_children(Patient, self.xml.patient)
         self.add_children(LabOrder, self.xml.lab_orders, "lab_order")
-        # self.add_children(SocialHistory)
-        # self.add_children(FamilyHistory)
-        # self.add_children(Allergy)
-        # self.add_children(Diagnosis)
+        self.add_children(SocialHistory, self.xml.social_histories, "social_history")
+        self.add_children(FamilyHistory, self.xml.family_histories, "family_history")
+        self.add_children(Allergy, self.xml.allergies, "allergy")
+        self.add_children(Diagnosis, self.xml.diagnoses, "diagnosis")
 
         # proceedures
-        # self.add_children(CauseOfDeath)
-        # self.add_children(RenalDiagnosis)
-        # self.add_children(Medication)
-        # self.add_children(Procedure)
-        # self.add_children(DialysisSession)
-        # self.add_children(VascularAccess)
-        # self.add_children(Document)
-        # self.add_children(Encounter)
-        # self.add_children(Treatment)
-        # self.add_children(TransplantList)
-        # self.add_children(ProgramMembership)
-        # self.add_children(OptOut)
-        # self.add_children(ClinicalRelationship)
-        # self.add_children(PVData)
+        self.add_children(CauseOfDeath)
+        self.add_children(RenalDiagnosis)
+        self.add_children(Medication)
+        self.add_children(Procedure)
+        self.add_children(DialysisSession)
+        self.add_children(VascularAccess)
+        self.add_children(Document)
+        self.add_children(Encounter)
+        self.add_children(Treatment)
+        self.add_children(TransplantList)
+        self.add_children(ProgramMembership)
+        self.add_children(OptOut)
+        self.add_children(ClinicalRelationship)
+        self.add_children(PVData)
 
     def transformer(self, pid: str):
         self.orm_object.pid = pid
