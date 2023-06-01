@@ -1,3 +1,8 @@
+"""
+Models to create sqla objects from an xml file 
+"""
+
+
 from __future__ import annotations  # allows typehint of node class
 from abc import ABC, abstractmethod
 from typing import Optional, Union
@@ -11,19 +16,19 @@ import ukrdc_sqla.ukrdc as sqla
 import ukrdc_xsdata as xsd_all
 from xsdata.models.datatype import XmlDateTime, XmlDate
 import ukrdc_xsdata.ukrdc.types as xsd_types
-import ukrdc_xsdata.ukrdc.social_histories as xsd_social_history  # noqa: F401
-import ukrdc_xsdata.ukrdc.family_histories as xsd_family_history  # noqa: F401
-import ukrdc_xsdata.ukrdc.allergies as xsd_allergy  # noqa: F401
-import ukrdc_xsdata.ukrdc.diagnoses as xsd_diagnosis  # noqa: F401
+import ukrdc_xsdata.ukrdc.social_histories as xsd_social_history
+import ukrdc_xsdata.ukrdc.family_histories as xsd_family_history
+import ukrdc_xsdata.ukrdc.allergies as xsd_allergy
+import ukrdc_xsdata.ukrdc.diagnoses as xsd_diagnosis
 import ukrdc_xsdata.ukrdc.medications as xsd_medication  # noqa: F401
 import ukrdc_xsdata.ukrdc.procedures as xsd_procedure  # noqa: F401
 import ukrdc_xsdata.ukrdc.dialysis_sessions as xsd_dialysis_session  # noqa: F401
 import ukrdc_xsdata.ukrdc.transplants as xsd_transplants  # noqa: F401
 import ukrdc_xsdata.ukrdc.vascular_accesses as xsd_vascular_accesses  # noqa: F401
-import ukrdc_xsdata.ukrdc.encounters as xsd_encounters  # noqa: F401
-import ukrdc_xsdata.ukrdc.program_memberships as xsd_program_memberships  # noqa: F401
-import ukrdc_xsdata.ukrdc.opt_outs as xsd_opt_outs  # noqa: F401
-import ukrdc_xsdata.ukrdc.clinical_relationships as xsd_clinical_relationships  # noqa: F401
+import ukrdc_xsdata.ukrdc.encounters as xsd_encounters
+import ukrdc_xsdata.ukrdc.program_memberships as xsd_program_memberships
+import ukrdc_xsdata.ukrdc.opt_outs as xsd_opt_outs
+import ukrdc_xsdata.ukrdc.clinical_relationships as xsd_clinical_relationships
 import ukrdc_xsdata.ukrdc.surveys as xsd_surveys  # noqa: F401
 import ukrdc_xsdata.ukrdc.documents as xsd_documents  # noqa: F401
 import ukrdc_xsdata.pv.pv_2_0 as xsd_pvdata  # noqa: F401
@@ -553,9 +558,26 @@ class CauseOfDeath(Node):
         super().__init__(xml, sqla.CauseOfDeath)
 
     def map_xml_to_tree(self):
-        pass
+        self.add_item("diagnosistype", self.xml.diagnosis_type)
 
-    def transformer(self):
+        self.add_code(
+            "diagnosingcliniciancode",
+            "diagnosingcliniciancodestd",
+            "diagnosingcliniciandesc",
+            self.xml.diagnosing_clinician,
+        )
+
+        self.add_code(
+            "diagnosiscode",
+            "diagnosiscodestd",
+            "diagnosisdesc",
+            self.xml.diagnosis,
+        )
+
+        self.add_item("comments", self.xml.comments)
+        self.add_item("enteredon", self.xml.entered_on)
+
+    def transformer(self, pid: Optional[str], **kwargs):
         pass
 
 
@@ -564,7 +586,28 @@ class RenalDiagnosis(Node):
         super().__init__(xml, sqla.RenalDiagnosis)
 
     def map_xml_to_tree(self):
-        pass
+        self.add_item("diagnosistype", self.xml.diagnosis_type)
+
+        self.add_code(
+            "diagnosingcliniciancode",
+            "diagnosingcliniciancodestd",
+            "diagnosingcliniciandesc",
+            self.xml.diagnosing_clinician,
+            optional=False,
+        )
+
+        self.add_code(
+            "diagnosiscode",
+            "diagnosiscodestd",
+            "diagnosisdesc",
+            self.xml.diagnosis,
+            optional=False,
+        )
+
+        self.add_item("comments", self.xml.comments)
+        self.add_item("identificationtime", self.xml.identification_time)
+        self.add_item("onsettime", self.xml.onset_time)
+        self.add_item("enteredon", self.xml.entered_on)
 
     def transformer(self):
         pass
@@ -720,7 +763,8 @@ class PatientRecord(Node):
 
         # diagnosis child objects
         self.add_children(Diagnosis, "diagnoses.diagnosis")
-
+        self.add_children(CauseOfDeath, "diagnoses.cause_of_death")
+        self.add_children(RenalDiagnosis, "diagnoses.renal_diagnosis")
         # self.add_children(CauseOfDeath, "cause_of_death")
         # self.add_children(RenalDiagnosis, "renal_diagnosis")
         # self.add_children(Medication, self.xml.medication)

@@ -46,7 +46,7 @@ def test_patient_record_xml_mapping():
     assert patient_record.orm_object.sendingfacility == "ABC123"
     assert patient_record.orm_object.sendingextract == "UKRDC"
 
-test_patient_record_xml_mapping()
+#test_patient_record_xml_mapping()
 
 def test_patient():
     """
@@ -583,3 +583,126 @@ def test_diagnosis():
     assert diagnosis.orm_object.encounternumber == encounter_number
     assert diagnosis.orm_object.enteredatcode == entered_at_code
     assert diagnosis.orm_object.enteredatcodestd == entered_at_coding_standard
+
+
+def test_cause_of_death():
+    diagnosis_type = "Type A"
+    diagnosing_clinician_coding_standard = "LOCAL"
+    diagnosing_clinician_code = "12345"
+    diagnosis_coding_standard = "EDTA_COD"
+    diagnosis_code = "38"
+    comments = "This is a comment."
+    entered_on = dt.datetime(2023,5,31)
+
+    xml = XmlParser().from_string(
+        f"""<CauseOfDeath>
+                <DiagnosisType>{diagnosis_type}</DiagnosisType>
+                <DiagnosingClinician>
+                    <CodingStandard>{diagnosing_clinician_coding_standard}</CodingStandard>
+                    <Code>{diagnosing_clinician_code}</Code>
+                </DiagnosingClinician>
+                <Diagnosis>
+                    <CodingStandard>{diagnosis_coding_standard}</CodingStandard>
+                    <Code>{diagnosis_code}</Code>
+                </Diagnosis>
+                <Comments>{comments}</Comments>
+                <EnteredOn>{XmlDateTime.from_datetime(entered_on)}</EnteredOn>
+            </CauseOfDeath>""",
+        xsd_diagnosis.CauseOfDeath
+    )
+
+    # set up model
+    cause_of_death = models.CauseOfDeath(xml)
+    assert isinstance(cause_of_death.orm_object, sqla.CauseOfDeath)
+    assert cause_of_death.xml == xml
+
+    # check values
+    cause_of_death.map_xml_to_tree()
+    assert cause_of_death.orm_object.diagnosistype == diagnosis_type
+    assert cause_of_death.orm_object.diagnosingcliniciancodestd == diagnosing_clinician_coding_standard
+    assert cause_of_death.orm_object.diagnosingcliniciancode == diagnosing_clinician_code
+    assert cause_of_death.orm_object.diagnosiscodestd == diagnosis_coding_standard
+    assert cause_of_death.orm_object.diagnosiscode == diagnosis_code
+    assert cause_of_death.orm_object.comments == comments
+    assert cause_of_death.orm_object.enteredon == entered_on
+
+
+def test_renal_diagnosis():
+    diagnosis_type = "Type B"
+    diagnosing_clinician_coding_standard = "LOCAL"
+    diagnosing_clinician_code = "54321"
+    diagnosis_coding_standard = "EDTA2"
+    diagnosis_code = "42"
+    comments = "This is another comment."
+    identification_time = dt.datetime(2023, 6, 1)
+    onset_time = dt.datetime(2023, 5, 30)
+    entered_on = dt.datetime(2023, 5, 31)
+
+    xml = XmlParser().from_string(
+        f"""<RenalDiagnosis>
+                <DiagnosisType>{diagnosis_type}</DiagnosisType>
+                <DiagnosingClinician>
+                    <CodingStandard>{diagnosing_clinician_coding_standard}</CodingStandard>
+                    <Code>{diagnosing_clinician_code}</Code>
+                </DiagnosingClinician>
+                <Diagnosis>
+                    <CodingStandard>{diagnosis_coding_standard}</CodingStandard>
+                    <Code>{diagnosis_code}</Code>
+                </Diagnosis>
+                <Comments>{comments}</Comments>
+                <IdentificationTime>{XmlDateTime.from_datetime(identification_time)}</IdentificationTime>
+                <OnsetTime>{XmlDateTime.from_datetime(onset_time)}</OnsetTime>
+                <EnteredOn>{XmlDateTime.from_datetime(entered_on)}</EnteredOn>
+            </RenalDiagnosis>""",
+        xsd_diagnosis.RenalDiagnosis
+    )
+
+    # set up model
+    renal_diagnosis = models.RenalDiagnosis(xml)
+    assert isinstance(renal_diagnosis.orm_object, sqla.RenalDiagnosis)
+    assert renal_diagnosis.xml == xml
+
+    # check values
+    renal_diagnosis.map_xml_to_tree()
+    assert renal_diagnosis.orm_object.diagnosistype == diagnosis_type
+    assert renal_diagnosis.orm_object.diagnosingcliniciancodestd == diagnosing_clinician_coding_standard
+    assert renal_diagnosis.orm_object.diagnosingcliniciancode == diagnosing_clinician_code
+    assert renal_diagnosis.orm_object.diagnosiscodestd == diagnosis_coding_standard
+    assert renal_diagnosis.orm_object.diagnosiscode == diagnosis_code
+    assert renal_diagnosis.orm_object.comments == comments
+    assert renal_diagnosis.orm_object.identificationtime == identification_time
+    assert renal_diagnosis.orm_object.onsettime == onset_time
+    assert renal_diagnosis.orm_object.enteredon == entered_on
+
+def test_medication():
+    pass
+
+def test_procedure():
+    pass
+
+def test_dialysis_session():
+    pass 
+
+def test_vascular_access():
+    pass 
+
+def test_document():
+    pass 
+
+def test_encounter():
+    pass 
+
+def test_treatment():
+    pass 
+
+def test_program_membership():
+    pass 
+
+def test_opt_out():
+    pass 
+
+def test_clinical_relationship():
+    pass 
+
+def test_pv_data():
+    pass 
