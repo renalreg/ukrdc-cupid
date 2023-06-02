@@ -2,16 +2,16 @@
 Models to create sqla objects from an xml file 
 """
 
-
 from __future__ import annotations  # allows typehint of node class
 from abc import ABC, abstractmethod
 from typing import Optional, Union
+from decimal import Decimal
 
 import ukrdc_cupid.core.store.keygen as key_gen
 import ukrdc_xsdata.ukrdc as xsd_ukrdc
 import ukrdc_xsdata.ukrdc.lab_orders as xsd_lab_orders
 import ukrdc_sqla.ukrdc as sqla
-
+import warnings
 
 import ukrdc_xsdata as xsd_all
 from xsdata.models.datatype import XmlDateTime, XmlDate
@@ -55,8 +55,8 @@ class Node(ABC):
 
     def add_item(
         self,
-        property: str,
-        value: Union[str, XmlDateTime, XmlDate, bool],
+        sqla_property: str,
+        value: Union[str, XmlDateTime, XmlDate, bool, int, Decimal],
         optional: bool = True,
     ):
         """Function to update and item the ORM class instance based on xml.
@@ -72,15 +72,18 @@ class Node(ABC):
 
         # add properties which constitute a single value
         # TODO: flag work item if non optional value doesn't exist
-        if (optional and value) or (not optional):
-            if value:
+        if (optional and value is not None) or (not optional):
+            if value is not None:
                 if isinstance(value, (XmlDateTime, XmlDate)):
                     datetime = value.to_datetime()
-                    setattr(self.orm_object, property, datetime)
-                elif isinstance(value, (str, bool)):
-                    setattr(self.orm_object, property, value)
+                    setattr(self.orm_object, sqla_property, datetime)
+                elif isinstance(value, (str, int, bool, Decimal)):
+                    setattr(self.orm_object, sqla_property, value)
                 else:
-                    setattr(self.orm_object, property, value.value)
+                    setattr(self.orm_object, sqla_property, value.value)
+        else:
+            if value is not None and getattr(self.orm_object, sqla_property) is None:
+                warnings.warn(f"Property {sqla_property} not added to ORM")
 
     def add_code(
         self,
@@ -614,44 +617,190 @@ class RenalDiagnosis(Node):
 
 
 class Medication(Node):
-    def __init__(self, xml: xsd_diagnosis.RenalDiagnosis):
-        super().__init__(xml, sqla.RenalDiagnosis)
+    def __init__(self, xml: xsd_medication.Medication):
+        super().__init__(xml, sqla.Medication)
+
+    def add_drug_product(self):
+        if self.xml.drug_product:
+            self.add_item("drugproductgeneric", self.xml.drug_product.generic)
+            self.add_item("drugproductlabelname", self.xml.drug_product.label_name)
+            self.add_code(
+                "drugproductformcode",
+                "drugproductformcodestd",
+                "drugproductformdesc",
+                self.xml.drug_product.form,
+            )
+            self.add_code(
+                "drugproductstrengthunitscode",
+                "drugproductstrengthunitscodestd",
+                "drugproductstrengthunitsdesc",
+                self.xml.drug_product.strength_units,
+            )
 
     def map_xml_to_tree(self):
-        pass
+        self.add_item("prescriptionnumber", self.xml.prescription_number)
+        self.add_item("fromtime", self.xml.from_time)
+        self.add_item("totime", self.xml.to_time)
+        self.add_code(
+            "orderedbycode", "orderedbycodestd", "orderedbydesc", self.xml.ordered_by
+        )
+        self.add_code(
+            "enteringorganizationcode",
+            "enteringorganizationcodestd",
+            "enteringorganizationdesc",
+            self.xml.entering_organization,
+        )
+        self.add_code("routecode", "routecodestd", "routedesc", self.xml.route)
+        self.add_drug_product()
+        self.add_item("frequency", self.xml.frequency)
+        self.add_item("commenttext", self.xml.comments)
+        self.add_item("dosequantity", self.xml.dose_quantity)
+        self.add_code(
+            "doseuomcode", "doseuomcodestd", "doseuomdesc", self.xml.dose_uo_m
+        )
+        self.add_item("indication", self.xml.indication)
+        self.add_item("encounternumber", self.xml.encounter_number)
+        self.add_item("updatedon", self.xml.updated_on)
+        self.add_item("externalid", self.xml.external_id)
 
     def transformer(self):
         pass
 
 
 class Procedure(Node):
-    def __init__(self, xml: xsd_diagnosis.RenalDiagnosis):
-        super().__init__(xml, sqla.RenalDiagnosis)
+    def __init__(self, xml: xsd_procedure.Procedure):
+        super().__init__(xml, sqla.Procedure)
 
     def map_xml_to_tree(self):
-        pass
+        self.add_code(
+            "proceduretypecode",
+            "proceduretypecodestd",
+            "proceduretypedesc",
+            self.xml.procedure_type,
+            optional=False,
+        )
+        self.add_code(
+            "cliniciancode",
+            "cliniciancodestd",
+            "cliniciandesc",
+            self.xml.clinician,
+            optional=False,
+        )
+        self.add_item("proceduretime", self.xml.procedure_time, optional=False)
+        self.add_code(
+            "enteredbycode",
+            "enteredbycodestd",
+            "enteredbydesc",
+            self.xml.entered_by,
+            optional=False,
+        )
+        self.add_code(
+            "enteredatcode",
+            "enteredatcodestd",
+            "enteredatdesc",
+            self.xml.entered_at,
+            optional=False,
+        )
 
     def transformer(self):
         pass
 
 
 class DialysisSession(Node):
-    def __init__(self, xml: xsd_diagnosis.RenalDiagnosis):
-        super().__init__(xml, sqla.RenalDiagnosis)
+    def __init__(self, xml: xsd_dialysis_session.DialysisSession):
+        super().__init__(xml, sqla.DialysisSession)
+
+    def add_attributes(self):
+        if self.xml.attributes:
+            self.add_item("qhd19", self.xml.attributes.qhd19)
+            self.add_item("qhd20", self.xml.attributes.qhd20)
+            self.add_item("qhd21", self.xml.attributes.qhd21)
+            self.add_item("qhd22", self.xml.attributes.qhd22)
+            self.add_item("qhd30", self.xml.attributes.qhd30)
+            self.add_item("qhd31", self.xml.attributes.qhd31)
+            self.add_item("qhd32", self.xml.attributes.qhd32)
+            self.add_item("qhd33", self.xml.attributes.qhd33)
 
     def map_xml_to_tree(self):
-        pass
+        self.add_code(
+            "proceduretypecode",
+            "proceduretypecodestd",
+            "proceduretypedesc",
+            self.xml.procedure_type,
+            optional=False,
+        )
+        self.add_code(
+            "cliniciancode",
+            "cliniciancodestd",
+            "cliniciandesc",
+            self.xml.clinician,
+            optional=False,
+        )
+        self.add_item("proceduretime", self.xml.procedure_time, optional=False)
+        self.add_code(
+            "enteredbycode",
+            "enteredbycodestd",
+            "enteredbydesc",
+            self.xml.entered_by,
+            optional=False,
+        )
+        self.add_code(
+            "enteredatcode",
+            "enteredatcodestd",
+            "enteredatdesc",
+            self.xml.entered_at,
+            optional=False,
+        )
+
+        self.add_attributes()
 
     def transformer(self):
         pass
 
 
 class VascularAccess(Node):
-    def __init__(self, xml: xsd_diagnosis.RenalDiagnosis):
-        super().__init__(xml, sqla.RenalDiagnosis)
+    def __init__(self, xml: xsd_vascular_accesses.VascularAccess):
+        super().__init__(xml, sqla.VascularAccess)
+
+    def add_acc(self):
+        if self.xml.attributes:
+            self.add_item("acc19", self.xml.attributes.acc19)
+            self.add_item("acc20", self.xml.attributes.acc20)
+            self.add_item("acc21", self.xml.attributes.acc21)
+            self.add_item("acc22", self.xml.attributes.acc22)
+            self.add_item("acc30", self.xml.attributes.acc30)
+            self.add_item("acc40", self.xml.attributes.acc40)
 
     def map_xml_to_tree(self):
-        pass
+        # Map values from XML to ORM object
+        self.add_code(
+            "proceduretypecode",
+            "proceduretypecodestd",
+            "proceduretypedesc",
+            self.xml.procedure_type,
+        )
+        self.add_code(
+            "cliniciancode",
+            "cliniciancodestd",
+            "cliniciandesc",
+            self.xml.clinician,
+        )
+        self.add_item("proceduretime", self.xml.procedure_time)
+        self.add_code(
+            "enteredbycode",
+            "enteredbycodestd",
+            "enteredbydesc",
+            self.xml.entered_by,
+        )
+        self.add_code(
+            "enteredatcode",
+            "enteredatcodestd",
+            "enteredatdesc",
+            self.xml.entered_at,
+        )
+        self.add_item("updatedon", self.xml.updated_on)
+        self.add_item("externalid", self.xml.external_id)
+        self.add_acc()
 
     def transformer(self):
         pass
@@ -755,7 +904,6 @@ class PatientRecord(Node):
 
         # map child objects
         self.add_children(Patient, "patient")
-
         self.add_children(LabOrder, "lab_orders.lab_order")
         self.add_children(SocialHistory, "social_histories.social_history")
         self.add_children(FamilyHistory, "family_histories.family_history")
@@ -765,8 +913,9 @@ class PatientRecord(Node):
         self.add_children(Diagnosis, "diagnoses.diagnosis")
         self.add_children(CauseOfDeath, "diagnoses.cause_of_death")
         self.add_children(RenalDiagnosis, "diagnoses.renal_diagnosis")
-        # self.add_children(CauseOfDeath, "cause_of_death")
-        # self.add_children(RenalDiagnosis, "renal_diagnosis")
+
+        # prodeedure child objects
+
         # self.add_children(Medication, self.xml.medication)
         # self.add_children(Procedure, self.xml.procedure)
         # self.add_children(DialysisSession, self.xml.dialysis_session)
