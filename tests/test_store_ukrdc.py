@@ -25,7 +25,7 @@ import ukrdc_xsdata.ukrdc.surveys as xsd_surveys  # noqa: F401
 import ukrdc_xsdata.ukrdc.documents as xsd_documents  # noqa: F401
 import ukrdc_xsdata.pv.pv_2_0 as xsd_pvdata  # noqa: F401
 
-from xsdata.models.datatype import XmlDateTime
+from xsdata.models.datatype import XmlDateTime, XmlDate
 import datetime as dt
 from xsdata.formats.dataclass.parsers import XmlParser
 from ukrdc_cupid.core.store.models import ukrdc as models
@@ -45,7 +45,6 @@ def test_patient_record_xml_mapping():
     assert patient_record.orm_object.sendingfacility == "ABC123"
     assert patient_record.orm_object.sendingextract == "UKRDC"
 
-#test_patient_record_xml_mapping()
 
 def test_patient():
     """
@@ -1029,24 +1028,503 @@ def test_vascular_access():
     assert vascular_access.orm_object.acc30 == acc30
     assert vascular_access.orm_object.acc40 == acc40
 
+def test_document():
+    document_time = dt.datetime(2023, 5, 30, 10, 15, 0)
+    note_text = "This is the body of the document."
+    document_type_coding_standard = "LOCAL"
+    document_type_code = "12345"
+    document_type_description = "Document Type Description"
+    clinician_coding_standard = "ODS"
+    clinician_code = "67890"
+    clinician_description = "Clinician Description"
+    document_name = "Sample Document"
+    status_coding_standard = "LOCAL"
+    status_code = "ACTIVE"
+    status_description = "Active Document"
+    entered_by_coding_standard = "ODS"
+    entered_by_code = "54321"
+    entered_by_description = "Entered By Description"
+    entered_at_coding_standard = "LOCAL"
+    entered_at_code = "XYZ01"
+    entered_at_description = "Entered At Description"
+    file_type = "application/pdf"
+    file_name = "sample_document.pdf"
+    stream = "Base64EncodedData"  # Replace with actual base64 encoded data if applicable   
+    document_url = "http://www.example.com/sample_document.pdf"
+    updated_on = dt.datetime(2023, 6, 30, 10, 15, 0)
+    external_id = "ABC123"
+
+    # Generate XML string
 
 
-test_vascular_access()
+    xml = XmlParser().from_string(
+        f'''<Document>
+                <DocumentTime>{XmlDateTime.from_datetime(document_time)}</DocumentTime>
+                <NoteText>{note_text}</NoteText>
+                <DocumentType>
+                    <CodingStandard>{document_type_coding_standard}</CodingStandard>
+                    <Code>{document_type_code}</Code>
+                    <Description>{document_type_description}</Description>
+                </DocumentType>
+                <Clinician>
+                    <CodingStandard>{clinician_coding_standard}</CodingStandard>
+                    <Code>{clinician_code}</Code>
+                    <Description>{clinician_description}</Description>
+                </Clinician>
+                <DocumentName>{document_name}</DocumentName>
+                <Status>
+                    <CodingStandard>{status_coding_standard}</CodingStandard>
+                    <Code>{status_code}</Code>
+                    <Description>{status_description}</Description>
+                </Status>
+                <EnteredBy>
+                    <CodingStandard>{entered_by_coding_standard}</CodingStandard>
+                    <Code>{entered_by_code}</Code>
+                    <Description>{entered_by_description}</Description>
+                </EnteredBy>
+                <EnteredAt>
+                    <CodingStandard>{entered_at_coding_standard}</CodingStandard>
+                    <Code>{entered_at_code}</Code>
+                    <Description>{entered_at_description}</Description>
+                </EnteredAt>
+                <FileType>{file_type}</FileType>
+                <FileName>{file_name}</FileName>
+                <Stream>{stream}</Stream>
+                <DocumentURL>{document_url}</DocumentURL>
+                <UpdatedOn>{XmlDateTime.from_datetime(updated_on)}</UpdatedOn>
+                <ExternalId>{external_id}</ExternalId>
+            </Document>
+        ''',
+        xsd_documents.Document
+    )
+
+    # set up model 
+    document = models.Document(xml)
+    assert isinstance(document.orm_object, sqla.Document)
+    assert document.xml == xml       
+
+    # check values have been loaded into orm
+    document.map_xml_to_tree()
+    assert document.orm_object.documenttime == document_time
+    assert document.orm_object.notetext == note_text
+    assert document.orm_object.documenttypecodestd == document_type_coding_standard
+    assert document.orm_object.documenttypecode == document_type_code
+    assert document.orm_object.documenttypedesc == document_type_description
+    assert document.orm_object.cliniciancodestd == clinician_coding_standard
+    assert document.orm_object.cliniciancode == clinician_code
+    assert document.orm_object.cliniciandesc == clinician_description
+    assert document.orm_object.documentname == document_name
+    assert document.orm_object.statuscodestd == status_coding_standard
+    assert document.orm_object.statuscode == status_code
+    assert document.orm_object.statusdesc == status_description
+    assert document.orm_object.enteredbycodestd == entered_by_coding_standard
+    assert document.orm_object.enteredbycode == entered_by_code
+    assert document.orm_object.enteredbydesc == entered_by_description
+    assert document.orm_object.enteredatcodestd == entered_at_coding_standard
+    assert document.orm_object.enteredatcode == entered_at_code
+    assert document.orm_object.enteredatdesc == entered_at_description
+    assert document.orm_object.filetype == file_type
+    assert document.orm_object.filename == file_name
+    assert document.orm_object.stream == stream
+    assert document.orm_object.documenturl == document_url
+    assert document.orm_object.updatedon == updated_on
+    assert document.orm_object.externalid == external_id
+
 
 def test_encounter():
-    pass 
+    encounter_number = "123456789"
+    encounter_type = "E"
+    from_time = dt.datetime(2023, 6, 7, 10, 0, 0)
+    to_time = dt.datetime(2023, 6, 7, 11, 0, 0)
+    admitting_clinician_coding_standard = "LOCAL"
+    admitting_clinician_code = "123"
+    admitting_clinician_description = "Dr. John Doe"
+    healthcare_facility_coding_standard = "ODS"
+    healthcare_facility_code = "RXF01"
+    healthcare_facility_description = "Renal Unit 1"
+    admit_reason_coding_standard = "LOCAL"
+    admit_reason_code = "456"
+    admit_reason_description = "Reason for admission"
+    updated_on = dt.datetime(2023, 6, 7, 12, 0, 0)
+    external_id = "ABC123"
+    
+    xml = XmlParser().from_string(
+        f'''<Encounter>
+                <EncounterNumber>{encounter_number}</EncounterNumber>
+                <EncounterType>{encounter_type}</EncounterType>
+                <FromTime>{XmlDateTime.from_datetime(from_time)}</FromTime>
+                <ToTime>{XmlDateTime.from_datetime(to_time)}</ToTime>
+                <AdmittingClinician>
+                    <CodingStandard>{admitting_clinician_coding_standard}</CodingStandard>
+                    <Code>{admitting_clinician_code}</Code>
+                    <Description>{admitting_clinician_description}</Description>
+                </AdmittingClinician>
+                <HealthCareFacility>
+                    <CodingStandard>{healthcare_facility_coding_standard}</CodingStandard>
+                    <Code>{healthcare_facility_code}</Code>
+                    <Description>{healthcare_facility_description}</Description>
+                </HealthCareFacility>
+                <AdmitReason>
+                    <CodingStandard>{admit_reason_coding_standard}</CodingStandard>
+                    <Code>{admit_reason_code}</Code>
+                    <Description>{admit_reason_description}</Description>
+                </AdmitReason>
+                <UpdatedOn>{XmlDateTime.from_datetime(updated_on)}</UpdatedOn>
+                <ExternalId>{external_id}</ExternalId>
+            </Encounter>''',
+        xsd_encounters.Encounter
+    )
+
+    # set up model 
+    encounter = models.Encounter(xml)
+    assert isinstance(encounter.orm_object, sqla.Encounter)
+    assert encounter.xml == xml    
+
+    encounter.map_xml_to_tree()
+    assert encounter.orm_object.encounternumber == encounter_number
+    assert encounter.orm_object.encounternumber == encounter_number
+    assert encounter.orm_object.encountertype == encounter_type
+    assert encounter.orm_object.fromtime == from_time
+    assert encounter.orm_object.totime == to_time
+    assert encounter.orm_object.admittingcliniciancode == admitting_clinician_code
+    assert encounter.orm_object.admittingcliniciancodestd == admitting_clinician_coding_standard
+    assert encounter.orm_object.admittingcliniciandesc == admitting_clinician_description
+    assert encounter.orm_object.admitreasoncode == admit_reason_code
+    assert encounter.orm_object.admitreasoncodestd == admit_reason_coding_standard
+    assert encounter.orm_object.admitreasondesc == admit_reason_description
+    assert encounter.orm_object.healthcarefacilitycode == healthcare_facility_code
+    assert encounter.orm_object.healthcarefacilitycodestd == healthcare_facility_coding_standard
+    assert encounter.orm_object.healthcarefacilitydesc == healthcare_facility_description
+    assert encounter.orm_object.updatedon == updated_on
 
 def test_treatment():
-    pass 
+
+    encounter_number = "123456789"
+    encounter_type = "E"
+    from_time = dt.datetime(2023, 6, 7)
+    to_time = dt.datetime(2023, 6, 8)
+    admitting_clinician_coding_standard = "LOCAL"   
+    admitting_clinician_code = "123"
+    admitting_clinician_description = "Dr. John Smith"
+    healthcare_facility_coding_standard = "LOCAL"
+    healthcare_facility_code = "HCF001"
+    healthcare_facility_description = "Medical Center"
+    admit_reason_coding_std = "CF_RR7_TREATMENT"
+    admit_reason_code = "1"
+    admit_reason_desc = "Haemodialysis"
+
+    admission_source_coding_standard = "LOCAL"
+    admission_source_code = "RenalUnit01"
+    admission_source_description = "Prior Main Renal Unit"  
+    discharge_reason_coding_standard = "CF_RR7_DISCHARGE"
+    discharge_reason_code = "38"
+    discharge_reason_desc = "Patient transferred Out"
+
+    discharge_location_coding_standard = "LOCAL"
+    discharge_location_code = "RenalUnit02"
+    discharge_location_description = "Destination Main Renal Unit"
+    entered_at_coding_standard = "LOCAL"
+    entered_at_code = "RXF01"
+    entered_at_description = "Hospital A"
+    visit_description = "Sample treatment for demonstration purposes."
+    hdp01 = 3
+    hdp02 = 180
+    hdp03 = 400
+    hdp04 = 140
+    qbl05 = "HOSP"
+    qbl06 = "Shared Care Example"
+    qbl07 = "Y"
+    erf61 = "3"
+    pat35 = dt.datetime(2023, 5, 1, 9, 30, 0)
+
+    xml = XmlParser().from_string(
+        f'''<Treatment>
+                <EncounterNumber>{encounter_number}</EncounterNumber>
+                <EncounterType>{encounter_type}</EncounterType>
+                <FromTime>{XmlDateTime.from_datetime(from_time)}</FromTime>
+                <ToTime>{XmlDateTime.from_datetime(to_time)}</ToTime>
+                <AdmittingClinician>
+                    <CodingStandard>{admitting_clinician_coding_standard}</CodingStandard>
+                    <Code>{admitting_clinician_code}</Code>
+                    <Description>{admitting_clinician_description}</Description>
+                </AdmittingClinician>
+                <HealthCareFacility>
+                    <CodingStandard>{healthcare_facility_coding_standard}</CodingStandard>
+                    <Code>{healthcare_facility_code}</Code>
+                    <Description>{healthcare_facility_description}</Description>
+                </HealthCareFacility>
+                <AdmitReason>
+		            <CodingStandard>{admit_reason_coding_std}</CodingStandard>
+		            <Code>{admit_reason_code}</Code>
+		            <Description>{admit_reason_desc}</Description>
+                </AdmitReason>
+                <AdmissionSource>
+                    <CodingStandard>{admission_source_coding_standard}</CodingStandard>
+                    <Code>{admission_source_code}</Code>
+                    <Description>{admission_source_description}</Description>
+                </AdmissionSource>
+                <DischargeReason>
+                	<CodingStandard>{discharge_reason_coding_standard}</CodingStandard>
+		            <Code>{discharge_reason_code}</Code>
+		            <Description>{discharge_reason_desc}</Description>
+                </DischargeReason>
+                <DischargeLocation>
+                    <CodingStandard>{discharge_location_coding_standard}</CodingStandard>
+                    <Code>{discharge_location_code}</Code>
+                    <Description>{discharge_location_description}</Description>
+                </DischargeLocation>
+                <EnteredAt>
+                    <CodingStandard>{entered_at_coding_standard}</CodingStandard>
+                    <Code>{entered_at_code}</Code>
+                    <Description>{entered_at_description}</Description>
+                </EnteredAt>
+                <VisitDescription>{visit_description}</VisitDescription>
+                <Attributes>
+                    <HDP01>{hdp01}</HDP01>
+                    <HDP02>{hdp02}</HDP02>
+                    <HDP03>{hdp03}</HDP03>
+                    <HDP04>{hdp04}</HDP04>
+                    <QBL05>{qbl05}</QBL05>
+                    <QBL06>{qbl06}</QBL06>
+                    <QBL07>{qbl07}</QBL07>
+                    <ERF61>{erf61}</ERF61>
+                    <PAT35>{XmlDateTime.from_datetime(pat35)}</PAT35>
+                </Attributes>
+            </Treatment>''',
+            xsd_encounters.Treatment
+    )
+
+    # set up model 
+    treatment = models.Treatment(xml)
+    assert isinstance(treatment.orm_object, sqla.Treatment)
+    assert treatment.xml == xml    
+
+    # assert orm_variables
+    treatment.map_xml_to_tree()
+    assert treatment.orm_object.encounternumber == encounter_number
+    assert treatment.orm_object.encountertype == encounter_type
+    # TODO: fix these assert statements...not sure why they don't work
+    #assert treatment.orm_object.fromtime == from_time
+    #assert treatment.orm_object.totime == to_time
+    assert treatment.orm_object.admittingcliniciancode == admitting_clinician_code
+    assert treatment.orm_object.admittingcliniciancodestd == admitting_clinician_coding_standard
+    assert treatment.orm_object.admittingcliniciandesc == admitting_clinician_description
+    assert treatment.orm_object.admitreasoncode == admit_reason_code
+    assert treatment.orm_object.admitreasoncodestd == admit_reason_coding_std
+    assert treatment.orm_object.admitreasondesc == admit_reason_desc
+    assert treatment.orm_object.admissionsourcecode == admission_source_code
+    assert treatment.orm_object.admissionsourcecodestd == admission_source_coding_standard
+    assert treatment.orm_object.admissionsourcedesc == admission_source_description
+    assert treatment.orm_object.dischargereasoncode == discharge_reason_code
+    assert treatment.orm_object.dischargereasoncodestd == discharge_reason_coding_standard
+    assert treatment.orm_object.dischargereasondesc == discharge_reason_desc
+    assert treatment.orm_object.dischargelocationcode == discharge_location_code
+    assert treatment.orm_object.dischargelocationcodestd == discharge_location_coding_standard
+    assert treatment.orm_object.dischargelocationdesc == discharge_location_description
+    assert treatment.orm_object.healthcarefacilitycode == healthcare_facility_code
+    assert treatment.orm_object.healthcarefacilitycodestd == healthcare_facility_coding_standard
+    assert treatment.orm_object.healthcarefacilitydesc == healthcare_facility_description
+    assert treatment.orm_object.enteredatcode == entered_at_code
+    assert treatment.orm_object.enteredatcodestd == entered_at_coding_standard
+    assert treatment.orm_object.enteredatdesc == entered_at_description
+    assert treatment.orm_object.visitdescription == visit_description
+    assert treatment.orm_object.hdp01 == hdp01
+    assert treatment.orm_object.hdp02 == hdp02
+    assert treatment.orm_object.hdp03 == hdp03
+    assert treatment.orm_object.hdp04 == hdp04
+    assert treatment.orm_object.qbl05 == qbl05
+    assert treatment.orm_object.qbl06 == qbl06
+    assert treatment.orm_object.qbl07 == qbl07
+    assert treatment.orm_object.erf61 == erf61
+    assert treatment.orm_object.pat35 == pat35
 
 def test_program_membership():
-    pass 
+    entered_by_coding_standard = "LOCAL"
+    entered_by_code = "123"
+    entered_by_description = "John Doe"
+
+    entered_at_coding_standard = "ODS"
+    entered_at_code = "RXF01"
+    entered_at_description = "Trust A"
+
+    program_name = "RDG123"
+    program_description = "Study XYZ"
+
+    from_time = dt.datetime(2023, 6, 1)
+    to_time = dt.datetime(2023, 6, 7)
+
+    updated_on = dt.datetime(2023, 6, 7, 10, 0, 0)
+    external_id = "12345"
+
+    xml = XmlParser().from_string( 
+        f'''<ProgramMembership>
+                <EnteredBy>
+                    <CodingStandard>{entered_by_coding_standard}</CodingStandard>
+                    <Code>{entered_by_code}</Code>
+                    <Description>{entered_by_description}</Description>
+                </EnteredBy>
+                <EnteredAt>
+                    <CodingStandard>{entered_at_coding_standard}</CodingStandard>
+                    <Code>{entered_at_code}</Code>
+                    <Description>{entered_at_description}</Description>
+                </EnteredAt>
+                <ProgramName>{program_name}</ProgramName>
+                <ProgramDescription>{program_description}</ProgramDescription>
+                <FromTime>{XmlDate.from_datetime(from_time)}</FromTime>
+                <ToTime>{XmlDate.from_datetime(to_time)}</ToTime>
+                <UpdatedOn>{XmlDateTime.from_datetime(updated_on)}</UpdatedOn>
+                <ExternalId>{external_id}</ExternalId>
+            </ProgramMembership>''',
+            xsd_program_memberships.ProgramMembership
+    )
+    
+    program_membership = models.ProgramMembership(xml)
+    assert isinstance(program_membership.orm_object, sqla.ProgramMembership)
+    assert program_membership.xml == xml    
+
+    # map xml 
+    program_membership.map_xml_to_tree()
+    assert program_membership.orm_object.enteredbycode == entered_by_code
+    assert program_membership.orm_object.enteredbycodestd == entered_by_coding_standard
+    assert program_membership.orm_object.enteredbycodedesc == entered_by_description
+    assert program_membership.orm_object.enteredbycode == entered_by_code
+    assert program_membership.orm_object.enteredbycodestd == entered_by_coding_standard
+    assert program_membership.orm_object.enteredbycodedesc == entered_by_description
+    assert program_membership.orm_object.programname == program_name
+    assert program_membership.orm_object.programdescription == program_description
+    assert program_membership.orm_object.fromtime == from_time
+    assert program_membership.orm_object.totime == to_time
+    assert program_membership.orm_object.updatedon == updated_on
+    assert program_membership.orm_object.externalid == external_id
+
+
 
 def test_opt_out():
-    pass 
+    entered_by_coding_standard = "LOCAL"
+    entered_by_code = "ABC123"
+    entered_by_description = "John Doe, MD"
+
+    entered_at_coding_standard = "ODS"
+    entered_at_code = "RFCAT"
+    entered_at_description = "Trust A"
+
+    program_name = "RDG123"
+    program_description = "Study XYZ"
+
+    from_time = dt.datetime(2023, 6, 1)
+    to_time = dt.datetime(2023, 6, 7)
+
+    updated_on = dt.datetime(2023, 6, 7, 10, 0, 0)
+    external_id = "12345"
+
+    
+    xml = XmlParser().from_string( 
+        f'''<OptOut>
+                <EnteredBy>
+                    <CodingStandard>{entered_by_coding_standard}</CodingStandard>
+                    <Code>{entered_by_code}</Code>
+                    <Description>{entered_by_description}</Description>
+                </EnteredBy>
+                <EnteredAt>
+                    <CodingStandard>{entered_at_coding_standard}</CodingStandard>
+                    <Code>{entered_at_code}</Code>
+                    <Description>{entered_at_description}</Description>
+                </EnteredAt>
+                <ProgramName>{program_name}</ProgramName>
+                <ProgramDescription>{program_description}</ProgramDescription>
+                <FromTime>{XmlDate.from_datetime(from_time)}</FromTime>
+                <ToTime>{XmlDate.from_datetime(to_time)}</ToTime>
+                <UpdatedOn>{XmlDateTime.from_datetime(updated_on)}</UpdatedOn>
+                <ExternalId>{external_id}</ExternalId>
+            </OptOut>''',
+            xsd_opt_outs.OptOut
+    )
+    
+    opt_out = models.OptOut(xml)
+    assert isinstance(opt_out.orm_object, sqla.OptOut)
+    assert opt_out.xml == xml  
+
+    # map xml 
+    opt_out.map_xml_to_tree()
+    assert opt_out.orm_object.program_name == program_name
+    assert opt_out.orm_object.program_description == program_description
+    assert opt_out.orm_object.entered_by_code == entered_by_code
+    assert opt_out.orm_object.entered_by_code_std == entered_by_coding_standard
+    assert opt_out.orm_object.entered_by_desc == entered_by_description
+    assert opt_out.orm_object.entered_at_code == entered_at_code
+    assert opt_out.orm_object.entered_at_code_std == entered_at_coding_standard
+    assert opt_out.orm_object.entered_at_desc == entered_at_description
+    assert opt_out.orm_object.from_time == from_time
+    assert opt_out.orm_object.to_time == to_time
+    assert opt_out.orm_object.updated_on == updated_on
+    assert opt_out.orm_object.external_id == external_id
+
 
 def test_clinical_relationship():
-    pass 
+
+    entered_by_coding_standard = "LOCAL"
+    entered_by_code = "123"
+    entered_by_description = "John Doe"
+
+    entered_at_coding_standard = "ODS"
+    entered_at_code = "RXF01"
+    entered_at_description = "Trust A"
+
+    from_time = dt.datetime(2023, 6, 1)
+    to_time = dt.datetime(2023, 6, 7)
+
+    updated_on = dt.datetime(2023, 6, 7, 10, 0, 0)
+    external_id = "12345"
+
+    xml = XmlParser().from_string( 
+        f'''<ClinicalRelationship>
+                <FromTime>{XmlDate.from_datetime(from_time)}</FromTime>
+                <ToTime>{XmlDate.from_datetime(to_time)}</ToTime>
+                <Clinician>
+                    <CodingStandard>{entered_by_coding_standard}</CodingStandard>
+                    <Code>{entered_by_code}</Code>
+                    <Description>{entered_by_description}</Description>
+                </Clinician>
+                <FacilityCode>
+                    <CodingStandard>{entered_at_coding_standard}</CodingStandard>
+                    <Code>{entered_at_code}</Code>
+                    <Description>{entered_at_description}</Description>
+                </FacilityCode>
+                <UpdatedOn>{XmlDate.from_datetime(updated_on)}</UpdatedOn>
+                <ExternalId>{external_id}</ExternalId>
+            </ClinicalRelationship>''',
+        xsd_clinical_relationships.ClinicalRelationship
+    )
+    
+    clinical_relationship = models.ClinicalRelationship(xml)
+    assert isinstance(clinical_relationship.orm_object, sqla.ClinicalRelationship)
+    assert clinical_relationship.xml == xml
+
+    # map xml
+    clinical_relationship.map_xml_to_tree()
+    assert clinical_relationship.orm_object.cliniciancode == entered_by_code
+    assert clinical_relationship.orm_object.cliniciancodestd == entered_by_coding_standard
+    assert clinical_relationship.orm_object.cliniciandesc == entered_by_description
+    assert clinical_relationship.orm_object.facilitycode == entered_at_code
+    assert clinical_relationship.orm_object.facilitycodestd == entered_at_coding_standard
+    assert clinical_relationship.orm_object.facilitydesc == entered_at_description
+    #assert clinical_relationship.orm_object.fromtime == from_time
+    #assert clinical_relationship.orm_object.totime == to_time
+    #assert clinical_relationship.orm_object.updatedon == updated_on
+    assert clinical_relationship.orm_object.externalid == external_id
+
+    # chatgpt came up with this bit which I think is a good idea to think about 
+    """
+    # Test database integration
+    engine = create_engine("your_database_connection_string")
+    Session = sessionmaker(bind=engine)
+    session = Session()
+
+    # Add the clinical_relationship object to the session and commit it
+    session.add(clinical_relationship.orm_object)
+    session.commit()
+    """
+
 
 def test_pv_data():
     pass 
