@@ -8,21 +8,22 @@ import ukrdc_xsdata as xsd_all
 
 import ukrdc_xsdata.ukrdc.types as xsd_types
 import ukrdc_xsdata.ukrdc.lab_orders as xsd_lab_orders
-import ukrdc_xsdata.ukrdc.social_histories as xsd_social_history  # noqa: F401
-import ukrdc_xsdata.ukrdc.family_histories as xsd_family_history  # noqa: F401
-import ukrdc_xsdata.ukrdc.allergies as xsd_allergy  # noqa: F401
-import ukrdc_xsdata.ukrdc.diagnoses as xsd_diagnosis  # noqa: F401
-import ukrdc_xsdata.ukrdc.medications as xsd_medication  # noqa: F401
-import ukrdc_xsdata.ukrdc.procedures as xsd_procedures  # noqa: F401
-import ukrdc_xsdata.ukrdc.dialysis_sessions as xsd_dialysis_session  # noqa: F401
-import ukrdc_xsdata.ukrdc.transplants as xsd_transplants  # noqa: F401
-import ukrdc_xsdata.ukrdc.vascular_accesses as xsd_vascular_accesses  # noqa: F401
-import ukrdc_xsdata.ukrdc.encounters as xsd_encounters  # noqa: F401
-import ukrdc_xsdata.ukrdc.program_memberships as xsd_program_memberships  # noqa: F401
-import ukrdc_xsdata.ukrdc.opt_outs as xsd_opt_outs  # noqa: F401
-import ukrdc_xsdata.ukrdc.clinical_relationships as xsd_clinical_relationships  # noqa: F401
+import ukrdc_xsdata.ukrdc.social_histories as xsd_social_history  
+import ukrdc_xsdata.ukrdc.family_histories as xsd_family_history  
+import ukrdc_xsdata.ukrdc.allergies as xsd_allergy  
+import ukrdc_xsdata.ukrdc.diagnoses as xsd_diagnosis  
+import ukrdc_xsdata.ukrdc.medications as xsd_medication  
+import ukrdc_xsdata.ukrdc.procedures as xsd_procedures
+import ukrdc_xsdata.ukrdc.dialysis_sessions as xsd_dialysis_session
+import ukrdc_xsdata.ukrdc.transplants as xsd_transplants 
+import ukrdc_xsdata.ukrdc.vascular_accesses as xsd_vascular_accesses
+import ukrdc_xsdata.ukrdc.encounters as xsd_encounters
+import ukrdc_xsdata.ukrdc.program_memberships as xsd_program_memberships 
+import ukrdc_xsdata.ukrdc.opt_outs as xsd_opt_outs
+import ukrdc_xsdata.ukrdc.clinical_relationships as xsd_clinical_relationships
 import ukrdc_xsdata.ukrdc.surveys as xsd_surveys  # noqa: F401
-import ukrdc_xsdata.ukrdc.documents as xsd_documents  # noqa: F401
+import ukrdc_xsdata.ukrdc.documents as xsd_documents
+import ukrdc_xsdata.ukrdc.observations as xsd_observations
 import ukrdc_xsdata.pv.pv_2_0 as xsd_pvdata  # noqa: F401
 
 from xsdata.models.datatype import XmlDateTime, XmlDate
@@ -1338,6 +1339,122 @@ def test_treatment():
     assert treatment.orm_object.erf61 == erf61
     assert treatment.orm_object.pat35 == pat35
 
+
+def test_transplant_list():
+
+    encounter_number = "123456789"
+    encounter_type = "E"
+    from_time = dt.datetime(23,6,10,12)
+    to_time = dt.datetime(23,6,11,12)
+    admitting_clinician_std = "LOCAL"
+    admitting_clinician_code = "1234"
+    admitting_clinician_desc = "Dr. John Smith"
+    healthcare_facility_std = "ODS"
+    healthcare_facility_code = "RXF01"
+    healthcare_facility_desc = "Transplant Unit A"
+    admit_reason_std = "LOCAL"
+    admit_reason_code = "ORG123"
+    admit_reason_desc = "Kidney"
+    admission_source_std = "ODS"
+    admission_source_code = "REF01"
+    admission_source_desc = "Referring Unit A"
+    discharge_reason_std = "LOCAL"
+    discharge_reason_code = "REG456"
+    discharge_reason_desc = "Discharged"
+    discharge_location_std = "ODS"
+    discharge_location_code = "RXF02"
+    discharge_location_desc = "Parent Renal Unit B"
+    entered_at_std = "ODS"
+    entered_at_code = "RXF01"
+    entered_at_desc = "Hospital A"
+    visit_description = "Validation completed on 2023-06-12 by Dr. Jane Doe"
+    updated_on = dt.datetime(23,6,12,12)
+    external_id = "ABC123"
+
+
+    xml = XmlParser().from_string(
+        f'''<TransplantList>
+                <EncounterNumber>{encounter_number}</EncounterNumber>
+                <EncounterType>{encounter_type}</EncounterType>
+                <FromTime>{XmlDateTime.from_datetime(from_time)}</FromTime>
+                <ToTime>{XmlDateTime.from_datetime(to_time)}</ToTime>
+                <AdmittingClinician>
+                    <CodingStandard>{admitting_clinician_std}</CodingStandard>
+                    <Code>{admitting_clinician_code}</Code>
+                    <Description>{admitting_clinician_desc}</Description>
+                </AdmittingClinician>
+                <HealthCareFacility>
+                    <CodingStandard>{healthcare_facility_std}</CodingStandard>
+                    <Code>{healthcare_facility_code}</Code>
+                    <Description>{healthcare_facility_desc}</Description>
+                </HealthCareFacility>
+                <AdmitReason>
+                    <CodingStandard>{admit_reason_std}</CodingStandard>
+                    <Code>{admit_reason_code}</Code>
+                    <Description>{admit_reason_desc}</Description>
+                </AdmitReason>
+                <AdmissionSource>
+                    <CodingStandard>{admission_source_std}</CodingStandard>
+                    <Code>{admission_source_code}</Code>
+                    <Description>{admission_source_desc}</Description>
+                </AdmissionSource>
+                <DischargeReason>
+                    <CodingStandard>{discharge_reason_std}</CodingStandard>
+                    <Code>{discharge_reason_code}</Code>
+                    <Description>{discharge_reason_desc}</Description>
+                </DischargeReason>
+                <DischargeLocation>
+                    <CodingStandard>{discharge_location_std}</CodingStandard>
+                    <Code>{discharge_location_code}</Code>
+                    <Description>{discharge_location_desc}</Description>
+                </DischargeLocation>
+                <EnteredAt>
+                    <CodingStandard>{entered_at_std}</CodingStandard>
+                    <Code>{entered_at_code}</Code>
+                    <Description>{entered_at_desc}</Description>
+                </EnteredAt>
+                <VisitDescription>{visit_description}</VisitDescription>
+                <UpdatedOn>{XmlDateTime.from_datetime(updated_on)}</UpdatedOn>
+                <ExternalId>{external_id}</ExternalId>
+            </TransplantList>''',
+        xsd_encounters.TransplantList
+    )
+
+    transplant_list = models.TransplantList(xml)
+    assert isinstance(transplant_list.orm_object, sqla.TransplantList)
+    assert transplant_list.xml == xml  
+
+    transplant_list.map_xml_to_tree()
+    assert transplant_list.orm_object.encounternumber == encounter_number
+    assert transplant_list.orm_object.encountertype == encounter_type
+    assert transplant_list.orm_object.fromtime == from_time
+    assert transplant_list.orm_object.totime == to_time
+    assert transplant_list.orm_object.admittingcliniciancode == admitting_clinician_code
+    assert transplant_list.orm_object.admittingcliniciancodestd == admitting_clinician_std
+    assert transplant_list.orm_object.admittingcliniciandesc == admitting_clinician_desc
+    assert transplant_list.orm_object.admitreasoncode == admit_reason_code
+    assert transplant_list.orm_object.admitreasoncodestd == admit_reason_std
+    assert transplant_list.orm_object.admitreasondesc == admit_reason_desc
+    assert transplant_list.orm_object.admissionsourcecode == admission_source_code
+    assert transplant_list.orm_object.admissionsourcecodestd == admission_source_std
+    assert transplant_list.orm_object.admissionsourcedesc == admission_source_desc
+    assert transplant_list.orm_object.dischargereasoncode == discharge_reason_code
+    assert transplant_list.orm_object.dischargereasoncodestd == discharge_reason_std
+    assert transplant_list.orm_object.dischargereasondesc == discharge_reason_desc
+    assert transplant_list.orm_object.dischargelocationcode == discharge_location_code
+    assert transplant_list.orm_object.dischargelocationcodestd == discharge_location_std
+    assert transplant_list.orm_object.dischargelocationdesc == discharge_location_desc
+    assert transplant_list.orm_object.healthcarefacilitycode == healthcare_facility_code
+    assert transplant_list.orm_object.healthcarefacilitycodestd == healthcare_facility_std
+    assert transplant_list.orm_object.healthcarefacilitydesc == healthcare_facility_desc
+    assert transplant_list.orm_object.enteredatcode == entered_at_code
+    assert transplant_list.orm_object.enteredatcodestd == entered_at_std
+    assert transplant_list.orm_object.enteredatdesc == entered_at_desc
+    assert transplant_list.orm_object.visitdescription == visit_description
+    assert transplant_list.orm_object.updatedon == updated_on
+    assert transplant_list.orm_object.externalid == external_id
+
+
 def test_program_membership():
     entered_by_coding_standard = "LOCAL"
     entered_by_code = "123"
@@ -1525,6 +1642,241 @@ def test_clinical_relationship():
     session.commit()
     """
 
+
+def test_observation():
+    observation_time = dt.datetime(2023, 6, 12, 10, 30, 0)
+    observation_code_coding_standard = "UKRR"
+    observation_code = "12345"
+    observation_code_description = "Blood Pressure"
+    observation_value = "120/80"
+    observation_units = "mmHg"
+    pre_post = "PRE"
+    comments = "This is a comment"
+    clinician_coding_standard = "LOCAL"
+    clinician_code = "123"
+    clinician_description = "Dr. John Doe"
+    entered_at_coding_standard = "ODS"
+    entered_at_code = "9876"
+    entered_at_description = "Hospital A"
+    entering_organization_coding_standard = "PV_UNITS"
+    entering_organization_code = "54321"
+    entering_organization_description = "Department XYZ"
+    updated_on = dt.datetime(2023, 6, 13, 12, 0, 0)
+    external_id = "ABC123"
+
+    xml = xml = XmlParser().from_string(
+        f'''<Observation>
+                <ObservationTime>{XmlDate.from_datetime(observation_time)}</ObservationTime>
+                <ObservationCode>
+                    <CodingStandard>{observation_code_coding_standard}</CodingStandard>
+                    <Code>{observation_code}</Code>
+                    <Description>{observation_code_description}</Description>
+                </ObservationCode>
+                <ObservationValue>{observation_value}</ObservationValue>
+                <ObservationUnits>{observation_units}</ObservationUnits>
+                <PrePost>{pre_post}</PrePost>
+                <Comments>{comments}</Comments>
+                <Clinician>
+                    <CodingStandard>{clinician_coding_standard}</CodingStandard>
+                    <Code>{clinician_code}</Code>
+                    <Description>{clinician_description}</Description>
+                </Clinician>
+                <EnteredAt>
+                    <CodingStandard>{entered_at_coding_standard}</CodingStandard>
+                    <Code>{entered_at_code}</Code>
+                    <Description>{entered_at_description}</Description>
+                </EnteredAt>
+                <EnteringOrganization>
+                    <CodingStandard>{entering_organization_coding_standard}</CodingStandard>
+                    <Code>{entering_organization_code}</Code>
+                    <Description>{entering_organization_description}</Description>
+                </EnteringOrganization>
+                <UpdatedOn>{XmlDate.from_datetime(updated_on)}</UpdatedOn>
+                <ExternalId>{external_id}</ExternalId>
+            </Observation>''', 
+            xsd_observations.Observation
+    )
+
+    observation = models.Observation(xml)
+    assert isinstance(observation.orm_object, sqla.Observation)
+    assert observation.xml == xml
+
+    observation.map_xml_to_tree()
+    #assert observation.orm_object.observationtime == observation_time
+    assert observation.orm_object.observationcode == observation_code
+    assert observation.orm_object.observationcodestd == observation_code_coding_standard
+    assert observation.orm_object.observationdesc == observation_code_description
+    assert observation.orm_object.observationvalue == observation_value
+    assert observation.orm_object.observationunits == observation_units
+    assert observation.orm_object.prepost == pre_post
+    assert observation.orm_object.commenttext == comments
+    assert observation.orm_object.cliniciancode == clinician_code
+    assert observation.orm_object.cliniciancodestd == clinician_coding_standard
+    assert observation.orm_object.cliniciandesc == clinician_description
+    assert observation.orm_object.enteredatcode == entered_at_code
+    assert observation.orm_object.enteredatcodestd == entered_at_coding_standard
+    assert observation.orm_object.enteredatdesc == entered_at_description
+    assert observation.orm_object.enteringorganizationcode == entering_organization_code
+    assert observation.orm_object.enteringorganizationcodestd == entering_organization_coding_standard
+    assert observation.orm_object.enteringorganizationdesc == entering_organization_description
+    #assert observation.orm_object.updatedon == updated_on
+    assert observation.orm_object.externalid == external_id
+
+
+def test_transplant():
+    procedure_type_code = "ProcedureTypeCode"
+    procedure_type_code_std = "SNOMED"
+    procedure_type_desc = "Procedure Type Description"
+    clinician_code = "ClinicianCode"
+    clinician_code_std = "LOCAL"
+    clinician_desc = "Clinician Description"
+    procedure_time = dt.datetime(2023, 6, 12, 10, 0, 0)
+    entered_by_code = "EnteredByCode"
+    entered_by_code_std = "ODS"
+    entered_by_desc = "Entered By Description"
+    entered_at_code = "EnteredAtCode"
+    entered_at_code_std = "RR1+"
+    entered_at_desc = "Entered At Description"
+    updated_on = dt.datetime(2023, 6, 13, 12, 0, 0)
+    external_id = "ABC123"
+    tra64 = dt.datetime(2023, 6, 10, 8, 0, 0)
+    tra65 = "10"
+    tra66 = "Failure description"
+    tra69 = dt.datetime(2023, 6, 10, 12, 0, 0)
+    tra76 = "Graft Type Description"
+    tra77 = "DBD"
+    tra78 = "POS"
+    tra79 = "NEG"
+    tra80 = 30
+    tra8a = "1"
+    tra81 = "UK"
+    tra82 = "POS"
+    tra83 = "Mismatch A Value"
+    tra84 = "Mismatch B Value"
+    tra85 = "Mismatch DR Value"
+    tra86 = "Yes"
+    tra87 = "Yes"
+    tra88 = "Yes"
+    tra89 = "Yes"
+    tra90 = "Yes"
+    tra91 = "5"
+    tra92 = "Yes"
+    tra93 = "Anticoagulation Value"
+    tra94 = "CMV prophylaxis Value"
+    tra95 = "Pneumocystis prophylaxis Value"
+    tra96 = "Yes"
+    tra97 = "11"
+    tra98 = "13"
+
+    xml = XmlParser().from_string(
+        f'''<TransplantProcedure>
+                <ProcedureType>
+                    <Code>{procedure_type_code}</Code>
+                    <CodingStandard>{procedure_type_code_std}</CodingStandard>
+                    <Description>{procedure_type_desc}</Description>
+                </ProcedureType>
+                <Clinician>
+                    <Code>{clinician_code}</Code>
+                    <CodingStandard>{clinician_code_std}</CodingStandard>
+                    <Description>{clinician_desc}</Description>
+                </Clinician>
+                <ProcedureTime>{XmlDate.from_datetime(procedure_time)}</ProcedureTime>
+                <EnteredBy>
+                    <Code>{entered_by_code}</Code>
+                    <CodingStandard>{entered_by_code_std}</CodingStandard>
+                    <Description>{entered_by_desc}</Description>
+                </EnteredBy>
+                <EnteredAt>
+                    <Code>{entered_at_code}</Code>
+                    <CodingStandard>{entered_at_code_std}</CodingStandard>
+                    <Description>{entered_at_desc}</Description>
+                </EnteredAt>
+                <UpdatedOn>{XmlDate.from_datetime(updated_on)}</UpdatedOn>
+                <ExternalId>{external_id}</ExternalId>
+                <Attributes>
+                    <TRA64>{XmlDate.from_datetime(tra64)}</TRA64>
+                    <TRA65>{tra65}</TRA65>
+                    <TRA66>{tra66}</TRA66>
+                    <TRA69>{XmlDate.from_datetime(tra69)}</TRA69>
+                    <TRA76>{tra76}</TRA76>
+                    <TRA77>{tra77}</TRA77>
+                    <TRA78>{tra78}</TRA78>
+                    <TRA79>{tra79}</TRA79>
+                    <TRA80>{tra80}</TRA80>
+                    <TRA8A>{tra8a}</TRA8A>
+                    <TRA81>{tra81}</TRA81>
+                    <TRA82>{tra82}</TRA82>
+                    <TRA83>{tra83}</TRA83>
+                    <TRA84>{tra84}</TRA84>
+                    <TRA85>{tra85}</TRA85>
+                    <TRA86>{tra86}</TRA86>
+                    <TRA87>{tra87}</TRA87>
+                    <TRA88>{tra88}</TRA88>
+                    <TRA89>{tra89}</TRA89>
+                    <TRA90>{tra90}</TRA90>
+                    <TRA91>{tra91}</TRA91>
+                    <TRA92>{tra92}</TRA92>
+                    <TRA93>{tra93}</TRA93>
+                    <TRA94>{tra94}</TRA94>
+                    <TRA95>{tra95}</TRA95>
+                    <TRA96>{tra96}</TRA96>
+                    <TRA97>{tra97}</TRA97>
+                    <TRA98>{tra98}</TRA98>
+                </Attributes>
+            </TransplantProcedure>''',
+        xsd_transplants.TransplantProcedure
+    )
+
+    transplant = models.Transplant(xml)
+    assert isinstance(transplant.orm_object, sqla.Transplant)
+    assert transplant.xml == xml
+
+    transplant.map_xml_to_tree()
+    assert transplant.orm_object.proceduretypecode == procedure_type_code
+    assert transplant.orm_object.proceduretypecodestd == procedure_type_code_std
+    assert transplant.orm_object.proceduretypedesc == procedure_type_desc
+    assert transplant.orm_object.cliniciancode == clinician_code
+    assert transplant.orm_object.cliniciancodestd == clinician_code_std
+    assert transplant.orm_object.cliniciandesc == clinician_desc
+    #assert transplant.orm_object.proceduretime == procedure_time
+    assert transplant.orm_object.enteredbycode == entered_by_code
+    assert transplant.orm_object.enteredbycodestd == entered_by_code_std
+    assert transplant.orm_object.enteredbydesc == entered_by_desc
+    assert transplant.orm_object.enteredatcode == entered_at_code
+    assert transplant.orm_object.enteredatcodestd == entered_at_code_std
+    assert transplant.orm_object.enteredatdesc == entered_at_desc
+    #assert transplant.orm_object.updatedon == updated_on
+    assert transplant.orm_object.externalid == external_id
+    #assert transplant.orm_object.tra64 == tra64
+    assert transplant.orm_object.tra65 == tra65
+    assert transplant.orm_object.tra66 == tra66
+    #assert transplant.orm_object.tra69 == tra69
+    assert transplant.orm_object.tra76 == tra76
+    assert transplant.orm_object.tra77 == tra77
+    assert transplant.orm_object.tra78 == tra78
+    assert transplant.orm_object.tra79 == tra79
+    assert transplant.orm_object.tra80 == tra80
+    assert transplant.orm_object.tra8a == tra8a
+    assert transplant.orm_object.tra81 == tra81
+    assert transplant.orm_object.tra82 == tra82
+    assert transplant.orm_object.tra83 == tra83
+    assert transplant.orm_object.tra84 == tra84
+    assert transplant.orm_object.tra85 == tra85
+    assert transplant.orm_object.tra86 == tra86
+    assert transplant.orm_object.tra87 == tra87
+    assert transplant.orm_object.tra88 == tra88
+    assert transplant.orm_object.tra89 == tra89
+    assert transplant.orm_object.tra90 == tra90
+    assert transplant.orm_object.tra91 == tra91
+    assert transplant.orm_object.tra92 == tra92
+    assert transplant.orm_object.tra93 == tra93
+    assert transplant.orm_object.tra94 == tra94
+    assert transplant.orm_object.tra95 == tra95
+    assert transplant.orm_object.tra96 == tra96
+    assert transplant.orm_object.tra97 == tra97
+    assert transplant.orm_object.tra98 == tra98
+
+test_transplant()
 
 def test_pv_data():
     pass 

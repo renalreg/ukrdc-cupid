@@ -20,17 +20,18 @@ import ukrdc_xsdata.ukrdc.social_histories as xsd_social_history
 import ukrdc_xsdata.ukrdc.family_histories as xsd_family_history
 import ukrdc_xsdata.ukrdc.allergies as xsd_allergy
 import ukrdc_xsdata.ukrdc.diagnoses as xsd_diagnosis
-import ukrdc_xsdata.ukrdc.medications as xsd_medication  # noqa: F401
-import ukrdc_xsdata.ukrdc.procedures as xsd_procedure  # noqa: F401
-import ukrdc_xsdata.ukrdc.dialysis_sessions as xsd_dialysis_session  # noqa: F401
+import ukrdc_xsdata.ukrdc.medications as xsd_medication
+import ukrdc_xsdata.ukrdc.procedures as xsd_procedure
+import ukrdc_xsdata.ukrdc.dialysis_sessions as xsd_dialysis_session
 import ukrdc_xsdata.ukrdc.transplants as xsd_transplants  # noqa: F401
-import ukrdc_xsdata.ukrdc.vascular_accesses as xsd_vascular_accesses  # noqa: F401
+import ukrdc_xsdata.ukrdc.vascular_accesses as xsd_vascular_accesses
 import ukrdc_xsdata.ukrdc.encounters as xsd_encounters
 import ukrdc_xsdata.ukrdc.program_memberships as xsd_program_memberships
 import ukrdc_xsdata.ukrdc.opt_outs as xsd_opt_outs
 import ukrdc_xsdata.ukrdc.clinical_relationships as xsd_clinical_relationships
 import ukrdc_xsdata.ukrdc.surveys as xsd_surveys  # noqa: F401
-import ukrdc_xsdata.ukrdc.documents as xsd_documents  # noqa: F401
+import ukrdc_xsdata.ukrdc.observations as xsd_observations
+import ukrdc_xsdata.ukrdc.documents as xsd_documents
 import ukrdc_xsdata.pv.pv_2_0 as xsd_pvdata  # noqa: F401
 
 
@@ -951,7 +952,54 @@ class TransplantList(Node):
         super().__init__(xml, sqla.TransplantList)
 
     def map_xml_to_tree(self):
-        pass
+        self.add_item("encounternumber", self.xml.encounter_number)
+        self.add_item("encountertype", self.xml.encounter_type)
+        self.add_item("fromtime", self.xml.from_time)
+        self.add_item("totime", self.xml.to_time)
+
+        self.add_code(
+            "admittingcliniciancode",
+            "admittingcliniciancodestd",
+            "admittingcliniciandesc",
+            self.xml.admitting_clinician,
+        )
+        self.add_code(
+            "healthcarefacilitycode",
+            "healthcarefacilitycodestd",
+            "healthcarefacilitydesc",
+            self.xml.health_care_facility,
+        )
+        self.add_code(
+            "admitreasoncode",
+            "admitreasoncodestd",
+            "admitreasondesc",
+            self.xml.admit_reason,
+        )
+        self.add_code(
+            "admissionsourcecode",
+            "admissionsourcecodestd",
+            "admissionsourcedesc",
+            self.xml.admission_source,
+        )
+        self.add_code(
+            "dischargereasoncode",
+            "dischargereasoncodestd",
+            "dischargereasondesc",
+            self.xml.discharge_reason,
+        )
+        self.add_code(
+            "dischargelocationcode",
+            "dischargelocationcodestd",
+            "dischargelocationdesc",
+            self.xml.discharge_location,
+        )
+        self.add_code(
+            "enteredatcode", "enteredatcodestd", "enteredatdesc", self.xml.entered_at
+        )
+
+        self.add_item("visitdescription", self.xml.visit_description)
+        self.add_item("updatedon", self.xml.updated_on)
+        self.add_item("externalid", self.xml.external_id)
 
     def transformer(self):
         pass
@@ -1033,6 +1081,156 @@ class ClinicalRelationship(Node):
         pass
 
 
+class Observation(Node):
+    def __init__(self, xml: xsd_observations.Observation):
+        super().__init__(xml, sqla.Observation)
+
+    def map_xml_to_tree(self):
+        self.add_item("observationtime", self.xml.observation_time, optional=False)
+        self.add_code(
+            "observationcode",
+            "observationcodestd",
+            "observationdesc",
+            self.xml.observation_code,
+            optional=False,
+        )
+        self.add_item("observationvalue", self.xml.observation_value)
+        self.add_item("observationunits", self.xml.observation_units)
+        self.add_item("prepost", self.xml.pre_post)
+        self.add_item("commenttext", self.xml.comments)
+        self.add_code(
+            "cliniciancode",
+            "cliniciancodestd",
+            "cliniciandesc",
+            self.xml.clinician,
+            optional=False,
+        )
+        self.add_code(
+            "enteredatcode",
+            "enteredatcodestd",
+            "enteredatdesc",
+            self.xml.entered_at,
+            optional=False,
+        )
+        self.add_code(
+            "enteringorganizationcode",
+            "enteringorganizationcodestd",
+            "enteringorganizationdesc",
+            self.xml.entering_organization,
+            optional=False,
+        )
+        self.add_item("updatedon", self.xml.updated_on, optional=False)
+        self.add_item("externalid", self.xml.external_id, optional=False)
+
+    def transformer(self):
+        pass
+
+
+class Transplant(Node):
+    def __init__(self, xml: xsd_transplants.TransplantProcedure):
+        super().__init__(xml, sqla.Transplant)
+
+    def add_attributes(self):
+        if self.xml.attributes:
+            self.add_item("tra64", self.xml.attributes.tra64)
+            self.add_item("tra65", self.xml.attributes.tra65)
+            self.add_item("tra66", self.xml.attributes.tra66)
+            self.add_item("tra69", self.xml.attributes.tra69)
+            self.add_item("tra76", self.xml.attributes.tra76)
+            self.add_item("tra77", self.xml.attributes.tra77)
+            self.add_item("tra78", self.xml.attributes.tra78)
+            self.add_item("tra79", self.xml.attributes.tra79)
+            self.add_item("tra80", self.xml.attributes.tra80)
+            self.add_item("tra8a", self.xml.attributes.tra8_a)
+            self.add_item("tra81", self.xml.attributes.tra81)
+            self.add_item("tra82", self.xml.attributes.tra82)
+            self.add_item("tra83", self.xml.attributes.tra83)
+            self.add_item("tra84", self.xml.attributes.tra84)
+            self.add_item("tra85", self.xml.attributes.tra85)
+            self.add_item("tra86", self.xml.attributes.tra86)
+            self.add_item("tra87", self.xml.attributes.tra87)
+            self.add_item("tra88", self.xml.attributes.tra88)
+            self.add_item("tra89", self.xml.attributes.tra89)
+            self.add_item("tra90", self.xml.attributes.tra90)
+            self.add_item("tra91", self.xml.attributes.tra91)
+            self.add_item("tra92", self.xml.attributes.tra92)
+            self.add_item("tra93", self.xml.attributes.tra93)
+            self.add_item("tra94", self.xml.attributes.tra94)
+            self.add_item("tra95", self.xml.attributes.tra95)
+            self.add_item("tra96", self.xml.attributes.tra96)
+            self.add_item("tra97", self.xml.attributes.tra97)
+            self.add_item("tra98", self.xml.attributes.tra98)
+
+    def map_xml_to_tree(self):
+        self.add_code(
+            "proceduretypecode",
+            "proceduretypecodestd",
+            "proceduretypedesc",
+            self.xml.procedure_type,
+        )
+        self.add_code(
+            "cliniciancode", "cliniciancodestd", "cliniciandesc", self.xml.clinician
+        )
+        self.add_item("proceduretime", self.xml.procedure_time)
+        self.add_code(
+            "enteredbycode", "enteredbycodestd", "enteredbydesc", self.xml.entered_by
+        )
+        self.add_code(
+            "enteredatcode", "enteredatcodestd", "enteredatdesc", self.xml.entered_at
+        )
+        self.add_item("updatedon", self.xml.updated_on)
+        self.add_item("externalid", self.xml.external_id)
+
+        self.add_attributes()
+
+    def transformer(self):
+        return
+
+
+class Question(Node):
+    def __init__(self, xml: xsd_surveys.Question):
+        super().__init__(xml, sqla.Question)
+
+    def map_xml_to_tree(self):
+        pass
+
+    def transformer(self):
+        pass
+
+
+class Score(Node):
+    def __init__(self, xml: xsd_surveys.Score):
+        super().__init__(xml, sqla.Score)
+
+    def map_xml_to_tree(self):
+        pass
+
+    def transformer(self):
+        pass
+
+
+class Level(Node):
+    def __init__(self, xml: xsd_surveys.Level):
+        super().__init__(xml, sqla.Level)
+
+    def map_xml_to_tree(self):
+        pass
+
+    def transformer(self):
+        pass
+
+
+class Survey(Node):
+    def __init__(self, xml: xsd_surveys.Survey):
+        super().__init__(xml, sqla.Survey)
+
+    def map_xml_to_tree(self):
+        pass
+
+    def transformer(self):
+        pass
+
+
 class PVData(Node):
     def __init__(self, xml):
         super().__init__(xml, sqla.PVData)
@@ -1069,17 +1267,20 @@ class PatientRecord(Node):
         self.add_children(Procedure, "procedures.procedure")
         self.add_children(DialysisSession, "procedures.dialysis_sessions")
         self.add_children(VascularAccess, "procedures.vascular_access")
-        # self.add_children(Transplant)
+        self.add_children(Transplant, "transplants.transplant")
 
         self.add_children(Document, "documents.document")
         self.add_children(Encounter, "encounters.encounter")
         self.add_children(Treatment, "encounters.treatment")
-        # self.add_children(TransplantList, self.xml.transplant_list)
+        self.add_children(TransplantList, "encounters.transplant_list")
 
         self.add_children(ProgramMembership, "program_memberships.program_membership")
         self.add_children(OptOut, "opt_outs.opt_out")
-        # self.add_children(ClinicalRelationship, "")
-        # self.add_children(PVData)
+        self.add_children(
+            ClinicalRelationship, "clinical_relationships.clinical_relationship"
+        )
+        self.add_children(Observation, "observations.observation")
+        self.add_children(PVData, "path_to_self_xml")
 
     def transformer(self, pid: str):
         self.orm_object.pid = pid
