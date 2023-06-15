@@ -4,35 +4,36 @@ Models to create sqla objects from an xml file
 
 from __future__ import annotations  # allows typehint of node class
 from abc import ABC, abstractmethod
-from typing import Optional, Union
+from typing import Optional, Union, List, Type, Dict, Any
 from decimal import Decimal
 
-import ukrdc_cupid.core.store.keygen as key_gen
-import ukrdc_xsdata.ukrdc as xsd_ukrdc
-import ukrdc_xsdata.ukrdc.lab_orders as xsd_lab_orders
+import ukrdc_cupid.core.store.keygen as key_gen  # type: ignore
+import ukrdc_xsdata.ukrdc as xsd_ukrdc  # type: ignore
+import ukrdc_xsdata.ukrdc.lab_orders as xsd_lab_orders  # type: ignore
 import ukrdc_sqla.ukrdc as sqla
 import warnings
 
 import ukrdc_xsdata as xsd_all
 from xsdata.models.datatype import XmlDateTime, XmlDate
-import ukrdc_xsdata.ukrdc.types as xsd_types
-import ukrdc_xsdata.ukrdc.social_histories as xsd_social_history
-import ukrdc_xsdata.ukrdc.family_histories as xsd_family_history
-import ukrdc_xsdata.ukrdc.allergies as xsd_allergy
-import ukrdc_xsdata.ukrdc.diagnoses as xsd_diagnosis
-import ukrdc_xsdata.ukrdc.medications as xsd_medication
-import ukrdc_xsdata.ukrdc.procedures as xsd_procedure
-import ukrdc_xsdata.ukrdc.dialysis_sessions as xsd_dialysis_session
-import ukrdc_xsdata.ukrdc.transplants as xsd_transplants  # noqa: F401
-import ukrdc_xsdata.ukrdc.vascular_accesses as xsd_vascular_accesses
-import ukrdc_xsdata.ukrdc.encounters as xsd_encounters
-import ukrdc_xsdata.ukrdc.program_memberships as xsd_program_memberships
-import ukrdc_xsdata.ukrdc.opt_outs as xsd_opt_outs
-import ukrdc_xsdata.ukrdc.clinical_relationships as xsd_clinical_relationships
-import ukrdc_xsdata.ukrdc.surveys as xsd_surveys  # noqa: F401
-import ukrdc_xsdata.ukrdc.observations as xsd_observations
-import ukrdc_xsdata.ukrdc.documents as xsd_documents
-import ukrdc_xsdata.pv.pv_2_0 as xsd_pvdata  # noqa: F401
+import ukrdc_xsdata.ukrdc.types as xsd_types  # type: ignore
+import ukrdc_xsdata.ukrdc.social_histories as xsd_social_history  # type: ignore
+import ukrdc_xsdata.ukrdc.family_histories as xsd_family_history  # type: ignore
+import ukrdc_xsdata.ukrdc.allergies as xsd_allergy  # type: ignore
+import ukrdc_xsdata.ukrdc.diagnoses as xsd_diagnosis  # type: ignore
+import ukrdc_xsdata.ukrdc.medications as xsd_medication  # type: ignore
+import ukrdc_xsdata.ukrdc.procedures as xsd_procedure  # type: ignore
+import ukrdc_xsdata.ukrdc.dialysis_sessions as xsd_dialysis_session  # type: ignore
+import ukrdc_xsdata.ukrdc.transplants as xsd_transplants  # type: ignore
+import ukrdc_xsdata.ukrdc.vascular_accesses as xsd_vascular_accesses  # type: ignore
+import ukrdc_xsdata.ukrdc.encounters as xsd_encounters  # type: ignore
+import ukrdc_xsdata.ukrdc.program_memberships as xsd_program_memberships  # type: ignore
+import ukrdc_xsdata.ukrdc.opt_outs as xsd_opt_outs  # type: ignore
+import ukrdc_xsdata.ukrdc.clinical_relationships as xsd_clinical_relationships  # type: ignore
+import ukrdc_xsdata.ukrdc.surveys as xsd_surveys  # type: ignore
+import ukrdc_xsdata.ukrdc.observations as xsd_observations  # type: ignore
+import ukrdc_xsdata.ukrdc.documents as xsd_documents  # type: ignore
+
+# import ukrdc_xsdata.pv.pv_2_0 as xsd_pvdata  # noqa: F401 type: ignore
 
 
 class Node(ABC):
@@ -44,15 +45,20 @@ class Node(ABC):
     tree is recursively applied by the parent class.
     """
 
-    def __init__(self, xml: xsd_all, orm_class: sqla = None, seq_no: int = None):
+    def __init__(
+        self,
+        xml: xsd_all,
+        orm_class: sqla.Base,  # type:ignore
+        seq_no: Optional[int] = None,
+    ):
         self.xml = xml  # xml file corresponding to a given
-        self.mapped_classes = []  # classes which depend on this one
+        self.mapped_classes: List[Node] = []  # classes which depend on this one
         self.seq_no = seq_no  # should only be need for tables where there
         if not orm_class:
             raise NameError("orm_class must be specified in child class")
 
         # create orm object which maps to Node
-        self.orm_object = orm_class()
+        self.orm_object = orm_class()  # type:ignore
 
     def add_item(
         self,
@@ -101,7 +107,7 @@ class Node(ABC):
             self.add_item(property_description, xml_code.description)
             self.add_item(property_std, xml_code.coding_standard)
 
-    def add_children(self, child_node: Node, xml_attr: str):
+    def add_children(self, child_node: Type[Node], xml_attr: str):
 
         # get xml items
         xml_items = getattr(self.xml, xml_attr, None)
@@ -111,9 +117,9 @@ class Node(ABC):
                 xml_items = [xml_items]
 
             for xml_item in xml_items:
-                node = child_node(xml_item)
-                node.map_xml_to_tree()
-                self.mapped_classes.append(node)
+                node_object = child_node(xml_item)  # type:ignore
+                node_object.map_xml_to_tree()
+                self.mapped_classes.append(node_object)
 
     def transform(self, pid: str):
         """
@@ -135,7 +141,7 @@ class Node(ABC):
             return [self.orm_object]
 
     @abstractmethod
-    def transformer(self, pid: Optional[str], **kwargs):
+    def transformer(self, pid: Optional[str], **kwargs: Optional[Dict[str, Any]]):
         """
         Specific to each class this will transform the data in the
         into the form required for the orm including adding keys, update dates etc
@@ -151,7 +157,7 @@ class Node(ABC):
 
 
 class ResultItem(Node):
-    def __init__(self, xml: xsd_lab_orders.ResultItem, seq_no: int = None):
+    def __init__(self, xml: xsd_lab_orders.ResultItem, seq_no: Optional[int] = None):
         super().__init__(xml, sqla.ResultItem, seq_no)
 
     def map_xml_to_tree(self):
@@ -173,14 +179,17 @@ class ResultItem(Node):
             "serviceidcode", "serviceidcodestd", "serviceiddesc", self.xml.service_id
         )
 
-    def transformer(self, order_id: str, seq_no: int):
+    def transformer(self, **kwargs):
+        seq_no: Optional[int] = kwargs.get("seq_no")
+        order_id: Optional[str] = kwargs.get("order_id")
+
         self.orm_object.id = key_gen.generate_key_resultitem(
             self.orm_object, order_id=order_id, seq_no=seq_no
         )
 
 
 class LabOrder(Node):
-    def __init__(self, xml: xsd_lab_orders.LabOrder, seq_no: int = None):
+    def __init__(self, xml: xsd_lab_orders.LabOrder, seq_no: Optional[int] = None):
         super().__init__(xml, sqla.LabOrder, seq_no)
 
     def map_xml_to_tree(self):
@@ -417,7 +426,7 @@ class Patient(Node):
         self.add_children(Address, "addresses.address")
         self.add_children(FamilyDoctor, "family_doctor")
 
-    def transformer(self, pid: str):
+    def transformer(self, pid: Optional[str], **kwargs: Optional[Dict[str, Any]]):
         self.orm_object.pid = pid
 
 
@@ -1209,17 +1218,6 @@ class Score(Node):
         pass
 
 
-class Level(Node):
-    def __init__(self, xml: xsd_surveys.Level):
-        super().__init__(xml, sqla.Level)
-
-    def map_xml_to_tree(self):
-        pass
-
-    def transformer(self):
-        pass
-
-
 class Survey(Node):
     def __init__(self, xml: xsd_surveys.Survey):
         super().__init__(xml, sqla.Survey)
@@ -1280,7 +1278,7 @@ class PatientRecord(Node):
             ClinicalRelationship, "clinical_relationships.clinical_relationship"
         )
         self.add_children(Observation, "observations.observation")
-        self.add_children(PVData, "path_to_self_xml")
+        # self.add_children(PVData, "path_to_self_xml")
 
-    def transformer(self, pid: str):
+    def transformer(self, pid: Optional[str], **kwargs: Optional[Dict[str, Any]]):
         self.orm_object.pid = pid

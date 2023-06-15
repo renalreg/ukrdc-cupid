@@ -7,7 +7,7 @@ def load_xml_from_path(filepath: str):
         data = file.read()
 
     try:
-        xsobject = XmlParser().from_string(data)
+        xsobject = XmlParser().from_string(data)  # type:ignore
         return xsobject
 
     except ParserError as e:

@@ -6,7 +6,7 @@ Returns:
 
 import ukrdc_sqla.ukrdc as orm
 
-import ukrdc_xsdata.ukrdc as xsd_ukrdc
+import ukrdc_xsdata.ukrdc as xsd_ukrdc  # type: ignore
 from sqlalchemy.orm import Session
 from sqlalchemy import and_, select
 

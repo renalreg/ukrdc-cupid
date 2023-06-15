@@ -1876,7 +1876,18 @@ def test_transplant():
     assert transplant.orm_object.tra97 == tra97
     assert transplant.orm_object.tra98 == tra98
 
-test_transplant()
+def test_level():
+    pass
 
-def test_pv_data():
-    pass 
+def test_score():
+    pass
+
+def test_level():
+    pass
+
+def test_survey():
+    pass
+
+
+#def test_pv_data():
+#    pass 
