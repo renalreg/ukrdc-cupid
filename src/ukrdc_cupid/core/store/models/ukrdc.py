@@ -194,7 +194,7 @@ class LabOrder(Node):
 
     def map_xml_to_tree(self):
 
-        self.add_item("placerid", self.xml.placer_id)
+        self.add_item("placerid", self.xml.placer_id, optional=False)
         self.add_item("fillerid", self.xml.filler_id)
         self.add_item("specimencollectedtime", self.xml.specimen_collected_time)
         self.add_item("status", self.xml.status)
