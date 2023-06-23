@@ -108,7 +108,6 @@ class Node(ABC):
             self.add_item(property_std, xml_code.coding_standard)
 
     def add_children(self, child_node: Type[Node], xml_attr: str):
-
         # get xml items
         xml_items = getattr(self.xml, xml_attr, None)
 
@@ -193,7 +192,6 @@ class LabOrder(Node):
         super().__init__(xml, sqla.LabOrder, seq_no)
 
     def map_xml_to_tree(self):
-
         self.add_item("placerid", self.xml.placer_id, optional=False)
         self.add_item("fillerid", self.xml.filler_id)
         self.add_item("specimencollectedtime", self.xml.specimen_collected_time)
@@ -390,7 +388,6 @@ class Patient(Node):
                 )
 
     def map_xml_to_tree(self):
-
         self.add_item("birthtime", self.xml.birth_time)
         self.add_item("deathtime", self.xml.death_time)
         self.add_item("gender", self.xml.gender)

@@ -311,7 +311,8 @@ def test_lab_orders():
 
 def test_result_items():
     
-    result_type = "AT"
+    #result_type = "AT"
+    result_type = "XZ"
     code = "ALB"
     result_value = "38.00000000"
 
@@ -335,6 +336,9 @@ def test_result_items():
     result_item.map_xml_to_tree()
     assert result_item.orm_object.resulttype == result_type
     assert result_item.orm_object.serviceidcode == code
+
+test_result_items()
+
 
 def test_social_history():
     """Test social history class using example xml file
