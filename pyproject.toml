@@ -12,6 +12,8 @@ version = "0.1.0"
 python = "^3.8"
 ukrdc-sqla = "^2.0.0"
 ukrdc-xsdata = "^3.3.0.post1"
+lxml = "^4.9.2"
+gitpython = "^3.1.31"
 
 [tool.poetry.group.dev.dependencies]
 black = {version = "^22.10.0", allow-prereleases = true}
