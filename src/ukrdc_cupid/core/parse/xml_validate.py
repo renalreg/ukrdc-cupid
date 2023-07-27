@@ -8,17 +8,28 @@ import os
 import shutil
 from git import Repo  # type: ignore
 from lxml import etree  # nosec B410
+from pydantic import Field
+from pydantic_settings import BaseSettings
+from platformdirs import user_data_dir
 
 
-APPDATA_DIR = os.path.expanduser("~\\AppData\\Local")
+class Settings(BaseSettings):
+    appdata_dir: str = Field(env="APPDATA_DIR", default=user_data_dir())
+    schema_repo: str = Field(
+        env="SCHEMA_REPO", default="https://github.com/renalreg/resources.git"
+    )
+    v3_commit: str = Field(
+        env="V3_COMMIT", default="232d696d3523908be815103a869c9e23b632ce3e"
+    )
+    v4_commit: str = Field(
+        env="V4_COMMIT", default="044b9f25b2d98257cb0cdc11a5fee29d903adc75"
+    )
+    v5_commit: str = Field(
+        env="V5_COMMIT", default="232d696d3523908be815103a869c9e23b632ce3e"
+    )
 
-# commits to pin the dataset version to
-REPO_URL = "https://github.com/renalreg/resources.git"
-V3_COMMIT = (
-    "f803899cd0a58864347002d63610db2dace11645"  # these xsd schemas currently broken
-)
-V4_COMMIT = "044b9f25b2d98257cb0cdc11a5fee29d903adc75"
-V5_COMMIT = "232d696d3523908be815103a869c9e23b632ce3e"
+
+env_variables = Settings()
 
 
 def download_ukrdc_schema(filepath: str, version: str):
@@ -30,16 +41,17 @@ def download_ukrdc_schema(filepath: str, version: str):
     """
 
     if version == "v3":
-        commit = V3_COMMIT
+        commit = env_variables.v3_commit
 
     if version == "v4":
-        commit = V4_COMMIT
+        commit = env_variables.v4_commit
 
     if version == "v5":
-        commit = V5_COMMIT
+        commit = env_variables.v5_commit
 
     repo_dir = os.path.join(filepath, "temp_files")
-    repo = Repo.clone_from(REPO_URL, repo_dir)
+
+    repo = Repo.clone_from(env_variables.schema_repo, repo_dir)
 
     # checkout desired commit, copy schema and clean up
     repo.git.checkout(commit)
@@ -59,7 +71,12 @@ def validate_rda_xml_string(rda_xml: str, dataset_version: str):
     # (I think there are plenty of ways this can break but is should be easily fixable by deleting the folder in APPDATA)
     if dataset_version == "v3":
         try:
-            xsd_file_path = os.path.join(APPDATA_DIR, "ukrdc_rda_schema", "v3")
+            xsd_file_path = os.path.join(
+                env_variables.appdata_dir,
+                "ukrdc_rda_schema",
+                "v3",
+                env_variables.v3_commit,
+            )
             xsd_doc = etree.parse(
                 os.path.join(xsd_file_path, "schema", "ukrdc", "UKRDC.xsd")
             )  # nosec B320
@@ -72,7 +89,12 @@ def validate_rda_xml_string(rda_xml: str, dataset_version: str):
 
     if dataset_version == "v4":
         try:
-            xsd_file_path = os.path.join(APPDATA_DIR, "ukrdc_rda_schema", "v4")
+            xsd_file_path = os.path.join(
+                env_variables.appdata_dir,
+                "ukrdc_rda_schema",
+                "v4",
+                env_variables.v4_commit,
+            )
             xsd_doc = etree.parse(
                 os.path.join(xsd_file_path, "schema", "ukrdc", "UKRDC.xsd")
             )  # nosec B320
@@ -85,7 +107,12 @@ def validate_rda_xml_string(rda_xml: str, dataset_version: str):
 
     if dataset_version == "v5":
         try:
-            xsd_file_path = os.path.join(APPDATA_DIR, "ukrdc_rda_schema", "v5")
+            xsd_file_path = os.path.join(
+                env_variables.appdata_dir,
+                "ukrdc_rda_schema",
+                "v5",
+                env_variables.v3_commit,
+            )
             xsd_doc = etree.parse(
                 os.path.join(xsd_file_path, "schema", "ukrdc", "UKRDC.xsd")
             )  # nosec B320
@@ -96,6 +123,8 @@ def validate_rda_xml_string(rda_xml: str, dataset_version: str):
                 os.path.join(xsd_file_path, "schema", "ukrdc", "UKRDC.xsd")
             )  # nosec B320
 
+    # This line will break if invalid schema are provided
+    # It doesn't see nessary to handle this since the schema should come from our resources repo
     xml_schema = etree.XMLSchema(xsd_doc)
 
     # Load the XML file
