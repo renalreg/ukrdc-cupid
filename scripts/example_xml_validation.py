@@ -2,7 +2,7 @@ from pathlib import Path
 from ukrdc_cupid.core.parse.xml_validate import validate_rda_xml_string
 
 def report_errors(file:str, dataset:str):
-    print(f"Running validation for file {file} againt dataset {dataset}")
+    print(f"\nRunning validation for file {file} against dataset {dataset}")
     errors = validate_rda_xml_string(Path(file).read_text(), dataset)
     if errors:
         print("-----------------------")

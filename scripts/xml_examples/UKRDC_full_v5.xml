@@ -1,0 +1,414 @@
+<ukrdc:PatientRecord xmlns:ukrdc="http://www.rixg.org.uk/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+    <SendingFacility channelName="UKRDCSampleExtract" schemaVersion="3.3.1" time="2022-07-21T09:00:00">ABC123</SendingFacility>
+    <SendingExtract>UKRDC</SendingExtract>
+    <Patient>
+        <PatientNumbers>
+            <PatientNumber>
+                <Number>AAA111B</Number>
+                <Organization>LOCALHOSP</Organization>
+                <NumberType>MRN</NumberType>
+            </PatientNumber>
+            <PatientNumber>
+                <Number>1111111111</Number>
+                <Organization>NHS</Organization>
+                <NumberType>NI</NumberType>
+            </PatientNumber>
+        </PatientNumbers>
+        <Names>
+            <Name use="L">
+                <Prefix>Mr</Prefix>
+                <Family>Sample</Family>
+                <Given>John</Given>
+            </Name>
+        </Names>
+        <BirthTime>2006-05-04T18:13:51.0</BirthTime>
+        <Gender>1</Gender>
+        <Addresses>
+            <Address use="H">
+                <FromTime>2006-05-04</FromTime>
+                <ToTime>2006-05-04</ToTime>
+                <Street>Street0</Street>
+                <Town>Town0</Town>
+                <County>County0</County>
+                <Postcode>BS10 5NB</Postcode>
+                <Country>
+                    <CodingStandard>ISO3166-1</CodingStandard>
+                    <Code>GBR</Code>
+                    <Description>Great Britain</Description>
+                </Country>
+            </Address>
+        </Addresses>
+        <ContactDetails>
+            <ContactDetail use="PRN">
+                <Value>0117 11111111</Value>
+            </ContactDetail>
+        </ContactDetails>
+        <CountryOfBirth>GBR</CountryOfBirth>
+        <FamilyDoctor>
+            <GPPracticeId>J11111</GPPracticeId>
+            <GPId>G2222222</GPId>
+            <Email>reception@villagegp.nhs.uk</Email>
+        </FamilyDoctor>
+        <EthnicGroup>
+            <CodingStandard>NHS_DATA_DICTIONARY</CodingStandard>
+            <Code>A</Code>
+            <Description>White - British</Description>
+        </EthnicGroup>
+        <BloodGroup>A</BloodGroup>
+        <BloodRhesus>POS</BloodRhesus>
+        <Death>false</Death>
+        <UpdatedOn>2006-05-04T18:13:51.0</UpdatedOn>
+        <ExternalId>1122334455</ExternalId>
+    </Patient>
+
+    <LabOrders start="2021-01-01" stop="2021-04-01">
+        <LabOrder>
+            <ReceivingLocation>
+                <CodingStandard>RR1+</CodingStandard>
+                <Code>ABC123</Code>
+                <Description>Test Hospital</Description>
+            </ReceivingLocation>
+            <PlacerId>PlacerId0</PlacerId>
+            <FillerId>FillerId0</FillerId>
+            <OrderedBy>
+                <CodingStandard>ODS</CodingStandard>
+                <Code>AA1122</Code>
+                <Description>Test Hospital 2</Description>
+            </OrderedBy>
+            <OrderItem>
+                <CodingStandard>LOCAL</CodingStandard>
+                <Code>11223344</Code>
+                <Description>Full Blood Test</Description>
+            </OrderItem>
+            <SpecimenCollectedTime>2006-05-04T18:13:51.0</SpecimenCollectedTime>
+            <SpecimenReceivedTime>2006-05-04T18:13:51.0</SpecimenReceivedTime>
+            <SpecimenSource>BLOOD</SpecimenSource>
+
+            <ResultItems>
+                <ResultItem>
+                    <EnteredOn>2006-05-04T18:13:51.0</EnteredOn>
+                    <PrePost>PRE</PrePost>
+                    <ServiceId>
+                        <CodingStandard>UKRR</CodingStandard>
+                        <Code>QBLA1</Code>
+                        <Description>Serum Creatinine</Description>
+                    </ServiceId>
+                    <ResultValue>78</ResultValue>
+                    <ResultValueUnits>mmol/L</ResultValueUnits>
+                    <ReferenceRange>10-1000</ReferenceRange>
+                    <ObservationTime>2006-05-04T18:13:51.0</ObservationTime>
+                </ResultItem>
+                <ResultItem>
+                    <EnteredOn>2006-05-04T18:13:51.0</EnteredOn>
+                    <PrePost>PRE</PrePost>
+                    <ServiceId>
+                        <CodingStandard>UKRR</CodingStandard>
+                        <Code>QBLF7</Code>
+                        <Description>Serum B12</Description>
+                    </ServiceId>
+                    <ResultValue>100</ResultValue>
+                    <ResultValueUnits>ng/L</ResultValueUnits>
+                    <ReferenceRange>0-10000</ReferenceRange>
+                    <ObservationTime>2006-05-04T18:13:51.0</ObservationTime>
+                </ResultItem>
+            </ResultItems>
+
+            <EnteredOn>2006-05-04T18:13:51.0</EnteredOn>
+            <EnteredAt>
+                <CodingStandard>RR1+</CodingStandard>
+                <Code>ABC123</Code>
+                <Description>Test Hospital</Description>
+            </EnteredAt>
+            <EnteringOrganization>
+                <CodingStandard>RR1+</CodingStandard>
+                <Code>ABC123</Code>
+                <Description>Test Hospital</Description>
+            </EnteringOrganization>
+            <UpdatedOn>2006-05-04T18:13:51.0</UpdatedOn>
+            <ExternalId>9999999999</ExternalId>
+        </LabOrder>
+    </LabOrders>
+
+    <Observations start="2021-01-01" stop="2021-04-01">
+        <Observation>
+            <ObservationTime>2006-05-04T18:13:51.0</ObservationTime>
+            <ObservationCode>
+                <CodingStandard>UKRR</CodingStandard>
+                <Code>QBLG3</Code>
+                <Description>Systolic BP</Description>
+            </ObservationCode>
+            <ObservationValue>150</ObservationValue>
+            <ObservationUnits>mmHg</ObservationUnits>
+            <PrePost>PRE</PrePost>
+            <EnteredAt>
+                <CodingStandard>RR1+</CodingStandard>
+                <Code>ABC123</Code>
+                <Description>Test Hospital</Description>
+            </EnteredAt>
+            <EnteringOrganization>
+                <CodingStandard>RR1+</CodingStandard>
+                <Code>ABC123</Code>
+                <Description>Test Hospital</Description>
+            </EnteringOrganization>
+            <UpdatedOn>2006-05-04T18:13:51.0</UpdatedOn>
+            <ExternalId>88888888</ExternalId>
+        </Observation>
+        <Observation>
+            <ObservationTime>2006-05-04T18:13:51.0</ObservationTime>
+            <ObservationCode>
+                <CodingStandard>UKRR</CodingStandard>
+                <Code>QBLG4</Code>
+                <Description>Diastolic BP</Description>
+            </ObservationCode>
+            <ObservationValue>100</ObservationValue>
+            <ObservationUnits>mmHg</ObservationUnits>
+            <PrePost>PRE</PrePost>
+            <EnteredAt>
+                <CodingStandard>RR1+</CodingStandard>
+                <Code>ABC123</Code>
+                <Description>Test Hospital</Description>
+            </EnteredAt>
+            <EnteringOrganization>
+                <CodingStandard>RR1+</CodingStandard>
+                <Code>ABC123</Code>
+                <Description>Test Hospital</Description>
+            </EnteringOrganization>
+            <UpdatedOn>2006-05-04T18:13:51.0</UpdatedOn>
+            <ExternalId>7777777777</ExternalId>
+        </Observation>
+    </Observations>
+
+    <Diagnoses>
+        <Diagnosis>
+            <Diagnosis>
+                <CodingStandard>SNOMED</CodingStandard>
+                <Code>414545008</Code>
+                <Description>Ischaemic Heart Disease</Description>
+            </Diagnosis>
+            <IdentificationTime>2006-05-04T18:13:51.0</IdentificationTime>
+            <OnsetTime>2006-05-04T18:13:51.0</OnsetTime>
+            <EnteredOn>2006-05-04T18:13:51.0</EnteredOn>
+            <UpdatedOn>2006-05-04T18:13:51.0</UpdatedOn>
+            <ExternalId>5555555555</ExternalId>
+        </Diagnosis>
+        <Diagnosis>
+            <Diagnosis>
+                <CodingStandard>SNOMED</CodingStandard>
+                <Code>235856003</Code>
+                <Description>Liver Disease</Description>
+            </Diagnosis>
+            <IdentificationTime>2006-05-04T18:13:51.0</IdentificationTime>
+            <OnsetTime>2006-05-04T18:13:51.0</OnsetTime>
+            <EnteredOn>2006-05-04T18:13:51.0</EnteredOn>
+            <UpdatedOn>2006-05-04T18:13:51.0</UpdatedOn>
+            <ExternalId>778787876878</ExternalId>
+        </Diagnosis>
+        <CauseOfDeath>
+            <DiagnosisType>PRIMARY</DiagnosisType>
+            <Diagnosis>
+                <CodingStandard>EDTA_COD</CodingStandard>
+                <Code>14</Code>
+                <Description>Other causes of cardiac failure</Description>
+            </Diagnosis>
+            <Comments>Comments15</Comments>
+            <EnteredOn>2006-05-04T18:13:51.0</EnteredOn>
+            <UpdatedOn>2006-05-04T18:13:51.0</UpdatedOn>
+            <ExternalId>211111221</ExternalId>
+        </CauseOfDeath>
+        <RenalDiagnosis>
+            <DiagnosisType>PRIMARY</DiagnosisType>
+            <Diagnosis>
+                <CodingStandard>EDTA2</CodingStandard>
+                <Code>13</Code>
+                <Description>Dense deposite disease, membrano-prolif. GN Type II</Description>
+            </Diagnosis>
+            <Comments>Comments16</Comments>
+            <IdentificationTime>2006-05-04T18:13:51.0</IdentificationTime>
+            <OnsetTime>2006-05-04T18:13:51.0</OnsetTime>
+            <EnteredOn>2006-05-04T18:13:51.0</EnteredOn>
+            <UpdatedOn>2006-05-04T18:13:51.0</UpdatedOn>
+            <ExternalId>433444333222</ExternalId>
+        </RenalDiagnosis>
+    </Diagnoses>
+
+    <Medications>
+        <Medication>
+            <FromTime>2006-05-04T18:13:51.0</FromTime>
+            <ToTime>2006-05-04T18:13:51.0</ToTime>
+            <Route>
+                <CodingStandard>RR22</CodingStandard>
+                <Code>1</Code>
+                <Description>Oral</Description>
+            </Route>
+            <DrugProduct>
+                <Generic>Generic0</Generic>
+                <LabelName>LabelName0</LabelName>
+                <Form>
+                    <CodingStandard>SNOMED</CodingStandard>
+                    <Code>Code60</Code>
+                    <Description>Description60</Description>
+                </Form>
+                <StrengthUnits>
+                    <CodingStandard>CF_RR23</CodingStandard>
+                    <Code>l</Code>
+                    <Description>Description61</Description>
+                </StrengthUnits>
+            </DrugProduct>
+            <Frequency>Frequency0</Frequency>
+            <Comments>Comments17</Comments>
+            <DoseQuantity>0</DoseQuantity>
+            <DoseUoM>
+                <CodingStandard>CodingStandard62</CodingStandard>
+                <Code>Code62</Code>
+                <Description>Description62</Description>
+            </DoseUoM>
+            <Indication>Indication0</Indication>
+            <EncounterNumber>EncounterNumber2</EncounterNumber>
+            <UpdatedOn>2006-05-04T18:13:51.0</UpdatedOn>
+            <ExternalId>ExternalId15</ExternalId>
+        </Medication>
+    </Medications>
+
+    <Procedures>
+        <DialysisSessions>
+            <DialysisSession>
+                <ProcedureType>
+                    <CodingStandard>SNOMED</CodingStandard>
+                    <Code>302497006</Code>
+                    <Description>Haemodialysis</Description>
+                </ProcedureType>
+                <ProcedureTime>2006-05-04T18:13:51.0</ProcedureTime>
+                <EnteredBy>
+                    <CodingStandard>ODS</CodingStandard>
+                    <Code>ABC123</Code>
+                    <Description>Dr Foster</Description>
+                </EnteredBy>
+                <EnteredAt>
+                    <CodingStandard>RR1+</CodingStandard>
+                    <Code>ABC123</Code>
+                    <Description>Test Hospital</Description>
+                </EnteredAt>
+                <UpdatedOn>2006-05-04T18:13:51.0</UpdatedOn>
+                <ExternalId>787878787</ExternalId>
+            </DialysisSession>
+            <DialysisSession>
+                <ProcedureType>
+                    <CodingStandard>SNOMED</CodingStandard>
+                    <Code>Code82</Code>
+                    <Description>Description82</Description>
+                </ProcedureType>
+                <ProcedureTime>2006-05-04T18:13:51.0</ProcedureTime>
+                <EnteredBy>
+                    <CodingStandard>ODS</CodingStandard>
+                    <Code>Code84</Code>
+                    <Description>Description84</Description>
+                </EnteredBy>
+                <EnteredAt>
+                    <CodingStandard>ODS</CodingStandard>
+                    <Code>Code85</Code>
+                    <Description>Description85</Description>
+                </EnteredAt>
+                <UpdatedOn>2006-05-04T18:13:51.0</UpdatedOn>
+                <ExternalId>ExternalId20</ExternalId>
+            </DialysisSession>
+        </DialysisSessions>
+        <Transplant>
+            <ProcedureType>
+                <CodingStandard>SNOMED</CodingStandard>
+                <Code>19647005</Code>
+                <Description>PEX</Description>
+            </ProcedureType>
+            <ProcedureTime>2006-05-04T18:13:51.0</ProcedureTime>
+            <EnteredBy>
+                <CodingStandard>ODS</CodingStandard>
+                <Code>ABC123</Code>
+                <Description>Dr Foster</Description>
+            </EnteredBy>
+            <EnteredAt>
+                <CodingStandard>RR1+</CodingStandard>
+                <Code>ABC123</Code>
+                <Description>Test Hospital</Description>
+            </EnteredAt>
+            <UpdatedOn>2006-05-04T18:13:51.0</UpdatedOn>
+            <ExternalId>1222333444</ExternalId>
+        </Transplant>
+        <VascularAccess>
+            <ProcedureType>
+                <CodingStandard>SNOMED</CodingStandard>
+                <Code>27929005</Code>
+                <Description>Construction of arteriovenous fistula</Description>
+            </ProcedureType>
+            <ProcedureTime>2006-05-04T18:13:51.0</ProcedureTime>
+            <EnteredBy>
+                <CodingStandard>ODS</CodingStandard>
+                <Code>ABC123</Code>
+                <Description>Dr Foster</Description>
+            </EnteredBy>
+            <EnteredAt>
+                <CodingStandard>RR1+</CodingStandard>
+                <Code>ABC123</Code>
+                <Description>Test Hospital</Description>
+            </EnteredAt>
+            <UpdatedOn>2006-05-04T18:13:51.0</UpdatedOn>
+            <ExternalId>1111111111</ExternalId>
+            <Attributes>
+                <ACC19>2006-05-04T18:13:51.0</ACC19>
+                <ACC20>2006-05-04T18:13:51.0</ACC20>
+                <ACC21>2006-05-04T18:13:51.0</ACC21>
+                <ACC22>100</ACC22>
+                <ACC30>1</ACC30>
+                <ACC40>300</ACC40>
+            </Attributes>
+        </VascularAccess>
+    </Procedures>
+
+    <Documents>
+        <Document>
+            <DocumentTime>2006-05-04T18:13:51.0</DocumentTime>
+            <NoteText>This is some plain text.</NoteText>
+            <DocumentName>GP Letter</DocumentName>
+            <FileType>text/plain</FileType>
+            <FileName>letter.txt</FileName>
+            <UpdatedOn>2006-05-04T18:13:51.0</UpdatedOn>
+            <ExternalId>1111111111</ExternalId>
+        </Document>
+    </Documents>
+
+    <Encounters>
+        <Treatment>
+            <FromTime>2006-05-04</FromTime>
+            <ToTime>2021-05-04</ToTime>
+            <HealthCareFacility>
+                <CodingStandard>RR1+</CodingStandard>
+                <Code>ABC123</Code>
+                <Description>Test Hospital</Description>
+            </HealthCareFacility>
+            <AdmitReason>
+                <CodingStandard>CF_RR7_TREATMENT</CodingStandard>
+                <Code>1</Code>
+                <Description>Haemodialysis</Description>
+            </AdmitReason>
+            <AdmissionSource>
+                <CodingStandard>RR1+</CodingStandard>
+                <Code>ABROAD</Code>
+                <Description>ABROAD</Description>
+            </AdmissionSource>
+            <DischargeReason>
+                <CodingStandard>CF_RR7_DISCHARGE</CodingStandard>
+                <Code>38</Code>
+                <Description>Patient Transferred Out</Description>
+            </DischargeReason>
+            <DischargeLocation>
+                <CodingStandard>RR1+</CodingStandard>
+                <Code>AAA111</Code>
+                <Description>Another Hospital</Description>
+            </DischargeLocation>
+            <Attributes>
+                <QBL05>HOME</QBL05>
+            </Attributes>
+            <UpdatedOn>2006-05-04T18:13:51.0</UpdatedOn>
+            <ExternalId>3343433432234</ExternalId>
+        </Treatment>
+    </Encounters>
+
+</ukrdc:PatientRecord>

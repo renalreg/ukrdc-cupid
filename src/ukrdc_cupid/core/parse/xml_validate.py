@@ -1,6 +1,8 @@
 """
 Functions to be called in the validation step. 
 These will be made available by the api and callable as its own step. This will enable the validity of the xml to be checked prior to any attempt to load and store it (a much more resource heavy process).
+
+Note that the RDA schema versioning is one behind that of the UKRR Dataset
 """
 
 
@@ -15,17 +17,25 @@ from platformdirs import user_data_dir
 
 class Settings(BaseSettings):
     appdata_dir: str = Field(env="APPDATA_DIR", default=user_data_dir())
+
+    # the schema are pinned to specific commits on the resources repo
     schema_repo: str = Field(
         env="SCHEMA_REPO", default="https://github.com/renalreg/resources.git"
     )
+
+    # Not sure about this but is is the commit tagged with version 2.4
     v3_commit: str = Field(
-        env="V3_COMMIT", default="232d696d3523908be815103a869c9e23b632ce3e"
+        env="V3_COMMIT", default="f6c77e12dabaf83e5f8a172b16bbec67d218e5b5"
     )
+
+    # last commit here https://github.com/renalreg/resources/pull/12
     v4_commit: str = Field(
-        env="V4_COMMIT", default="044b9f25b2d98257cb0cdc11a5fee29d903adc75"
+        env="V4_COMMIT", default="232d696d3523908be815103a869c9e23b632ce3e"
     )
+
+    # Most recent commit as of 31/07/23
     v5_commit: str = Field(
-        env="V5_COMMIT", default="232d696d3523908be815103a869c9e23b632ce3e"
+        env="V5_COMMIT", default="004900d69f4f0ecec47d6eadc595d8d4b55b84cb"
     )
 
 
@@ -59,14 +69,8 @@ def download_ukrdc_schema(filepath: str, version: str):
     shutil.rmtree(repo_dir, ignore_errors=True)
 
 
-def validate_rda_xml_string(rda_xml: str, dataset_version: str):
-    """Function to take a RDA xml file and do basic checks against the ukrdc schema
-
-    Args:
-        rda_xml (str): xml file as a string
-        dataset_version (str): version of the dataset to check the xml against
-    """
-
+def load_schema(dataset_version: str):
+    """function to load or download and load ukrdc schema"""
     # Load the XSD schema and try downloading files if there is an error
     # (I think there are plenty of ways this can break but is should be easily fixable by deleting the folder in APPDATA)
     if dataset_version == "v3":
@@ -125,7 +129,18 @@ def validate_rda_xml_string(rda_xml: str, dataset_version: str):
 
     # This line will break if invalid schema are provided
     # It doesn't see nessary to handle this since the schema should come from our resources repo
-    xml_schema = etree.XMLSchema(xsd_doc)
+    return etree.XMLSchema(xsd_doc), xsd_file_path
+
+
+def validate_rda_xml_string(rda_xml: str, dataset_version: str = "v5"):
+    """Function to take a RDA xml file and do basic checks against the ukrdc schema
+
+    Args:
+        rda_xml (str): xml file as a string
+        dataset_version (str): version of the dataset to check the xml against
+    """
+
+    xml_schema, _ = load_schema(dataset_version)
 
     # Load the XML file
     xml_doc = etree.XML(rda_xml.encode())
