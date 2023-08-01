@@ -1,9 +1,9 @@
 from pathlib import Path
 from ukrdc_cupid.core.parse.xml_validate import validate_rda_xml_string
 
-def report_errors(file:str, dataset:str):
-    print(f"\nRunning validation for file {file} against dataset {dataset}")
-    errors = validate_rda_xml_string(Path(file).read_text(), dataset)
+def report_errors(file:str, schema_version:str):
+    print(f"\nRunning validation for file {file} against schema version {schema_version}")
+    errors = validate_rda_xml_string(Path(file).read_text(), schema_version)
     if errors:
         print("-----------------------")
         print("  Line number | Error  ")
@@ -18,9 +18,9 @@ def report_errors(file:str, dataset:str):
 xml_files = [item for item in Path("scripts/xml_examples/").rglob("*.xml")]
 
 
-
+# runs through and validates all example files against all available datasets
 for file in xml_files:
-    for dataset in [ "v5", "v4","v3"]:
-        report_errors(file, dataset)
+    for schema_version in ["3.4.5","4.0.0"]:
+        report_errors(file, schema_version)
 
 

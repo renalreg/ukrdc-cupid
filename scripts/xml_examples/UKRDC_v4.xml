@@ -1,5 +1,5 @@
 <ukrdc:PatientRecord xmlns:ukrdc="http://www.rixg.org.uk/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
-    <SendingFacility channelName="UKRDCSampleExtract" schemaVersion="3.3.1">ABC123</SendingFacility>
+    <SendingFacility channelName="UKRDCSampleExtract" schemaVersion="3.3.1" time="2022-07-21T09:00:00">ABC123</SendingFacility>
     <SendingExtract>UKRDC</SendingExtract>
     <Patient>
         <PatientNumbers>
@@ -188,11 +188,6 @@
             <IdentificationTime>2006-05-04T18:13:51.0</IdentificationTime>
             <OnsetTime>2006-05-04T18:13:51.0</OnsetTime>
             <EnteredOn>2006-05-04T18:13:51.0</EnteredOn>
-            <EnteredAt>
-                <CodingStandard>RR1+</CodingStandard>
-                <Code>ABC123</Code>
-                <Description>Test Hospital</Description>
-            </EnteredAt>
             <UpdatedOn>2006-05-04T18:13:51.0</UpdatedOn>
             <ExternalId>5555555555</ExternalId>
         </Diagnosis>
@@ -205,15 +200,11 @@
             <IdentificationTime>2006-05-04T18:13:51.0</IdentificationTime>
             <OnsetTime>2006-05-04T18:13:51.0</OnsetTime>
             <EnteredOn>2006-05-04T18:13:51.0</EnteredOn>
-            <EnteredAt>
-                <CodingStandard>RR1+</CodingStandard>
-                <Code>ABC123</Code>
-                <Description>Test Hospital 1</Description>
-            </EnteredAt>
             <UpdatedOn>2006-05-04T18:13:51.0</UpdatedOn>
             <ExternalId>778787876878</ExternalId>
         </Diagnosis>
         <CauseOfDeath>
+            <DiagnosisType>PRIMARY</DiagnosisType>
             <Diagnosis>
                 <CodingStandard>EDTA_COD</CodingStandard>
                 <Code>14</Code>
@@ -225,6 +216,7 @@
             <ExternalId>211111221</ExternalId>
         </CauseOfDeath>
         <RenalDiagnosis>
+            <DiagnosisType>PRIMARY</DiagnosisType>
             <Diagnosis>
                 <CodingStandard>EDTA2</CodingStandard>
                 <Code>13</Code>
@@ -298,16 +290,6 @@
                 </EnteredAt>
                 <UpdatedOn>2006-05-04T18:13:51.0</UpdatedOn>
                 <ExternalId>787878787</ExternalId>
-                <Attributes>
-                    <QHD19>Y</QHD19>
-                    <QHD20>NLN</QHD20>
-                    <QHD21>BB</QHD21>
-                    <QHD22>Y</QHD22>
-                    <QHD30>100</QHD30>
-                    <QHD31>200</QHD31>
-                    <QHD32>300</QHD32>
-                    <QHD33>U</QHD33>
-                </Attributes>
             </DialysisSession>
             <DialysisSession>
                 <ProcedureType>
@@ -315,11 +297,6 @@
                     <Code>Code82</Code>
                     <Description>Description82</Description>
                 </ProcedureType>
-                <Clinician>
-                    <CodingStandard>ODS</CodingStandard>
-                    <Code>Code83</Code>
-                    <Description>Description83</Description>
-                </Clinician>
                 <ProcedureTime>2006-05-04T18:13:51.0</ProcedureTime>
                 <EnteredBy>
                     <CodingStandard>ODS</CodingStandard>
@@ -333,16 +310,6 @@
                 </EnteredAt>
                 <UpdatedOn>2006-05-04T18:13:51.0</UpdatedOn>
                 <ExternalId>ExternalId20</ExternalId>
-                <Attributes>
-                    <QHD19>Y</QHD19>
-                    <QHD20>NLN</QHD20>
-                    <QHD21>BB</QHD21>
-                    <QHD22>Y</QHD22>
-                    <QHD30>100</QHD30>
-                    <QHD31>200</QHD31>
-                    <QHD32>300</QHD32>
-                    <QHD33>L</QHD33>
-                </Attributes>
             </DialysisSession>
         </DialysisSessions>
         <Transplant>
@@ -364,36 +331,6 @@
             </EnteredAt>
             <UpdatedOn>2006-05-04T18:13:51.0</UpdatedOn>
             <ExternalId>1222333444</ExternalId>
-            <Attributes>
-                <TRA64>2006-05-04T18:13:51.0</TRA64>
-                <TRA65>14</TRA65>
-                <TRA66>2006-05-04T18:13:51.0</TRA66>
-                <TRA69>2006-05-04T18:13:51.0</TRA69>
-                <TRA76>21</TRA76>
-                <TRA77>DBD</TRA77>
-                <TRA78>NEG</TRA78>
-                <TRA79>NEG</TRA79>
-                <TRA80>27</TRA80>
-                <TRA8A>1</TRA8A>
-                <TRA81>NEG</TRA81>
-                <TRA82>NEG</TRA82>
-                <TRA83>0</TRA83>
-                <TRA84>0</TRA84>
-                <TRA85>0</TRA85>
-                <TRA86>Y</TRA86>
-                <TRA87>Y</TRA87>
-                <TRA88>Y</TRA88>
-                <TRA89>Y</TRA89>
-                <TRA90>Y</TRA90>
-                <TRA91>90</TRA91>
-                <TRA92>Y</TRA92>
-                <TRA93>0</TRA93>
-                <TRA94>1</TRA94>
-                <TRA95>2</TRA95>
-                <TRA96>Y</TRA96>
-                <TRA97>10</TRA97>
-                <TRA98>10</TRA98>
-            </Attributes>
         </Transplant>
         <VascularAccess>
             <ProcedureType>
@@ -467,15 +404,7 @@
                 <Description>Another Hospital</Description>
             </DischargeLocation>
             <Attributes>
-                <HDP01>100</HDP01>
-                <HDP02>200</HDP02>
-                <HDP03>300</HDP03>
-                <HDP04>400</HDP04>
-                <QBL05>HOSP</QBL05>
-                <QBL06>1</QBL06>
-                <QBL07>Y</QBL07>
-                <ERF61>1</ERF61>
-                <PAT35>2006-05-04T18:13:51.0</PAT35>
+                <QBL05>INCENTRE</QBL05>
             </Attributes>
             <UpdatedOn>2006-05-04T18:13:51.0</UpdatedOn>
             <ExternalId>3343433432234</ExternalId>
