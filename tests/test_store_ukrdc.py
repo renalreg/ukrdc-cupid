@@ -38,7 +38,7 @@ def test_patient_record_xml_mapping():
     """
     To be expanded: this test loads a full xml record 
     """
-    xml = load_xml_from_path(r"scripts/xml_examples/UKRDC.xml")
+    xml = load_xml_from_path(r"scripts/xml_examples/UKRDC_v3.xml")
 
     patient_record = models.PatientRecord(xml)
     patient_record.map_xml_to_tree()
