@@ -24,26 +24,29 @@ class Settings(BaseSettings):
 
     appdata_dir: str = Field(env="APPDATA_DIR", default=user_data_dir())
 
-    # the schema are pinned to specific commits on the resources repo
     schema_repo: str = Field(
         env="SCHEMA_REPO", default="https://github.com/renalreg/resources.git"
     )
 
-    # should be pinned to the highest minor release of version 3 of RDA schema
-    v3_commit: str = Field(
-        env="V3_COMMIT", default="14fa420a971e16306de3e00cd1fc51b6e344c596"
+    v3_3_0_commit: str = Field(
+        env="V3_3_0_COMMIT", default="7095add5ea07369dedbd499fa4662f3f72754d31"
     )
 
-    # "" version 4 of RDA schema
-    v4_commit: str = Field(
-        env="V4_COMMIT", default="046b25021c52ebeaff1d878a01aa8ec56c4667ed"
+    v3_4_5_commit: str = Field(
+        env="V3_4_5_COMMIT", default="14fa420a971e16306de3e00cd1fc51b6e344c596"
+    )
+
+    v4_0_0_commit: str = Field(
+        env="V4_0_0_COMMIT", default="046b25021c52ebeaff1d878a01aa8ec56c4667ed"
     )
 
 
 env_variables = Settings()
 
+SUPPORTED_VERSIONS = ["3.3.0", "3.4.5", "4.0.0"]
 
-def download_ukrdc_schema(filepath: str, schema_version: int):
+
+def download_ukrdc_schema(filepath: str, schema_version: str):
     """
     Downloads the specified schema version from the GitHub repository. A specific commit id is mapped to each supported version of the schema this is loaded via the environment variables.
 
@@ -56,13 +59,13 @@ def download_ukrdc_schema(filepath: str, schema_version: int):
         The schema are pinned to specific commits on the resources repo.
     """
 
-    if schema_version == 3:
-        commit = env_variables.v3_commit
-
-    elif schema_version == 4:
-        commit = env_variables.v4_commit
+    if schema_version in SUPPORTED_VERSIONS:
+        version = "v" + schema_version.replace(".", "_")
+        commit = getattr(env_variables, f"{version}_commit")
     else:
-        raise ValueError("Unsupported schema version")
+        raise ValueError("Unsupported schema version {schema_version}")
+
+    print(commit)
 
     repo_dir = os.path.join(filepath, "temp_files")
 
@@ -74,7 +77,7 @@ def download_ukrdc_schema(filepath: str, schema_version: int):
     shutil.rmtree(repo_dir, ignore_errors=True)
 
 
-def load_schema(schema_version: int):
+def load_schema(schema_version: str):
     """
     Locate the schema locally and load it into lxml so it can be used for validation.
 
@@ -88,47 +91,27 @@ def load_schema(schema_version: int):
         ValueError: If an unsupported schema version is provided.
     """
 
-    # Load the XSD schema into lxml and if that doesn't work downloading schema files locally from github
-    if schema_version == 3:
-        try:
-            xsd_file_path = os.path.join(
-                env_variables.appdata_dir,
-                "ukrdc_rda_schema",
-                "v3",
-                env_variables.v3_commit,
-            )
-            xsd_doc = etree.parse(
-                os.path.join(xsd_file_path, "schema", "ukrdc", "UKRDC.xsd")
-            )  # nosec B320
-        except OSError:
-            print("downloading missing ukrdc version 3 schema")
-            download_ukrdc_schema(xsd_file_path, 3)
-            xsd_doc = etree.parse(
-                os.path.join(xsd_file_path, "schema", "ukrdc", "UKRDC.xsd")
-            )  # nosec B320
-
-    elif schema_version == 4:
-        try:
-            xsd_file_path = os.path.join(
-                env_variables.appdata_dir,
-                "ukrdc_rda_schema",
-                "v4",
-                env_variables.v4_commit,
-            )
-            xsd_doc = etree.parse(
-                os.path.join(xsd_file_path, "schema", "ukrdc", "UKRDC.xsd")
-            )  # nosec B320
-        except OSError:
-            print("downloading missing ukrdc version 4 schema")
-            download_ukrdc_schema(xsd_file_path, 4)
-            xsd_doc = etree.parse(
-                os.path.join(xsd_file_path, "schema", "ukrdc", "UKRDC.xsd")
-            )  # nosec B320
+    # assemble the information required to load locally stored xsd schema and complain if unsupported version is used
+    if schema_version in SUPPORTED_VERSIONS:
+        formatted_ver = schema_version.replace(".", "_")
+        commit = getattr(env_variables, f"v{formatted_ver}_commit")
     else:
-        raise ValueError("Unsupported schema version")
+        raise ValueError("Unsupported schema version {schema_version}")
 
-    # This line will break if invalid schema are provided
-    # It doesn't see nessary to handle this since the schema should come from our resources repo
+    xsd_file_path = os.path.join(
+        env_variables.appdata_dir,
+        "ukrdc_rda_schema",
+        "v" + formatted_ver,
+        commit,
+    )
+    ukrdc_path = os.path.join(xsd_file_path, "schema", "ukrdc", "UKRDC.xsd")
+
+    try:
+        xsd_doc = etree.parse(ukrdc_path)  # nosec B320
+    except OSError:
+        download_ukrdc_schema(xsd_file_path, schema_version=schema_version)
+        xsd_doc = etree.parse(ukrdc_path)  # nosec B320
+
     return etree.XMLSchema(xsd_doc), xsd_file_path
 
 
@@ -144,7 +127,7 @@ def validate_rda_xml_string(rda_xml: str, schema_version: str = "4.0.0"):
         dict or None: If validation fails, returns a dictionary of errors (None if validation passes).
     """
 
-    xml_schema, _ = load_schema(int(schema_version[0]))
+    xml_schema, _ = load_schema(schema_version)
 
     # Load the XML file
     xml_doc = etree.XML(rda_xml.encode())
