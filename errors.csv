@@ -1,0 +1,5 @@
+file name,schema version,line,error
+UKRDC_mistakes.xml,3.3.0,line 31,"Element 'Fromtime': This element is not expected. Expected is one of ( FromTime, ToTime, Street, Town, County, Postcode, Country )."
+UKRDC_mistakes.xml,3.3.0,line 152,Element 'UpdatedOn': '2006-05-04T18:13' is not a valid value of the atomic type 'xs:dateTime'.
+UKRDC_mistakes.xml,3.3.0,line 242,"Element 'Totime': This element is not expected. Expected is one of ( ToTime, OrderedBy, EnteringOrganization, Route, DrugProduct )."
+UKRDC_v4.xml,3.3.0,line 407,"Element 'QBL05': [facet 'enumeration'] The value 'INCENTRE' is not an element of the set {'HOSP', 'SATL', 'HOME'}."
