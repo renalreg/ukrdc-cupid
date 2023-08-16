@@ -11,12 +11,12 @@ version = "0.1.1"
 [tool.poetry.dependencies]
 python = "^3.8"
 ukrdc-sqla = "^2.0.0"
-ukrdc-xsdata = "^3.3.0.post1"
 lxml = "^4.9.2"
 gitpython = "^3.1.31"
 pydantic = "^2.1.1"
 pydantic-settings = "^2.0.2"
 platformdirs = "^3.9.1"
+ukrdc-xsdata = "^4.0.0"
 
 [tool.poetry.group.dev.dependencies]
 black = {version = "^22.10.0", allow-prereleases = true}

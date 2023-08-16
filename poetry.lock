@@ -596,13 +596,13 @@ typing-extensions = ">=4.6.0,<4.7.0 || >4.7.0"
 
 [[package]]
 name = "pydantic-settings"
-version = "2.0.2"
+version = "2.0.3"
 description = "Settings management using Pydantic"
 optional = false
 python-versions = ">=3.7"
 files = [
-    {file = "pydantic_settings-2.0.2-py3-none-any.whl", hash = "sha256:6183a2abeab465d5a3ab69758e9a22d38b0cc2ba193f0b85f6971a252ea630f6"},
-    {file = "pydantic_settings-2.0.2.tar.gz", hash = "sha256:342337fff50b23585e807a86dec85037900972364435c55c2fc00d16ff080539"},
+    {file = "pydantic_settings-2.0.3-py3-none-any.whl", hash = "sha256:ddd907b066622bd67603b75e2ff791875540dc485b7307c4fffc015719da8625"},
+    {file = "pydantic_settings-2.0.3.tar.gz", hash = "sha256:962dc3672495aad6ae96a4390fac7e593591e144625e5112d359f8f67fb75945"},
 ]
 
 [package.dependencies]
@@ -859,13 +859,13 @@ files = [
 
 [[package]]
 name = "tox"
-version = "4.7.0"
+version = "4.8.0"
 description = "tox is a generic virtualenv management and test command line tool"
 optional = false
 python-versions = ">=3.7"
 files = [
-    {file = "tox-4.7.0-py3-none-any.whl", hash = "sha256:79399a3d4641d1fd15eb6bd62c2f35923988038bf0ecf37a688b5e7a767de7d7"},
-    {file = "tox-4.7.0.tar.gz", hash = "sha256:89120e1568c763924301cfde61ba7d4b5c4615eeb1086d5370deb03e9cf63c41"},
+    {file = "tox-4.8.0-py3-none-any.whl", hash = "sha256:4991305a56983d750a0d848a34242be290452aa88d248f1bf976e4036ee8b213"},
+    {file = "tox-4.8.0.tar.gz", hash = "sha256:2adacf435b12ccf10b9dfa9975d8ec0afd7cbae44d300463140d2117b968037b"},
 ]
 
 [package.dependencies]
@@ -911,12 +911,12 @@ SQLAlchemy = ">=1.4.25,<2.0.0"
 
 [[package]]
 name = "ukrdc-xsdata"
-version = "3.4.5"
+version = "4.0.0"
 description = ""
 optional = false
 python-versions = "*"
 files = [
-    {file = "ukrdc_xsdata-3.4.5-py3-none-any.whl", hash = "sha256:d2084fd01cc45228e5bc73703f86f9b825cfa112263da10bcf84294110dc53b3"},
+    {file = "ukrdc_xsdata-4.0.0-py3-none-any.whl", hash = "sha256:a60f729be8d0b3e98345cfdafe30dee030cee60846297907235d06dd8462700c"},
 ]
 
 [package.dependencies]
@@ -924,13 +924,13 @@ xsdata = "*"
 
 [[package]]
 name = "virtualenv"
-version = "20.24.2"
+version = "20.24.3"
 description = "Virtual Python Environment builder"
 optional = false
 python-versions = ">=3.7"
 files = [
-    {file = "virtualenv-20.24.2-py3-none-any.whl", hash = "sha256:43a3052be36080548bdee0b42919c88072037d50d56c28bd3f853cbe92b953ff"},
-    {file = "virtualenv-20.24.2.tar.gz", hash = "sha256:fd8a78f46f6b99a67b7ec5cf73f92357891a7b3a40fd97637c27f854aae3b9e0"},
+    {file = "virtualenv-20.24.3-py3-none-any.whl", hash = "sha256:95a6e9398b4967fbcb5fef2acec5efaf9aa4972049d9ae41f95e0972a683fd02"},
+    {file = "virtualenv-20.24.3.tar.gz", hash = "sha256:e5c3b4ce817b0b328af041506a2a299418c98747c4b1e68cb7527e74ced23efc"},
 ]
 
 [package.dependencies]
@@ -944,13 +944,13 @@ test = ["covdefaults (>=2.3)", "coverage (>=7.2.7)", "coverage-enable-subprocess
 
 [[package]]
 name = "xsdata"
-version = "23.7"
+version = "23.8"
 description = "Python XML Binding"
 optional = false
-python-versions = ">=3.7"
+python-versions = ">=3.8"
 files = [
-    {file = "xsdata-23.7-py3-none-any.whl", hash = "sha256:ccfc72098275dcb65c558cf7850d71e01af3e1c212483f4df4e5d273f6d0e1dc"},
-    {file = "xsdata-23.7.tar.gz", hash = "sha256:8d79e9078d8ff4f8c4830ecda1208613a4b5e283a41e4cd304561bf6fca96aac"},
+    {file = "xsdata-23.8-py3-none-any.whl", hash = "sha256:3cf34ffb1ae35ac873e7eb53504e326d7997939f976a51814a57f77c8df8f09e"},
+    {file = "xsdata-23.8.tar.gz", hash = "sha256:55f03d4c88236f047266affe550ba0dd19476adfce6a01f3e0aefac7c8078e56"},
 ]
 
 [package.dependencies]
@@ -966,4 +966,4 @@ test = ["pre-commit", "pytest", "pytest-benchmark", "pytest-cov"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.8"
-content-hash = "5783175b2ca834e286898603a8c176143266953a13212a22a297281493592c02"
+content-hash = "2ae201feeb0c3a476b95bb5f85d9845517ff8d7ab486630f633a43f98371d691"

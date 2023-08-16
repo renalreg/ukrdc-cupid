@@ -631,14 +631,16 @@ def test_cause_of_death():
 
 
 def test_renal_diagnosis():
-    diagnosis_type = "Type B"
+    diagnosis_type = "PRIMARY"
     diagnosing_clinician_coding_standard = "LOCAL"
     diagnosing_clinician_code = "54321"
     diagnosis_coding_standard = "EDTA2"
     diagnosis_code = "42"
+    biopsy_performed = "Y"
     comments = "This is another comment."
     identification_time = dt.datetime(2023, 6, 1)
     onset_time = dt.datetime(2023, 5, 30)
+    verification_status = "confirmed"
     entered_on = dt.datetime(2023, 5, 31)
 
     xml = XmlParser().from_string(
@@ -652,9 +654,11 @@ def test_renal_diagnosis():
                     <CodingStandard>{diagnosis_coding_standard}</CodingStandard>
                     <Code>{diagnosis_code}</Code>
                 </Diagnosis>
+                <BiopsyPerformed>{biopsy_performed}</BiopsyPerformed>
                 <Comments>{comments}</Comments>
                 <IdentificationTime>{XmlDateTime.from_datetime(identification_time)}</IdentificationTime>
                 <OnsetTime>{XmlDateTime.from_datetime(onset_time)}</OnsetTime>
+                <VerificationStatus>{verification_status}</VerificationStatus>
                 <EnteredOn>{XmlDateTime.from_datetime(entered_on)}</EnteredOn>
             </RenalDiagnosis>""",
         xsd_diagnosis.RenalDiagnosis
@@ -672,9 +676,11 @@ def test_renal_diagnosis():
     assert renal_diagnosis.orm_object.diagnosingcliniciancode == diagnosing_clinician_code
     assert renal_diagnosis.orm_object.diagnosiscodestd == diagnosis_coding_standard
     assert renal_diagnosis.orm_object.diagnosiscode == diagnosis_code
+    #assert renal_diagnosis.orm_object.biopsyperformed == biopsy_performed
     assert renal_diagnosis.orm_object.comments == comments
     assert renal_diagnosis.orm_object.identificationtime == identification_time
     assert renal_diagnosis.orm_object.onsettime == onset_time
+    #assert renal_diagnosis.orm_object.verificationstatus == verification_status
     assert renal_diagnosis.orm_object.enteredon == entered_on
 
 

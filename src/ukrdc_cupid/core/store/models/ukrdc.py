@@ -622,6 +622,8 @@ class RenalDiagnosis(Node):
         self.add_item("onsettime", self.xml.onset_time)
         self.add_item("enteredon", self.xml.entered_on)
 
+        # biopsyperformed and verification status will need to be added when the database supports them
+
     def transformer(self):
         pass
 
