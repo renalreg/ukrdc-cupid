@@ -20,6 +20,7 @@ import ukrdc_xsdata.ukrdc.social_histories as xsd_social_history  # type: ignore
 import ukrdc_xsdata.ukrdc.family_histories as xsd_family_history  # type: ignore
 import ukrdc_xsdata.ukrdc.allergies as xsd_allergy  # type: ignore
 import ukrdc_xsdata.ukrdc.diagnoses as xsd_diagnosis  # type: ignore
+import ukrdc_xsdata.ukrdc.dialysis_prescriptions as xsd_prescriptions  # type: ignore
 import ukrdc_xsdata.ukrdc.medications as xsd_medication  # type: ignore
 import ukrdc_xsdata.ukrdc.procedures as xsd_procedure  # type: ignore
 import ukrdc_xsdata.ukrdc.dialysis_sessions as xsd_dialysis_session  # type: ignore
@@ -195,39 +196,57 @@ class LabOrder(Node):
     def map_xml_to_tree(self):
 
         self.add_item("placerid", self.xml.placer_id, optional=False)
-        self.add_item("fillerid", self.xml.filler_id)
-        self.add_item("specimencollectedtime", self.xml.specimen_collected_time)
-        self.add_item("status", self.xml.status)
-        self.add_item("specimenreceivedtime", self.xml.specimen_received_time)
+        self.add_item("fillerid", self.xml.filler_id, optional=True)
+        self.add_item(
+            "specimencollectedtime", self.xml.specimen_collected_time, optional=True
+        )
+        self.add_item("status", self.xml.status, optional=True)
+        self.add_item(
+            "specimenreceivedtime", self.xml.specimen_received_time, optional=True
+        )
 
-        self.add_item("specimensource", self.xml.specimen_source)
-        self.add_item("duration", self.xml.duration)
-        self.add_item("enteredon", self.xml.entered_on)
-        self.add_item("updatedon", self.xml.updated_on)
-        self.add_item("externalid", self.xml.external_id)
+        self.add_item("specimensource", self.xml.specimen_source, optional=True)
+        self.add_item("duration", self.xml.duration, optional=True)
+        self.add_item("enteredon", self.xml.entered_on, optional=True)
+        self.add_item("updatedon", self.xml.updated_on, optional=True)
+        self.add_item("externalid", self.xml.external_id, optional=True)
 
         self.add_code(
             "receivinglocationcode",
             "receivinglocationdesc",
             "receivinglocationcodestd",
             self.xml.receiving_location,
+            optional=True,
         )
         self.add_code(
-            "orderedbycode", "orderedbycodestd", "orderedbydesc", self.xml.ordered_by
+            "orderedbycode",
+            "orderedbycodestd",
+            "orderedbydesc",
+            self.xml.ordered_by,
+            optional=True,
         )
 
         self.add_code(
-            "orderitemcode", "orderitemcodestd", "orderitemdesc", self.xml.order_item
+            "orderitemcode",
+            "orderitemcodestd",
+            "orderitemdesc",
+            self.xml.order_item,
+            optional=True,
         )
         self.add_code(
             "ordercategorycode",
             "ordercategorycodestd",
             "ordercategorydesc",
             self.xml.order_category,
+            optional=True,
         )
 
         self.add_code(
-            "prioritycode", "prioritycodestd", "prioritydesc", self.xml.priority
+            "prioritycode",
+            "prioritycodestd",
+            "prioritydesc",
+            self.xml.priority,
+            optional=True,
         )
 
         # self.add_patient_class(self.xml.patient_class)
@@ -236,16 +255,22 @@ class LabOrder(Node):
             "pateintclassdesc",
             "patientclasscodestd",
             self.xml.patient_class,
+            optional=True,
         )
 
         self.add_code(
-            "enteredatcode", "enteredatdesc", "enteredatcodestd", self.xml.entered_at
+            "enteredatcode",
+            "enteredatdesc",
+            "enteredatcodestd",
+            self.xml.entered_at,
+            optional=True,
         )
         self.add_code(
             "enteringorganizationcode",
             "enteringorganizationcodestd",
             "enteringorganizationdesc",
             self.xml.entering_organization,
+            optional=True,
         )
 
         self.add_children(ResultItem, "result_items.result_item")
@@ -442,7 +467,7 @@ class SocialHistory(Node):
             self.xml.social_habit,
             optional=False,
         )
-        self.add_item("updatedon", self.xml.updated_on)
+        self.add_item("updatedon", self.xml.updated_on, optional=True)
         self.add_item("externalid", self.xml.external_id)
 
     def transformer(self):
@@ -459,27 +484,27 @@ class FamilyHistory(Node):
             "familymembercodestd",
             "familymemberdesc",
             self.xml.family_member,
-            optional=False,
+            optional=True,
         )
         self.add_code(
             "diagnosiscode",
             "diagnosiscodingstandard",
             "diagnosisdesc",
             self.xml.diagnosis,
-            optional=False,
+            optional=True,
         )
-        self.add_item("notetext", self.xml.note_text)
+        self.add_item("notetext", self.xml.note_text, optional=True)
         self.add_code(
             "enteredatcode",
             "enteredatcodestd",
             "enteredatdesc",
             self.xml.entered_at,
-            optional=False,
+            optional=True,
         )
-        self.add_item("fromtime", self.xml.from_time)
-        self.add_item("totime", self.xml.to_time)
-        self.add_item("updatedon", self.xml.updated_on)
-        self.add_item("externalid", self.xml.external_id)
+        self.add_item("fromtime", self.xml.from_time, optional=True)
+        self.add_item("totime", self.xml.to_time, optional=True)
+        self.add_item("updatedon", self.xml.updated_on, optional=True)
+        self.add_item("externalid", self.xml.external_id, optional=True)
 
     def transformer(self):
         pass
@@ -502,24 +527,33 @@ class Allergy(Node):
             "allergycategorycodestd",
             "allergycategorydesc",
             self.xml.allergy_category,
-            optional=False,
+            optional=True,
         )
         self.add_code(
             "severitycode",
             "severitycodestd",
             "severitydesc",
             self.xml.severity,
-            optional=False,
+            optional=True,
         )
         self.add_code(
-            "cliniciancode", "cliniciancodestd", "cliniciandesc", self.xml.clinician
+            "cliniciancode",
+            "cliniciancodestd",
+            "cliniciandesc",
+            self.xml.clinician,
+            optional=True,
         )
-        self.add_item("discoverytime", self.xml.discovery_time)
-        self.add_item("confirmedtime", self.xml.confirmed_time)
-        self.add_item("comments", self.xml.comments)
-        self.add_item("inactivetime", self.xml.inactive_time)
-        self.add_item("freetextallergy", self.xml.free_text_allergy)
-        self.add_item("qualifyingdetails", self.xml.qualifying_details)
+        self.add_item("discoverytime", self.xml.discovery_time, optional=True)
+        self.add_item("confirmedtime", self.xml.confirmed_time, optional=True)
+        self.add_item("comments", self.xml.comments, optional=True)
+        self.add_item("inactivetime", self.xml.inactive_time, optional=True)
+        self.add_item("freetextallergy", self.xml.free_text_allergy, optional=True)
+        self.add_item("qualifyingdetails", self.xml.qualifying_details, optional=True)
+
+        # common metadata
+        self.add_item("updatedon", self.xml.updated_on, optional=True)
+        # there is an update_date, actioncode here not sure what it does
+        self.add_item("externalid", self.xml.external_id, optional=True)
 
     def transformer(self):
         pass
@@ -543,24 +577,22 @@ class Diagnosis(Node):
             "diagnosiscodestd",
             "diagnosisdesc",
             self.xml.diagnosis,
-            optional=True,
+            optional=False,
         )
 
-        self.add_code(
-            "enteredatcode",
-            "enteredatcodestd",
-            "enteredatdesc",
-            self.xml.entered_at,
-            optional=True,
-        )
+        # TODO: Add biopsy performed when supported by the database.
 
-        self.add_item("diagnosistype", self.xml.diagnosis_type)
-        self.add_item("comments", self.xml.comments)
-        self.add_item("identificationtime", self.xml.identification_time)
-        self.add_item("onsettime", self.xml.onset_time)
-        self.add_item("enteredon", self.xml.entered_on)
-        self.add_item("encounternumber", self.xml.encounter_number)
-        self.add_item("verificationstatus", self.xml.verification_status)
+        self.add_item("diagnosistype", self.xml.diagnosis_type, optional=True)
+        self.add_item("comments", self.xml.comments, optional=True)
+        self.add_item("identificationtime", self.xml.identification_time, optional=True)
+        self.add_item("onsettime", self.xml.onset_time, optional=True)
+        self.add_item("enteredon", self.xml.entered_on, optional=True)
+        self.add_item("encounternumber", self.xml.encounter_number, optional=True)
+        self.add_item("verificationstatus", self.xml.verification_status, optional=True)
+
+        # common metadata
+        self.add_item("updatedon", self.xml.updated_on, optional=True)
+        self.add_item("externalid", self.xml.external_id, optional=True)
 
     def transformer(self):
         pass
@@ -571,24 +603,27 @@ class CauseOfDeath(Node):
         super().__init__(xml, sqla.CauseOfDeath)
 
     def map_xml_to_tree(self):
-        self.add_item("diagnosistype", self.xml.diagnosis_type)
-
-        self.add_code(
-            "diagnosingcliniciancode",
-            "diagnosingcliniciancodestd",
-            "diagnosingcliniciandesc",
-            self.xml.diagnosing_clinician,
-        )
+        self.add_item("diagnosistype", self.xml.diagnosis_type, optional=False)
 
         self.add_code(
             "diagnosiscode",
             "diagnosiscodestd",
             "diagnosisdesc",
             self.xml.diagnosis,
+            optional=False,
         )
 
-        self.add_item("comments", self.xml.comments)
-        self.add_item("enteredon", self.xml.entered_on)
+        self.add_item("comments", self.xml.comments, optional=True)
+        if self.xml.verification_status:
+            print(
+                "Cause of Death verification status not currently supported by the UKRDC database"
+            )
+
+        self.add_item("enteredon", self.xml.entered_on, optional=True)
+
+        # common metadata
+        self.add_item("updatedon", self.xml.updated_on, optional=True)
+        self.add_item("externalid", self.xml.external_id, optional=True)
 
     def transformer(self, pid: Optional[str], **kwargs):
         pass
@@ -599,14 +634,14 @@ class RenalDiagnosis(Node):
         super().__init__(xml, sqla.RenalDiagnosis)
 
     def map_xml_to_tree(self):
-        self.add_item("diagnosistype", self.xml.diagnosis_type)
+        self.add_item("diagnosistype", self.xml.diagnosis_type, optional=False)
 
         self.add_code(
             "diagnosingcliniciancode",
             "diagnosingcliniciancodestd",
             "diagnosingcliniciandesc",
             self.xml.diagnosing_clinician,
-            optional=False,
+            optional=True,
         )
 
         self.add_code(
@@ -617,15 +652,32 @@ class RenalDiagnosis(Node):
             optional=False,
         )
 
-        self.add_item("comments", self.xml.comments)
-        self.add_item("identificationtime", self.xml.identification_time)
-        self.add_item("onsettime", self.xml.onset_time)
-        self.add_item("enteredon", self.xml.entered_on)
+        self.add_item("comments", self.xml.comments, optional=True)
+        self.add_item("identificationtime", self.xml.identification_time, optional=True)
+        self.add_item("onsettime", self.xml.onset_time, optional=True)
+        self.add_item("enteredon", self.xml.entered_on, optional=True)
 
-        # biopsyperformed and verification status will need to be added when the database supports them
+        # common metadata
+        self.add_item("updatedon", self.xml.updated_on, optional=True)
+        self.add_item("externalid", self.xml.external_id, optional=True)
+
+        if self.xml.verification_status:
+            print("Cause of Death verification status not currently supported")
+
+        if self.xml.biopsy_performed:
+            print("Biopsy performed status not currently supported")
 
     def transformer(self):
         pass
+
+
+class DialysisPrescription(Node):
+    def __init__(self, xml: xsd_prescriptions.DialysisPrescription):
+        super().__init__(xml, None)
+
+    def map_xml_to_tree(self):
+        if self.xml.dialysis_session:
+            print("Loading dialysis sessions not currently supported")
 
 
 class Medication(Node):
@@ -633,47 +685,65 @@ class Medication(Node):
         super().__init__(xml, sqla.Medication)
 
     def add_drug_product(self):
-        if self.xml.drug_product:
-            self.add_item("drugproductgeneric", self.xml.drug_product.generic)
-            self.add_item("drugproductlabelname", self.xml.drug_product.label_name)
-            self.add_code(
-                "drugproductformcode",
-                "drugproductformcodestd",
-                "drugproductformdesc",
-                self.xml.drug_product.form,
-            )
-            self.add_code(
-                "drugproductstrengthunitscode",
-                "drugproductstrengthunitscodestd",
-                "drugproductstrengthunitsdesc",
-                self.xml.drug_product.strength_units,
-            )
+
+        self.add_code(
+            "drugproductidcode",
+            "drugproductidcodestd",
+            "drugproductiddesc",
+            self.xml.drug_product.id,
+            optional=True,
+        )
+        self.add_item(
+            "drugproductgeneric", self.xml.drug_product.generic, optional=False
+        )
+        self.add_item(
+            "drugproductlabelname", self.xml.drug_product.label_name, optional=True
+        )
+        self.add_code(
+            "drugproductformcode",
+            "drugproductformcodestd",
+            "drugproductformdesc",
+            self.xml.drug_product.form,
+            optional=True,
+        )
+        self.add_code(
+            "drugproductstrengthunitscode",
+            "drugproductstrengthunitscodestd",
+            "drugproductstrengthunitsdesc",
+            self.xml.drug_product.strength_units,
+            optional=True,
+        )
 
     def map_xml_to_tree(self):
-        self.add_item("prescriptionnumber", self.xml.prescription_number)
-        self.add_item("fromtime", self.xml.from_time)
-        self.add_item("totime", self.xml.to_time)
-        self.add_code(
-            "orderedbycode", "orderedbycodestd", "orderedbydesc", self.xml.ordered_by
-        )
+        self.add_item("prescriptionnumber", self.xml.prescription_number, optional=True)
+        self.add_item("fromtime", self.xml.from_time, optional=True)
+        self.add_item("totime", self.xml.to_time, optional=True)
+
         self.add_code(
             "enteringorganizationcode",
             "enteringorganizationcodestd",
             "enteringorganizationdesc",
             self.xml.entering_organization,
+            optional=True,
         )
-        self.add_code("routecode", "routecodestd", "routedesc", self.xml.route)
-        self.add_drug_product()
-        self.add_item("frequency", self.xml.frequency)
-        self.add_item("commenttext", self.xml.comments)
-        self.add_item("dosequantity", self.xml.dose_quantity)
         self.add_code(
-            "doseuomcode", "doseuomcodestd", "doseuomdesc", self.xml.dose_uo_m
+            "routecode", "routecodestd", "routedesc", self.xml.route, optional=True
         )
-        self.add_item("indication", self.xml.indication)
-        self.add_item("encounternumber", self.xml.encounter_number)
-        self.add_item("updatedon", self.xml.updated_on)
-        self.add_item("externalid", self.xml.external_id)
+        self.add_drug_product()
+        self.add_item("frequency", self.xml.frequency, optional=True)
+        self.add_item("commenttext", self.xml.comments, optional=True)
+        self.add_item("dosequantity", self.xml.dose_quantity, optional=True)
+        self.add_code(
+            "doseuomcode",
+            "doseuomcodestd",
+            "doseuomdesc",
+            self.xml.dose_uo_m,
+            optional=True,
+        )
+        self.add_item("indication", self.xml.indication, optional=True)
+        self.add_item("encounternumber", self.xml.encounter_number, optional=True)
+        self.add_item("updatedon", self.xml.updated_on, optional=True)
+        self.add_item("externalid", self.xml.external_id, optional=True)
 
     def transformer(self):
         pass
@@ -691,28 +761,26 @@ class Procedure(Node):
             self.xml.procedure_type,
             optional=False,
         )
-        self.add_code(
-            "cliniciancode",
-            "cliniciancodestd",
-            "cliniciandesc",
-            self.xml.clinician,
-            optional=False,
-        )
+
         self.add_item("proceduretime", self.xml.procedure_time, optional=False)
         self.add_code(
             "enteredbycode",
             "enteredbycodestd",
             "enteredbydesc",
             self.xml.entered_by,
-            optional=False,
+            optional=True,
         )
         self.add_code(
             "enteredatcode",
             "enteredatcodestd",
             "enteredatdesc",
             self.xml.entered_at,
-            optional=False,
+            optional=True,
         )
+
+        # common metadata
+        self.add_item("updatedon", self.xml.updated_on, optional=True)
+        self.add_item("externalid", self.xml.external_id, optional=True)
 
     def transformer(self):
         pass
@@ -722,17 +790,6 @@ class DialysisSession(Node):
     def __init__(self, xml: xsd_dialysis_session.DialysisSession):
         super().__init__(xml, sqla.DialysisSession)
 
-    def add_attributes(self):
-        if self.xml.attributes:
-            self.add_item("qhd19", self.xml.attributes.qhd19)
-            self.add_item("qhd20", self.xml.attributes.qhd20)
-            self.add_item("qhd21", self.xml.attributes.qhd21)
-            self.add_item("qhd22", self.xml.attributes.qhd22)
-            self.add_item("qhd30", self.xml.attributes.qhd30)
-            self.add_item("qhd31", self.xml.attributes.qhd31)
-            self.add_item("qhd32", self.xml.attributes.qhd32)
-            self.add_item("qhd33", self.xml.attributes.qhd33)
-
     def map_xml_to_tree(self):
         self.add_code(
             "proceduretypecode",
@@ -741,30 +798,27 @@ class DialysisSession(Node):
             self.xml.procedure_type,
             optional=False,
         )
-        self.add_code(
-            "cliniciancode",
-            "cliniciancodestd",
-            "cliniciandesc",
-            self.xml.clinician,
-            optional=False,
-        )
         self.add_item("proceduretime", self.xml.procedure_time, optional=False)
         self.add_code(
             "enteredbycode",
             "enteredbycodestd",
             "enteredbydesc",
             self.xml.entered_by,
-            optional=False,
+            optional=True,
         )
         self.add_code(
             "enteredatcode",
             "enteredatcodestd",
             "enteredatdesc",
             self.xml.entered_at,
-            optional=False,
+            optional=True,
         )
 
-        self.add_attributes()
+        # add former attributes
+        self.add_item("qhd19", self.xml.symtomatic_hypotension, optional=True)
+        self.add_item("qhd20", self.xml.vascular_access.code, optional=True)
+        self.add_item("qhd21", self.xml.vascular_access_site.code, optional=True)
+        self.add_item("qhd31", self.xml.time_dialysed, optional=True)
 
     def transformer(self):
         pass
@@ -790,28 +844,25 @@ class VascularAccess(Node):
             "proceduretypecodestd",
             "proceduretypedesc",
             self.xml.procedure_type,
+            optional=False,
         )
-        self.add_code(
-            "cliniciancode",
-            "cliniciancodestd",
-            "cliniciandesc",
-            self.xml.clinician,
-        )
-        self.add_item("proceduretime", self.xml.procedure_time)
+        self.add_item("proceduretime", self.xml.procedure_time, optional=False)
         self.add_code(
             "enteredbycode",
             "enteredbycodestd",
             "enteredbydesc",
             self.xml.entered_by,
+            optional=True,
         )
         self.add_code(
             "enteredatcode",
             "enteredatcodestd",
             "enteredatdesc",
             self.xml.entered_at,
+            optional=True,
         )
-        self.add_item("updatedon", self.xml.updated_on)
-        self.add_item("externalid", self.xml.external_id)
+        self.add_item("updatedon", self.xml.updated_on, optional=True)
+        self.add_item("externalid", self.xml.external_id, optional=True)
         self.add_acc()
 
     def transformer(self):
@@ -823,31 +874,48 @@ class Document(Node):
         super().__init__(xml, sqla.Document)
 
     def map_xml_to_tree(self):
-        self.add_item("documenttime", self.xml.document_time)
-        self.add_item("notetext", self.xml.note_text)
+        self.add_item("documenttime", self.xml.document_time, optional=False)
+        self.add_item("notetext", self.xml.note_text, optional=True)
         self.add_code(
             "documenttypecode",
             "documenttypecodestd",
             "documenttypedesc",
             self.xml.document_type,
+            optional=True,
         )
         self.add_code(
-            "cliniciancode", "cliniciancodestd", "cliniciandesc", self.xml.clinician
+            "cliniciancode",
+            "cliniciancodestd",
+            "cliniciandesc",
+            self.xml.clinician,
+            optional=True,
         )
-        self.add_item("documentname", self.xml.document_name)
-        self.add_code("statuscode", "statuscodestd", "statusdesc", self.xml.status)
+        self.add_item("documentname", self.xml.document_name, optional=True)
         self.add_code(
-            "enteredbycode", "enteredbycodestd", "enteredbydesc", self.xml.entered_by
+            "statuscode", "statuscodestd", "statusdesc", self.xml.status, optional=True
         )
         self.add_code(
-            "enteredatcode", "enteredatcodestd", "enteredatdesc", self.xml.entered_at
+            "enteredbycode",
+            "enteredbycodestd",
+            "enteredbydesc",
+            self.xml.entered_by,
+            optional=True,
         )
-        self.add_item("filetype", self.xml.file_type)
-        self.add_item("filename", self.xml.file_name)
-        self.add_item("stream", self.xml.stream)
-        self.add_item("documenturl", self.xml.document_url)
-        self.add_item("updatedon", self.xml.updated_on)
-        self.add_item("externalid", self.xml.external_id)
+        self.add_code(
+            "enteredatcode",
+            "enteredatcodestd",
+            "enteredatdesc",
+            self.xml.entered_at,
+            optional=True,
+        )
+        self.add_item("filetype", self.xml.file_type, optional=True)
+        self.add_item("filename", self.xml.file_name, optional=True)
+        self.add_item("stream", self.xml.stream, optional=True)
+        self.add_item("documenturl", self.xml.document_url, optional=True)
+
+        # common metadata
+        self.add_item("updatedon", self.xml.updated_on, optional=True)
+        self.add_item("externalid", self.xml.external_id, optional=True)
 
     def transformer(self):
         pass
@@ -858,16 +926,17 @@ class Encounter(Node):
         super().__init__(xml, sqla.Encounter)
 
     def map_xml_to_tree(self):
-        self.add_item("encounternumber", self.xml.encounter_number)
-        self.add_item("encountertype", self.xml.encounter_type)
-        self.add_item("fromtime", self.xml.from_time)
-        self.add_item("totime", self.xml.to_time)
+        self.add_item("encounternumber", self.xml.encounter_number, optional=True)
+        self.add_item("encountertype", self.xml.encounter_type, optional=False)
+        self.add_item("fromtime", self.xml.from_time, optional=False)
+        self.add_item("totime", self.xml.to_time, optional=True)
 
         self.add_code(
             "admittingcliniciancode",
             "admittingcliniciancodestd",
             "admittingcliniciandesc",
             self.xml.admitting_clinician,
+            optional=True,
         )
 
         self.add_code(
@@ -875,6 +944,7 @@ class Encounter(Node):
             "healthcarefacilitycodestd",
             "healthcarefacilitydesc",
             self.xml.health_care_facility,
+            optional=True,
         )
 
         self.add_code(
@@ -882,10 +952,44 @@ class Encounter(Node):
             "admitreasoncodestd",
             "admitreasondesc",
             self.xml.admit_reason,
+            optional=True,
         )
 
-        self.add_item("updatedon", self.xml.updated_on)
-        self.add_item("externalid", self.xml.external_id)
+        self.add_code(
+            "admissionsourcecode",
+            "admissionsourcecodestd",
+            "admissionsourcedesc",
+            self.xml.admission_source,
+            optional=True,
+        )
+
+        self.add_code(
+            "dischargereasoncode",
+            "dischargereasoncodestd",
+            "dischargereasondesc",
+            self.xml.discharge_reason,
+            optional=True,
+        )
+
+        self.add_code(
+            "dischargelocationcode",
+            "dischargelocationcodestd",
+            "dischargelocationdesc",
+            self.xml.discharge_location,
+            optional=True,
+        )
+
+        self.add_code(
+            "enteredatcode",
+            "enteredatcodestd",
+            "enteredatdesc",
+            self.xml.entered_at,
+            optional=True,
+        )
+
+        self.add_item("visitdescription", self.xml.visit_description, optional=True)
+        self.add_item("updatedon", self.xml.updated_on, optional=True)
+        self.add_item("externalid", self.xml.external_id, optional=True)
 
     def transformer(self):
         pass
@@ -896,63 +1000,67 @@ class Treatment(Node):
         super().__init__(xml, sqla.Treatment)
 
     def map_xml_to_tree(self):
-        self.add_item("encounternumber", self.xml.encounter_number)
-        self.add_item("encountertype", self.xml.encounter_type)
-        self.add_item("fromtime", self.xml.from_time)
-        self.add_item("totime", self.xml.to_time)
+        self.add_item("encounternumber", self.xml.encounter_number, optional=True)
+        self.add_item("fromtime", self.xml.from_time, optional=False)
+        self.add_item("totime", self.xml.to_time, optional=True)
         self.add_code(
             "admittingcliniciancode",
             "admittingcliniciancodestd",
             "admittingcliniciandesc",
             self.xml.admitting_clinician,
-        )
-        self.add_code(
-            "admitreasoncode",
-            "admitreasoncodestd",
-            "admitreasondesc",
-            self.xml.admit_reason,
-        )
-        self.add_code(
-            "admissionsourcecode",
-            "admissionsourcecodestd",
-            "admissionsourcedesc",
-            self.xml.admission_source,
-        )
-        self.add_code(
-            "dischargereasoncode",
-            "dischargereasoncodestd",
-            "dischargereasondesc",
-            self.xml.discharge_reason,
-        )
-        self.add_code(
-            "dischargelocationcode",
-            "dischargelocationcodestd",
-            "dischargelocationdesc",
-            self.xml.discharge_location,
+            optional=True,
         )
         self.add_code(
             "healthcarefacilitycode",
             "healthcarefacilitycodestd",
             "healthcarefacilitydesc",
             self.xml.health_care_facility,
+            optional=True,
         )
+        self.add_code(
+            "admitreasoncode",
+            "admitreasoncodestd",
+            "admitreasondesc",
+            self.xml.admit_reason,
+            optional=True,
+        )
+
+        self.add_code(
+            "admissionsourcecode",
+            "admissionsourcecodestd",
+            "admissionsourcedesc",
+            self.xml.admission_source,
+            optional=True,
+        )
+        self.add_code(
+            "dischargereasoncode",
+            "dischargereasoncodestd",
+            "dischargereasondesc",
+            self.xml.discharge_reason,
+            optional=True,
+        )
+        self.add_code(
+            "dischargelocationcode",
+            "dischargelocationcodestd",
+            "dischargelocationdesc",
+            self.xml.discharge_location,
+            optional=True,
+        )
+
         self.add_code(
             "enteredatcode",
             "enteredatcodestd",
             "enteredatdesc",
             self.xml.entered_at,
+            optional=True,
         )
 
-        self.add_item("visitdescription", self.xml.visit_description)
-        self.add_item("hdp01", self.xml.attributes.hdp01)
-        self.add_item("hdp02", self.xml.attributes.hdp02)
-        self.add_item("hdp03", self.xml.attributes.hdp03)
-        self.add_item("hdp04", self.xml.attributes.hdp04)
-        self.add_item("qbl05", self.xml.attributes.qbl05)
-        self.add_item("qbl06", self.xml.attributes.qbl06)
-        self.add_item("qbl07", self.xml.attributes.qbl07)
-        self.add_item("erf61", self.xml.attributes.erf61)
-        self.add_item("pat35", self.xml.attributes.pat35)
+        self.add_item("visitdescription", self.xml.visit_description, optional=True)
+        self.add_item("qbl05", self.xml.attributes.qbl05, optional=True)
+
+        # common metadata
+        self.add_item("update_date", self.xml.updated_on, optional=True)
+        self.add_item("externalid", self.xml.external_id, optional=True)
 
     def transformer(self):
         pass
@@ -963,54 +1071,64 @@ class TransplantList(Node):
         super().__init__(xml, sqla.TransplantList)
 
     def map_xml_to_tree(self):
-        self.add_item("encounternumber", self.xml.encounter_number)
-        self.add_item("encountertype", self.xml.encounter_type)
-        self.add_item("fromtime", self.xml.from_time)
-        self.add_item("totime", self.xml.to_time)
+        self.add_item("encounternumber", self.xml.encounter_number, optional=False)
+        self.add_item("encountertype", self.xml.encounter_type, optional=True)
+        self.add_item("fromtime", self.xml.from_time, optional=False)
+        self.add_item("totime", self.xml.to_time, optional=True)
 
         self.add_code(
             "admittingcliniciancode",
             "admittingcliniciancodestd",
             "admittingcliniciandesc",
             self.xml.admitting_clinician,
+            optional=True,
         )
         self.add_code(
             "healthcarefacilitycode",
             "healthcarefacilitycodestd",
             "healthcarefacilitydesc",
             self.xml.health_care_facility,
+            optional=True,
         )
         self.add_code(
             "admitreasoncode",
             "admitreasoncodestd",
             "admitreasondesc",
             self.xml.admit_reason,
+            optional=True,
         )
         self.add_code(
             "admissionsourcecode",
             "admissionsourcecodestd",
             "admissionsourcedesc",
             self.xml.admission_source,
+            optional=True,
         )
         self.add_code(
             "dischargereasoncode",
             "dischargereasoncodestd",
             "dischargereasondesc",
             self.xml.discharge_reason,
+            optional=True,
         )
         self.add_code(
             "dischargelocationcode",
             "dischargelocationcodestd",
             "dischargelocationdesc",
             self.xml.discharge_location,
+            optional=True,
         )
         self.add_code(
-            "enteredatcode", "enteredatcodestd", "enteredatdesc", self.xml.entered_at
+            "enteredatcode",
+            "enteredatcodestd",
+            "enteredatdesc",
+            self.xml.entered_at,
+            optional=True,
         )
 
-        self.add_item("visitdescription", self.xml.visit_description)
-        self.add_item("updatedon", self.xml.updated_on)
-        self.add_item("externalid", self.xml.external_id)
+        self.add_item("visitdescription", self.xml.visit_description, optional=True)
+        self.add_item("updatedon", self.xml.updated_on, optional=True)
+        self.add_item("externalid", self.xml.external_id, optional=True)
 
     def transformer(self):
         pass
@@ -1026,19 +1144,21 @@ class ProgramMembership(Node):
             "enteredbycodestd",
             "enteredbycodedesc",
             self.xml.entered_by,
+            optional=True,
         )
         self.add_code(
             "enteredatcode",
             "enteredatcodestd",
             "enteredatcodedesc",
             self.xml.entered_at,
+            optional=True,
         )
-        self.add_item("programname", self.xml.program_name)
-        self.add_item("programdescription", self.xml.program_description)
-        self.add_item("fromtime", self.xml.from_time)
-        self.add_item("totime", self.xml.to_time)
-        self.add_item("updatedon", self.xml.updated_on)
-        self.add_item("externalid", self.xml.external_id)
+        self.add_item("programname", self.xml.program_name, optional=True)
+        self.add_item("programdescription", self.xml.program_description, optional=True)
+        self.add_item("fromtime", self.xml.from_time, optional=False)
+        self.add_item("totime", self.xml.to_time, optional=True)
+        self.add_item("updatedon", self.xml.updated_on, optional=True)
+        self.add_item("externalid", self.xml.external_id, optional=True)
 
     def transformer(self):
         pass
@@ -1049,24 +1169,28 @@ class OptOut(Node):
         super().__init__(xml, sqla.OptOut)
 
     def map_xml_to_tree(self):
-        self.add_item("program_name", self.xml.program_name)
-        self.add_item("program_description", self.xml.program_description)
+        self.add_item("program_name", self.xml.program_name, optional=False)
+        self.add_item(
+            "program_description", self.xml.program_description, optional=True
+        )
         self.add_code(
             "entered_by_code",
             "entered_by_code_std",
             "entered_by_desc",
             self.xml.entered_by,
+            optional=True,
         )
         self.add_code(
             "entered_at_code",
             "entered_at_code_std",
             "entered_at_desc",
             self.xml.entered_at,
+            optional=True,
         )
-        self.add_item("from_time", self.xml.from_time)
-        self.add_item("to_time", self.xml.to_time)
-        self.add_item("updated_on", self.xml.updated_on)
-        self.add_item("external_id", self.xml.external_id)
+        self.add_item("from_time", self.xml.from_time, optional=False)
+        self.add_item("to_time", self.xml.to_time, optional=True)
+        self.add_item("updated_on", self.xml.updated_on, optional=True)
+        self.add_item("external_id", self.xml.external_id, optional=True)
 
     def transformer(self):
         pass
@@ -1078,13 +1202,21 @@ class ClinicalRelationship(Node):
 
     def map_xml_to_tree(self):
         self.add_code(
-            "cliniciancode", "cliniciancodestd", "cliniciandesc", self.xml.clinician
+            "cliniciancode",
+            "cliniciancodestd",
+            "cliniciandesc",
+            self.xml.clinician,
+            optional=True,
         )
         self.add_code(
-            "facilitycode", "facilitycodestd", "facilitydesc", self.xml.facility_code
+            "facilitycode",
+            "facilitycodestd",
+            "facilitydesc",
+            self.xml.facility_code,
+            optional=True,
         )
         self.add_item("fromtime", self.xml.from_time, optional=False)
-        self.add_item("totime", self.xml.to_time, optional=False)
+        self.add_item("totime", self.xml.to_time, optional=True)
         self.add_item("updatedon", self.xml.updated_on)
         self.add_item("externalid", self.xml.external_id)
 
@@ -1103,35 +1235,29 @@ class Observation(Node):
             "observationcodestd",
             "observationdesc",
             self.xml.observation_code,
-            optional=False,
+            optional=True,
         )
-        self.add_item("observationvalue", self.xml.observation_value)
-        self.add_item("observationunits", self.xml.observation_units)
-        self.add_item("prepost", self.xml.pre_post)
-        self.add_item("commenttext", self.xml.comments)
-        self.add_code(
-            "cliniciancode",
-            "cliniciancodestd",
-            "cliniciandesc",
-            self.xml.clinician,
-            optional=False,
-        )
+        self.add_item("observationvalue", self.xml.observation_value, optional=True)
+        self.add_item("observationunits", self.xml.observation_units, optional=True)
+        self.add_item("prepost", self.xml.pre_post, optional=True)
+        self.add_item("commenttext", self.xml.comments, optional=True)
+
         self.add_code(
             "enteredatcode",
             "enteredatcodestd",
             "enteredatdesc",
             self.xml.entered_at,
-            optional=False,
+            optional=True,
         )
         self.add_code(
             "enteringorganizationcode",
             "enteringorganizationcodestd",
             "enteringorganizationdesc",
             self.xml.entering_organization,
-            optional=False,
+            optional=True,
         )
-        self.add_item("updatedon", self.xml.updated_on, optional=False)
-        self.add_item("externalid", self.xml.external_id, optional=False)
+        self.add_item("updatedon", self.xml.updated_on, optional=True)
+        self.add_item("externalid", self.xml.external_id, optional=True)
 
     def transformer(self):
         pass
@@ -1141,58 +1267,33 @@ class Transplant(Node):
     def __init__(self, xml: xsd_transplants.TransplantProcedure):
         super().__init__(xml, sqla.Transplant)
 
-    def add_attributes(self):
-        if self.xml.attributes:
-            self.add_item("tra64", self.xml.attributes.tra64)
-            self.add_item("tra65", self.xml.attributes.tra65)
-            self.add_item("tra66", self.xml.attributes.tra66)
-            self.add_item("tra69", self.xml.attributes.tra69)
-            self.add_item("tra76", self.xml.attributes.tra76)
-            self.add_item("tra77", self.xml.attributes.tra77)
-            self.add_item("tra78", self.xml.attributes.tra78)
-            self.add_item("tra79", self.xml.attributes.tra79)
-            self.add_item("tra80", self.xml.attributes.tra80)
-            self.add_item("tra8a", self.xml.attributes.tra8_a)
-            self.add_item("tra81", self.xml.attributes.tra81)
-            self.add_item("tra82", self.xml.attributes.tra82)
-            self.add_item("tra83", self.xml.attributes.tra83)
-            self.add_item("tra84", self.xml.attributes.tra84)
-            self.add_item("tra85", self.xml.attributes.tra85)
-            self.add_item("tra86", self.xml.attributes.tra86)
-            self.add_item("tra87", self.xml.attributes.tra87)
-            self.add_item("tra88", self.xml.attributes.tra88)
-            self.add_item("tra89", self.xml.attributes.tra89)
-            self.add_item("tra90", self.xml.attributes.tra90)
-            self.add_item("tra91", self.xml.attributes.tra91)
-            self.add_item("tra92", self.xml.attributes.tra92)
-            self.add_item("tra93", self.xml.attributes.tra93)
-            self.add_item("tra94", self.xml.attributes.tra94)
-            self.add_item("tra95", self.xml.attributes.tra95)
-            self.add_item("tra96", self.xml.attributes.tra96)
-            self.add_item("tra97", self.xml.attributes.tra97)
-            self.add_item("tra98", self.xml.attributes.tra98)
-
     def map_xml_to_tree(self):
         self.add_code(
             "proceduretypecode",
             "proceduretypecodestd",
             "proceduretypedesc",
             self.xml.procedure_type,
+            optional=False,
         )
-        self.add_code(
-            "cliniciancode", "cliniciancodestd", "cliniciandesc", self.xml.clinician
-        )
-        self.add_item("proceduretime", self.xml.procedure_time)
+        self.add_item("proceduretime", self.xml.procedure_time, optional=False)
         self.add_code(
             "enteredbycode", "enteredbycodestd", "enteredbydesc", self.xml.entered_by
         )
         self.add_code(
             "enteredatcode", "enteredatcodestd", "enteredatdesc", self.xml.entered_at
         )
-        self.add_item("updatedon", self.xml.updated_on)
-        self.add_item("externalid", self.xml.external_id)
 
-        self.add_attributes()
+        self.add_item("updatedon", self.xml.updated_on, optional=True)
+        self.add_item("externalid", self.xml.external_id, optional=True)
+
+        # former attributes
+        self.add_item("tra77", self.xml.donor_type)
+        self.add_item("tra72", self.xml.date_registered)
+        self.add_item("tra64", self.xml.failure_date)
+        self.add_item("tra91", self.xml.cold_ischaemic_time)
+        self.add_item("tra83", self.xml.hlamismatch_a)
+        self.add_item("tra84", self.xml.hlamismatch_b)
+        self.add_item("tra85", self.xml.hlamismatch_c)
 
     def transformer(self):
         return
