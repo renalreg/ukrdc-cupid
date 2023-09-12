@@ -19,6 +19,7 @@ def report_errors(file:str, schema_version:str):
         return
 
 #input_path = r"C:\Users\philip.main\Source\ins_files"
+#input_path = r"C:\Users\philip.main\Source\CCL_xml_v5\2023-07-26\corrected"
 input_path = r"scripts\xml_examples"
 
 xml_files = [item for item in Path(input_path).rglob("*.xml")]
@@ -30,9 +31,10 @@ csv_headers = ["file name", "schema version", "line", "error"]
 # Create a list to hold all errors
 all_errors = []
 
-schema_version = "3.3.0"
+schema_version = "4.0.0"
 # Run through and validate all example files against all available datasets
 for file in xml_files:
+    print(file)
     errors = report_errors(file, schema_version)
     if errors:
         # Append errors to the list

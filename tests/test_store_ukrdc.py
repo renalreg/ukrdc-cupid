@@ -38,7 +38,7 @@ def test_patient_record_xml_mapping():
     """
     To be expanded: this test loads a full xml record 
     """
-    xml = load_xml_from_path(r"scripts/xml_examples/UKRDC_v3.xml")
+    xml = load_xml_from_path(r"tests/xml_files/UKRDC_v4_0_0.xml")
 
     patient_record = models.PatientRecord(xml)
     patient_record.map_xml_to_tree()
@@ -535,6 +535,7 @@ def test_diagnosis():
     entered_at_coding_standard = "LOCAL"
     entered_at_code = "Hospital123"
     entered_at_description = "Hospital"
+    biopsy_performed = "Y"
 
     xml = XmlParser().from_string(
         f"""<Diagnosis>
@@ -549,17 +550,13 @@ def test_diagnosis():
                     <Code>{diagnosis_code}</Code>
                     <Description>{diagnosis_description}</Description>
                 </Diagnosis>
+                <BiopsyPerformed>{biopsy_performed}</BiopsyPerformed>
                 <Comments>{comments}</Comments>
                 <IdentificationTime>{XmlDateTime.from_datetime(identification_time)}</IdentificationTime>
                 <OnsetTime>{XmlDateTime.from_datetime(onset_time)}</OnsetTime>
                 <VerificationStatus>{verification_status}</VerificationStatus>
                 <EnteredOn>{XmlDateTime.from_datetime(entered_on)}</EnteredOn>
                 <EncounterNumber>{encounter_number}</EncounterNumber>
-                <EnteredAt>
-                    <CodingStandard>{entered_at_coding_standard}</CodingStandard>
-                    <Code>{entered_at_code}</Code>
-                    <Description>{entered_at_description}</Description>
-                </EnteredAt>
             </Diagnosis>""",
         xsd_diagnosis.Diagnosis
     )
@@ -584,33 +581,33 @@ def test_diagnosis():
     assert diagnosis.orm_object.verificationstatus == verification_status
     assert diagnosis.orm_object.enteredon == entered_on
     assert diagnosis.orm_object.encounternumber == encounter_number
-    assert diagnosis.orm_object.enteredatcode == entered_at_code
-    assert diagnosis.orm_object.enteredatcodestd == entered_at_coding_standard
 
 
 def test_cause_of_death():
-    diagnosis_type = "Type A"
-    diagnosing_clinician_coding_standard = "LOCAL"
-    diagnosing_clinician_code = "12345"
+    diagnosis_type = "PRIMARY"
     diagnosis_coding_standard = "EDTA_COD"
     diagnosis_code = "38"
+    diagnosis_code_desc = "Generalised Viral Infection"
     comments = "This is a comment."
     entered_on = dt.datetime(2023,5,31)
+    updated_on = dt.datetime(2023, 6, 10)
+    external_id = "ABC123"
+    verification_status = "provisional"
 
     xml = XmlParser().from_string(
         f"""<CauseOfDeath>
                 <DiagnosisType>{diagnosis_type}</DiagnosisType>
-                <DiagnosingClinician>
-                    <CodingStandard>{diagnosing_clinician_coding_standard}</CodingStandard>
-                    <Code>{diagnosing_clinician_code}</Code>
-                </DiagnosingClinician>
                 <Diagnosis>
                     <CodingStandard>{diagnosis_coding_standard}</CodingStandard>
                     <Code>{diagnosis_code}</Code>
+                    <Description>{diagnosis_code_desc}</Description>
                 </Diagnosis>
                 <Comments>{comments}</Comments>
+                <VerificationStatus>{verification_status}</VerificationStatus>
                 <EnteredOn>{XmlDateTime.from_datetime(entered_on)}</EnteredOn>
-            </CauseOfDeath>""",
+                <UpdatedOn>{XmlDateTime.from_datetime(updated_on)}</UpdatedOn>
+                <ExternalId>{external_id}</ExternalId>
+        </CauseOfDeath>""",
         xsd_diagnosis.CauseOfDeath
     )
 
@@ -621,24 +618,26 @@ def test_cause_of_death():
 
     # check values
     cause_of_death.map_xml_to_tree()
-    assert cause_of_death.orm_object.diagnosistype == diagnosis_type
-    assert cause_of_death.orm_object.diagnosingcliniciancodestd == diagnosing_clinician_coding_standard
-    assert cause_of_death.orm_object.diagnosingcliniciancode == diagnosing_clinician_code
     assert cause_of_death.orm_object.diagnosiscodestd == diagnosis_coding_standard
     assert cause_of_death.orm_object.diagnosiscode == diagnosis_code
+    assert cause_of_death.orm_object.diagnosisdesc == diagnosis_code_desc
     assert cause_of_death.orm_object.comments == comments
     assert cause_of_death.orm_object.enteredon == entered_on
+    assert cause_of_death.orm_object.externalid == external_id
+    assert cause_of_death.orm_object.updatedon == updated_on
 
 
 def test_renal_diagnosis():
-    diagnosis_type = "Type B"
+    diagnosis_type = "PRIMARY"
     diagnosing_clinician_coding_standard = "LOCAL"
     diagnosing_clinician_code = "54321"
     diagnosis_coding_standard = "EDTA2"
     diagnosis_code = "42"
+    biopsy_performed = "Y"
     comments = "This is another comment."
     identification_time = dt.datetime(2023, 6, 1)
     onset_time = dt.datetime(2023, 5, 30)
+    verification_status = "confirmed"
     entered_on = dt.datetime(2023, 5, 31)
 
     xml = XmlParser().from_string(
@@ -652,9 +651,11 @@ def test_renal_diagnosis():
                     <CodingStandard>{diagnosis_coding_standard}</CodingStandard>
                     <Code>{diagnosis_code}</Code>
                 </Diagnosis>
+                <BiopsyPerformed>{biopsy_performed}</BiopsyPerformed>
                 <Comments>{comments}</Comments>
                 <IdentificationTime>{XmlDateTime.from_datetime(identification_time)}</IdentificationTime>
                 <OnsetTime>{XmlDateTime.from_datetime(onset_time)}</OnsetTime>
+                <VerificationStatus>{verification_status}</VerificationStatus>
                 <EnteredOn>{XmlDateTime.from_datetime(entered_on)}</EnteredOn>
             </RenalDiagnosis>""",
         xsd_diagnosis.RenalDiagnosis
@@ -672,9 +673,11 @@ def test_renal_diagnosis():
     assert renal_diagnosis.orm_object.diagnosingcliniciancode == diagnosing_clinician_code
     assert renal_diagnosis.orm_object.diagnosiscodestd == diagnosis_coding_standard
     assert renal_diagnosis.orm_object.diagnosiscode == diagnosis_code
+    #assert renal_diagnosis.orm_object.biopsyperformed == biopsy_performed
     assert renal_diagnosis.orm_object.comments == comments
     assert renal_diagnosis.orm_object.identificationtime == identification_time
     assert renal_diagnosis.orm_object.onsettime == onset_time
+    #assert renal_diagnosis.orm_object.verificationstatus == verification_status
     assert renal_diagnosis.orm_object.enteredon == entered_on
 
 
@@ -682,18 +685,21 @@ def test_medication():
     prescription_number = "123456789"
     from_time = dt.datetime(2006, 5, 4, 18, 13, 51)
     to_time = dt.datetime(2006, 5, 4, 18, 13, 51)
-    ordered_by_code = "1234"
-    ordered_by_desc = "Dr. Robert"
     entering_organization_code = "RFDOG"
     entering_organization_desc = "whoof"
+    entering_organization_code_std = "LOCAL"
+
     route_code = "1"
     route_desc = "Oral"
+    route_code_std = "RR22"
     drug_product_generic = "Generic0"
     drug_product_label_name = "LabelName0"
     drug_product_form_code = "Code60"
     drug_product_form_desc = "Description60"
     drug_product_strength_units_code = "l"
     drug_product_strength_units_desc = "Description61"
+    drug_product_strength_code_std =  "CF_RR23"
+    drug_product_coding_std = "SNOMED"
     frequency = "Frequency0"
     comments = "Comments17"
     dose_quantity = 0
@@ -707,18 +713,13 @@ def test_medication():
                 <PrescriptionNumber>{prescription_number}</PrescriptionNumber>
                 <FromTime>{XmlDateTime.from_datetime(from_time)}</FromTime>
                 <ToTime>{XmlDateTime.from_datetime(to_time)}</ToTime>
-                <OrderedBy>
-                    <CodingStandard>LOCAL</CodingStandard>
-                    <Code>{ordered_by_code}</Code>
-                    <Description>{ordered_by_desc}</Description>
-                </OrderedBy>
                 <EnteringOrganization>
-                    <CodingStandard>ODS</CodingStandard>
+                    <CodingStandard>{entering_organization_code_std}</CodingStandard>
                     <Code>{entering_organization_code}</Code>
                     <Description>{entering_organization_desc}</Description>
                 </EnteringOrganization>
                 <Route>
-                    <CodingStandard>RR22</CodingStandard>
+                    <CodingStandard>{route_code_std}</CodingStandard>
                     <Code>{route_code}</Code>
                     <Description>{route_desc}</Description>
                 </Route>
@@ -726,12 +727,12 @@ def test_medication():
                     <Generic>{drug_product_generic}</Generic>
                     <LabelName>{drug_product_label_name}</LabelName>
                     <Form>
-                        <CodingStandard>SNOMED</CodingStandard>
+                        <CodingStandard>{drug_product_coding_std}</CodingStandard>
                         <Code>{drug_product_form_code}</Code>
                         <Description>{drug_product_form_desc}</Description>
                     </Form>
                     <StrengthUnits>
-                        <CodingStandard>CF_RR23</CodingStandard>
+                        <CodingStandard>{drug_product_strength_code_std}</CodingStandard>
                         <Code>{drug_product_strength_units_code}</Code>
                         <Description>{drug_product_strength_units_desc}</Description>
                     </StrengthUnits>
@@ -760,12 +761,12 @@ def test_medication():
     assert medication.orm_object.prescriptionnumber == prescription_number
     assert medication.orm_object.fromtime == from_time
     assert medication.orm_object.totime == to_time
-    assert medication.orm_object.orderedbycode == ordered_by_code
-    assert medication.orm_object.orderedbydesc == ordered_by_desc
     assert medication.orm_object.enteringorganizationcode == entering_organization_code
     assert medication.orm_object.enteringorganizationdesc == entering_organization_desc
+    assert medication.orm_object.enteringorganizationcodestd == entering_organization_code_std
     assert medication.orm_object.routecode == route_code
     assert medication.orm_object.routedesc == route_desc
+    assert medication.orm_object.routecodestd == route_code_std
     assert medication.orm_object.drugproductgeneric == drug_product_generic
     assert medication.orm_object.drugproductlabelname == drug_product_label_name
     assert medication.orm_object.drugproductformcode == drug_product_form_code
@@ -777,7 +778,12 @@ def test_medication():
     assert (
         medication.orm_object.drugproductstrengthunitsdesc
         == drug_product_strength_units_desc
+    )    
+    assert (
+        medication.orm_object.drugproductstrengthunitscodestd
+        == drug_product_strength_code_std
     )
+    assert medication.orm_object
     assert medication.orm_object.frequency == frequency
     assert medication.orm_object.commenttext == comments
     assert medication.orm_object.dosequantity == dose_quantity
@@ -790,18 +796,17 @@ def test_medication():
 def test_procedure():
 
     procedure_type_code = "Type B"
-    procedure_type_code_std = "ODS"
+    procedure_type_code_std = "SNOMED"
     procedure_type_desc = "queso con aceitunas"
-    clinician_code = "54321"
-    clinician_code_std = "LOCAL"
-    clinician_code_desc = "Dr Dolittle"
     procedure_time = dt.datetime(2023, 6, 1)
     entered_by_code = "12345"
     entered_by_code_std = "ODS"
-    entered_by_desc = "sdf;askdf "
-    entered_at_code = "RXF01"
+    entered_by_desc = "Dr Who"
+    entered_at_code = "RFCAT"
     entered_at_code_std = "LOCAL"
-    entered_at_code_desc = "sadfsad "
+    entered_at_code_desc = "Meow"
+    external_id = "ExternalId15"
+    from_time = dt.datetime(2023, 7, 1)
 
     xml = XmlParser().from_string( 
         f"""<Procedure>
@@ -810,11 +815,6 @@ def test_procedure():
                     <Code>{procedure_type_code}</Code>
                     <Description>{procedure_type_desc}</Description>
                 </ProcedureType>
-                <Clinician>
-                    <CodingStandard>{clinician_code_std}</CodingStandard>
-                    <Code>{clinician_code}</Code>
-                    <Description>{clinician_code_desc}</Description>
-                </Clinician>
                 <ProcedureTime>{XmlDateTime.from_datetime(procedure_time)}</ProcedureTime>
                 <EnteredBy>
                     <CodingStandard>{entered_by_code_std}</CodingStandard>
@@ -826,6 +826,8 @@ def test_procedure():
                     <Code>{entered_at_code}</Code>
                     <Description>{entered_at_code_desc}</Description>
                 </EnteredAt>
+                <UpdatedOn>{XmlDateTime.from_datetime(from_time)}</UpdatedOn>
+                <ExternalId>{external_id}</ExternalId>
             </Procedure>""",
             xsd_procedures.Procedure
     )
@@ -840,9 +842,6 @@ def test_procedure():
     assert procedure.orm_object.proceduretypecode == procedure_type_code
     assert procedure.orm_object.proceduretypecodestd == procedure_type_code_std
     assert procedure.orm_object.proceduretypedesc == procedure_type_desc
-    assert procedure.orm_object.cliniciancode == clinician_code
-    assert procedure.orm_object.cliniciancodestd == clinician_code_std
-    assert procedure.orm_object.cliniciandesc == clinician_code_desc
     assert procedure.orm_object.proceduretime == procedure_time
     assert procedure.orm_object.enteredbycode == entered_by_code
     assert procedure.orm_object.enteredbycodestd == entered_by_code_std
@@ -850,15 +849,14 @@ def test_procedure():
     assert procedure.orm_object.enteredatcode == entered_at_code
     assert procedure.orm_object.enteredatcodestd == entered_at_code_std
     assert procedure.orm_object.enteredatdesc == entered_at_code_desc
+    assert procedure.orm_object.updatedon == from_time
+    assert procedure.orm_object.externalid == external_id
 
 def test_dialysis_session():
     # Define the dialysis session details
     procedure_type_code = "302497006"
     procedure_type_code_std = "SNOMED"
     procedure_type_desc = "Haemodialysis"
-    clinician_code = "54321"
-    clinician_code_std = "LOCAL"
-    clinician_code_desc = "Dr Dolittle"
     procedure_time = dt.datetime(2023, 6, 1)
     entered_by_code = "ABC123"
     entered_by_code_std = "ODS"
@@ -883,11 +881,6 @@ def test_dialysis_session():
                     <Code>{procedure_type_code}</Code>
                     <Description>{procedure_type_desc}</Description>
                 </ProcedureType>
-                <Clinician>
-                    <CodingStandard>{clinician_code_std}</CodingStandard>
-                    <Code>{clinician_code}</Code>
-                    <Description>{clinician_code_desc}</Description>
-                </Clinician>
                 <ProcedureTime>{XmlDateTime.from_datetime(procedure_time)}</ProcedureTime>
                 <EnteredBy>
                     <CodingStandard>{entered_by_code_std}</CodingStandard>
@@ -899,19 +892,19 @@ def test_dialysis_session():
                     <Code>{entered_at_code}</Code>
                     <Description>{entered_at_code_desc}</Description>
                 </EnteredAt>
-                <Attributes>
-                    <QHD19>{qhd19}</QHD19>
-                    <QHD20>{qhd20}</QHD20>
-                    <QHD21>{qhd21}</QHD21>
-                    <QHD22>{qhd22}</QHD22>
-                    <QHD30>{qhd30}</QHD30>
-                    <QHD31>{qhd31}</QHD31>
-                    <QHD32>{qhd32}</QHD32>
-                    <QHD33>{qhd33}</QHD33>
-                </Attributes>
+                <SymtomaticHypotension>{qhd19}</SymtomaticHypotension>
+                <VascularAccess>
+                    <Code>{qhd20}</Code>
+                </VascularAccess>
+                <VascularAccessSite>
+                    <Code>{qhd21}</Code>
+                </VascularAccessSite>
+                <TimeDialysed>{qhd31}</TimeDialysed>
             </DialysisSession>""",
         xsd_dialysis_session.DialysisSession
     )
+
+
 
     # Set up model
     dialysis_session = models.DialysisSession(xml)
@@ -923,9 +916,6 @@ def test_dialysis_session():
     assert dialysis_session.orm_object.proceduretypecode == procedure_type_code
     assert dialysis_session.orm_object.proceduretypecodestd == procedure_type_code_std
     assert dialysis_session.orm_object.proceduretypedesc == procedure_type_desc
-    assert dialysis_session.orm_object.cliniciancode == clinician_code
-    assert dialysis_session.orm_object.cliniciancodestd == clinician_code_std
-    assert dialysis_session.orm_object.cliniciandesc == clinician_code_desc
     assert dialysis_session.orm_object.proceduretime == procedure_time
     assert dialysis_session.orm_object.enteredbycode == entered_by_code
     assert dialysis_session.orm_object.enteredbycodestd == entered_by_code_std
@@ -936,20 +926,13 @@ def test_dialysis_session():
     assert dialysis_session.orm_object.qhd19 == qhd19
     assert dialysis_session.orm_object.qhd20 == qhd20
     assert dialysis_session.orm_object.qhd21 == qhd21
-    assert dialysis_session.orm_object.qhd22 == qhd22
-    assert dialysis_session.orm_object.qhd30 == qhd30
     assert dialysis_session.orm_object.qhd31 == qhd31
-    assert dialysis_session.orm_object.qhd32 == qhd32
-    assert dialysis_session.orm_object.qhd33 == qhd33
 
 def test_vascular_access():
     # Define the vascular access details
     procedure_type_code = "12345678"
     procedure_type_code_std = "SNOMED"
     procedure_type_desc = "Vascular Access Procedure"
-    clinician_code = "CL001"
-    clinician_code_std = "LOCAL"
-    clinician_code_desc = "Dr. Smith"
     procedure_time = dt.datetime(2023, 5, 30, 10, 15, 0)
     entered_by_code = "EN001"
     entered_by_code_std = "ODS"
@@ -974,11 +957,6 @@ def test_vascular_access():
                     <Code>{procedure_type_code}</Code>
                     <Description>{procedure_type_desc}</Description>
                 </ProcedureType>
-                <Clinician>
-                    <CodingStandard>{clinician_code_std}</CodingStandard>
-                    <Code>{clinician_code}</Code>
-                    <Description>{clinician_code_desc}</Description>
-                </Clinician>
                 <ProcedureTime>{XmlDateTime.from_datetime(procedure_time)}</ProcedureTime>
                 <EnteredBy>
                     <CodingStandard>{entered_by_code_std}</CodingStandard>
@@ -1014,9 +992,6 @@ def test_vascular_access():
     assert vascular_access.orm_object.proceduretypecode == procedure_type_code
     assert vascular_access.orm_object.proceduretypecodestd == procedure_type_code_std
     assert vascular_access.orm_object.proceduretypedesc == procedure_type_desc
-    assert vascular_access.orm_object.cliniciancode == clinician_code
-    assert vascular_access.orm_object.cliniciancodestd == clinician_code_std
-    assert vascular_access.orm_object.cliniciandesc == clinician_code_desc
     assert vascular_access.orm_object.proceduretime == procedure_time
     assert vascular_access.orm_object.enteredbycode == entered_by_code
     assert vascular_access.orm_object.enteredbycodestd == entered_by_code_std
@@ -1236,7 +1211,7 @@ def test_treatment():
     hdp02 = 180
     hdp03 = 400
     hdp04 = 140
-    qbl05 = "HOSP"
+    qbl05 = "INCENTRE"
     qbl06 = "Shared Care Example"
     qbl07 = "Y"
     erf61 = "3"
@@ -1245,7 +1220,6 @@ def test_treatment():
     xml = XmlParser().from_string(
         f'''<Treatment>
                 <EncounterNumber>{encounter_number}</EncounterNumber>
-                <EncounterType>{encounter_type}</EncounterType>
                 <FromTime>{XmlDateTime.from_datetime(from_time)}</FromTime>
                 <ToTime>{XmlDateTime.from_datetime(to_time)}</ToTime>
                 <AdmittingClinician>
@@ -1285,15 +1259,7 @@ def test_treatment():
                 </EnteredAt>
                 <VisitDescription>{visit_description}</VisitDescription>
                 <Attributes>
-                    <HDP01>{hdp01}</HDP01>
-                    <HDP02>{hdp02}</HDP02>
-                    <HDP03>{hdp03}</HDP03>
-                    <HDP04>{hdp04}</HDP04>
                     <QBL05>{qbl05}</QBL05>
-                    <QBL06>{qbl06}</QBL06>
-                    <QBL07>{qbl07}</QBL07>
-                    <ERF61>{erf61}</ERF61>
-                    <PAT35>{XmlDateTime.from_datetime(pat35)}</PAT35>
                 </Attributes>
             </Treatment>''',
             xsd_encounters.Treatment
@@ -1307,7 +1273,6 @@ def test_treatment():
     # assert orm_variables
     treatment.map_xml_to_tree()
     assert treatment.orm_object.encounternumber == encounter_number
-    assert treatment.orm_object.encountertype == encounter_type
     # TODO: fix these assert statements...not sure why they don't work
     #assert treatment.orm_object.fromtime == from_time
     #assert treatment.orm_object.totime == to_time
@@ -1333,16 +1298,9 @@ def test_treatment():
     assert treatment.orm_object.enteredatcodestd == entered_at_coding_standard
     assert treatment.orm_object.enteredatdesc == entered_at_description
     assert treatment.orm_object.visitdescription == visit_description
-    assert treatment.orm_object.hdp01 == hdp01
-    assert treatment.orm_object.hdp02 == hdp02
-    assert treatment.orm_object.hdp03 == hdp03
-    assert treatment.orm_object.hdp04 == hdp04
     assert treatment.orm_object.qbl05 == qbl05
-    assert treatment.orm_object.qbl06 == qbl06
-    assert treatment.orm_object.qbl07 == qbl07
-    assert treatment.orm_object.erf61 == erf61
-    assert treatment.orm_object.pat35 == pat35
 
+test_treatment()
 
 def test_transplant_list():
 
@@ -1680,11 +1638,6 @@ def test_observation():
                 <ObservationUnits>{observation_units}</ObservationUnits>
                 <PrePost>{pre_post}</PrePost>
                 <Comments>{comments}</Comments>
-                <Clinician>
-                    <CodingStandard>{clinician_coding_standard}</CodingStandard>
-                    <Code>{clinician_code}</Code>
-                    <Description>{clinician_description}</Description>
-                </Clinician>
                 <EnteredAt>
                     <CodingStandard>{entered_at_coding_standard}</CodingStandard>
                     <Code>{entered_at_code}</Code>
@@ -1714,9 +1667,6 @@ def test_observation():
     assert observation.orm_object.observationunits == observation_units
     assert observation.orm_object.prepost == pre_post
     assert observation.orm_object.commenttext == comments
-    assert observation.orm_object.cliniciancode == clinician_code
-    assert observation.orm_object.cliniciancodestd == clinician_coding_standard
-    assert observation.orm_object.cliniciandesc == clinician_description
     assert observation.orm_object.enteredatcode == entered_at_code
     assert observation.orm_object.enteredatcodestd == entered_at_coding_standard
     assert observation.orm_object.enteredatdesc == entered_at_description
@@ -1726,14 +1676,10 @@ def test_observation():
     #assert observation.orm_object.updatedon == updated_on
     assert observation.orm_object.externalid == external_id
 
-
 def test_transplant():
     procedure_type_code = "ProcedureTypeCode"
     procedure_type_code_std = "SNOMED"
     procedure_type_desc = "Procedure Type Description"
-    clinician_code = "ClinicianCode"
-    clinician_code_std = "LOCAL"
-    clinician_desc = "Clinician Description"
     procedure_time = dt.datetime(2023, 6, 12, 10, 0, 0)
     entered_by_code = "EnteredByCode"
     entered_by_code_std = "ODS"
@@ -1744,33 +1690,15 @@ def test_transplant():
     updated_on = dt.datetime(2023, 6, 13, 12, 0, 0)
     external_id = "ABC123"
     tra64 = dt.datetime(2023, 6, 10, 8, 0, 0)
-    tra65 = "10"
-    tra66 = "Failure description"
-    tra69 = dt.datetime(2023, 6, 10, 12, 0, 0)
-    tra76 = "Graft Type Description"
+
+    tra72 = dt.datetime(2023, 6, 10, 12, 0, 0)
+
     tra77 = "DBD"
-    tra78 = "POS"
-    tra79 = "NEG"
-    tra80 = 30
-    tra8a = "1"
-    tra81 = "UK"
-    tra82 = "POS"
     tra83 = "Mismatch A Value"
     tra84 = "Mismatch B Value"
     tra85 = "Mismatch DR Value"
-    tra86 = "Yes"
-    tra87 = "Yes"
-    tra88 = "Yes"
-    tra89 = "Yes"
-    tra90 = "Yes"
     tra91 = "5"
-    tra92 = "Yes"
-    tra93 = "Anticoagulation Value"
-    tra94 = "CMV prophylaxis Value"
-    tra95 = "Pneumocystis prophylaxis Value"
-    tra96 = "Yes"
-    tra97 = "11"
-    tra98 = "13"
+
 
     xml = XmlParser().from_string(
         f'''<TransplantProcedure>
@@ -1779,11 +1707,6 @@ def test_transplant():
                     <CodingStandard>{procedure_type_code_std}</CodingStandard>
                     <Description>{procedure_type_desc}</Description>
                 </ProcedureType>
-                <Clinician>
-                    <Code>{clinician_code}</Code>
-                    <CodingStandard>{clinician_code_std}</CodingStandard>
-                    <Description>{clinician_desc}</Description>
-                </Clinician>
                 <ProcedureTime>{XmlDate.from_datetime(procedure_time)}</ProcedureTime>
                 <EnteredBy>
                     <Code>{entered_by_code}</Code>
@@ -1797,36 +1720,13 @@ def test_transplant():
                 </EnteredAt>
                 <UpdatedOn>{XmlDate.from_datetime(updated_on)}</UpdatedOn>
                 <ExternalId>{external_id}</ExternalId>
-                <Attributes>
-                    <TRA64>{XmlDate.from_datetime(tra64)}</TRA64>
-                    <TRA65>{tra65}</TRA65>
-                    <TRA66>{tra66}</TRA66>
-                    <TRA69>{XmlDate.from_datetime(tra69)}</TRA69>
-                    <TRA76>{tra76}</TRA76>
-                    <TRA77>{tra77}</TRA77>
-                    <TRA78>{tra78}</TRA78>
-                    <TRA79>{tra79}</TRA79>
-                    <TRA80>{tra80}</TRA80>
-                    <TRA8A>{tra8a}</TRA8A>
-                    <TRA81>{tra81}</TRA81>
-                    <TRA82>{tra82}</TRA82>
-                    <TRA83>{tra83}</TRA83>
-                    <TRA84>{tra84}</TRA84>
-                    <TRA85>{tra85}</TRA85>
-                    <TRA86>{tra86}</TRA86>
-                    <TRA87>{tra87}</TRA87>
-                    <TRA88>{tra88}</TRA88>
-                    <TRA89>{tra89}</TRA89>
-                    <TRA90>{tra90}</TRA90>
-                    <TRA91>{tra91}</TRA91>
-                    <TRA92>{tra92}</TRA92>
-                    <TRA93>{tra93}</TRA93>
-                    <TRA94>{tra94}</TRA94>
-                    <TRA95>{tra95}</TRA95>
-                    <TRA96>{tra96}</TRA96>
-                    <TRA97>{tra97}</TRA97>
-                    <TRA98>{tra98}</TRA98>
-                </Attributes>
+                <DonorType>{tra77}</DonorType>
+                <DateRegistered>{tra72}</DateRegistered>
+                <FailureDate>{tra64}</FailureDate>
+                <ColdIschaemicTime>{tra91}</ColdIschaemicTime>
+                <HLAMismatchA>{tra83}</HLAMismatchA>
+                <HLAMismatchB>{tra84}</HLAMismatchB>
+                <HLAMismatchC>{tra85}</HLAMismatchC>
             </TransplantProcedure>''',
         xsd_transplants.TransplantProcedure
     )
@@ -1839,9 +1739,7 @@ def test_transplant():
     assert transplant.orm_object.proceduretypecode == procedure_type_code
     assert transplant.orm_object.proceduretypecodestd == procedure_type_code_std
     assert transplant.orm_object.proceduretypedesc == procedure_type_desc
-    assert transplant.orm_object.cliniciancode == clinician_code
-    assert transplant.orm_object.cliniciancodestd == clinician_code_std
-    assert transplant.orm_object.cliniciandesc == clinician_desc
+
     #assert transplant.orm_object.proceduretime == procedure_time
     assert transplant.orm_object.enteredbycode == entered_by_code
     assert transplant.orm_object.enteredbycodestd == entered_by_code_std
@@ -1851,34 +1749,11 @@ def test_transplant():
     assert transplant.orm_object.enteredatdesc == entered_at_desc
     #assert transplant.orm_object.updatedon == updated_on
     assert transplant.orm_object.externalid == external_id
-    #assert transplant.orm_object.tra64 == tra64
-    assert transplant.orm_object.tra65 == tra65
-    assert transplant.orm_object.tra66 == tra66
-    #assert transplant.orm_object.tra69 == tra69
-    assert transplant.orm_object.tra76 == tra76
     assert transplant.orm_object.tra77 == tra77
-    assert transplant.orm_object.tra78 == tra78
-    assert transplant.orm_object.tra79 == tra79
-    assert transplant.orm_object.tra80 == tra80
-    assert transplant.orm_object.tra8a == tra8a
-    assert transplant.orm_object.tra81 == tra81
-    assert transplant.orm_object.tra82 == tra82
     assert transplant.orm_object.tra83 == tra83
     assert transplant.orm_object.tra84 == tra84
     assert transplant.orm_object.tra85 == tra85
-    assert transplant.orm_object.tra86 == tra86
-    assert transplant.orm_object.tra87 == tra87
-    assert transplant.orm_object.tra88 == tra88
-    assert transplant.orm_object.tra89 == tra89
-    assert transplant.orm_object.tra90 == tra90
     assert transplant.orm_object.tra91 == tra91
-    assert transplant.orm_object.tra92 == tra92
-    assert transplant.orm_object.tra93 == tra93
-    assert transplant.orm_object.tra94 == tra94
-    assert transplant.orm_object.tra95 == tra95
-    assert transplant.orm_object.tra96 == tra96
-    assert transplant.orm_object.tra97 == tra97
-    assert transplant.orm_object.tra98 == tra98
 
 def test_level():
     pass
