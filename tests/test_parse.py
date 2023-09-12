@@ -49,8 +49,8 @@ def test_transplant_validation():
                 </EnteredAt>
                 <UpdatedOn>2006-05-04T18:13:51.0</UpdatedOn>
                 <ExternalId>1222333444</ExternalId>
-                <DateRegistered>2006-01-04</DateRegistered>
                 <DonorType>DBD</DonorType>
+                <DateRegistered>2006-01-04</DateRegistered>
                 <FailureDate>2006-05-04</FailureDate>
                 <ColdIschaemicTime>90</ColdIschaemicTime>
                 <HLAMismatchA>0</HLAMismatchA>
@@ -61,6 +61,4 @@ def test_transplant_validation():
     </ukrdc:PatientRecord>"""
 
     errors = validate_rda_xml_string(v4_00_transplant_xml,schema_version="4.0.0")
-    print(errors)
     assert not errors
-#test_transplant_validation()
