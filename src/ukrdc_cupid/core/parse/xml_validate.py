@@ -15,6 +15,8 @@ from pydantic_settings import BaseSettings
 from platformdirs import user_data_dir
 
 
+# TODO: I think this bit of code could be generalised so that new versions of the schema
+# can be supported automatically just by loading them from the enviroment variables
 class Settings(BaseSettings):
     """Load the enviroment variable
 
@@ -40,10 +42,14 @@ class Settings(BaseSettings):
         env="V4_0_0_COMMIT", default="046b25021c52ebeaff1d878a01aa8ec56c4667ed"
     )
 
+    v4_1_0_commit: str = Field(
+        env="V4_1_0_COMMIT", default="ce0f8618a0712c86e895f302d99bfda94a2787c4"
+    )
+
 
 env_variables = Settings()
 
-SUPPORTED_VERSIONS = ["3.3.0", "3.4.5", "4.0.0"]
+SUPPORTED_VERSIONS = ["3.3.0", "3.4.5", "4.0.0", "4.1.0"]
 
 
 def download_ukrdc_schema(filepath: str, schema_version: str):
