@@ -309,6 +309,7 @@
                 <UpdatedOn>2006-05-04T18:13:51.0</UpdatedOn>
                 <ExternalId>ExternalId20</ExternalId>
                 <SymtomaticHypotension>Y</SymtomaticHypotension><VascularAccess><Code>NLN</Code></VascularAccess><VascularAccessSite><Code>BB</Code></VascularAccessSite><TimeDialysed>200</TimeDialysed></DialysisSession>
+            </DialysisSession>
         </DialysisSessions>
         <Transplant>
             <ProcedureType>

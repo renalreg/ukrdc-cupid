@@ -50,11 +50,11 @@ def link_patient_number(session: Session, xml: xsd_ukrdc.PatientRecord):
         """
 
         patient_ids = [
-            number.number for number in xml.patient.patient_numbers.patient_number
+            number.number for number in xml.patient.patient_numbers[0].patient_number
         ]
         patient_id_types = [
             number.number_type.value
-            for number in xml.patient.patient_numbers.patient_number
+            for number in xml.patient.patient_numbers[0].patient_number
         ]
 
         patient_number_query = (

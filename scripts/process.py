@@ -6,12 +6,13 @@ to load an xml file into a sqla object with all the correct keys.
 from ukrdc_cupid.core.parse.utils import load_xml_from_path
 from ukrdc_cupid.core.match.identify import link_patient_number 
 from ukrdc_cupid.core.store.models.ukrdc import PatientRecord
+from ukrdc_cupid.core.store.insert import insert_incoming_data
 
 from sqlalchemy.orm import sessionmaker
 from xsdata.exceptions import ParserError
 from sqlalchemy import create_engine
 
-from ukrdc_cupid.core.store.keygen import mint_new_pid
+from ukrdc_cupid.core.store.keygen import mint_new_pid, mint_new_ukrdcid
     
 #engine = Connection.get_engine_from_file(key="ukrdc_staging")
 #session = scoped_session(sessionmaker(engine))
@@ -24,35 +25,24 @@ session = ukrdc3_sessionmaker()
 
 # load xml file as python object 
 #xml_file = r"Q:\UKRDC\UKRDC Feed Development\RFBAK Leicester\RFBAK_00082_4165311820.xml"
-xml_file = r"scripts/xml_examples/UKRDC.xml"
+xml_file = r"scripts/xml_examples/UKRDC_v4.xml"
 xml_object = load_xml_from_path(xml_file)
 
 if isinstance(xml_object, ParserError):
     print(f"File load failed for the following reason: {xml_object}")
 else: 
-    # link patient to existing record 
+    # link patient to existing record return by order of preference
     linked_patients = link_patient_number(session=session, xml=xml_object)
 
     if len(linked_patients) == 0: 
         # create new pid and load into sqla
         pid = mint_new_pid(session=session)
-        patient_record = PatientRecord(xml_object)
-        patient_record.map_xml_to_tree()
-        patient_record.transform(pid)
-        pr_orm = patient_record.get_orm_list()
-        print(pr_orm)
+        ukrdcid = mint_new_ukrdcid(session = session)
 
-    elif len(linked_patients) == 1:
+    elif len(linked_patients) > 0 :
         # assign existing pid and ukrdcid 
-        patient_record = PatientRecord(xml_object)
+        pid = linked_patients[0].pid
+        ukrdcid = linked_patients[0].ukrdcid
 
-        
-    else:
-        # if multiple matches are returned don't attempt to choose one
-        print("Patient cannot be unambigously matched to multiple records")
-
-
-
-
-
-
+    # map the xml files to ORM objects
+    insert_incoming_data(ukrdc_session=session, pid=pid, ukrdcid = ukrdcid, incoming_xml_file=xml_object)

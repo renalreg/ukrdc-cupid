@@ -1,5 +1,6 @@
 from xsdata.formats.dataclass.parsers import XmlParser
 from xsdata.exceptions import ParserError
+from ukrdc_xsdata.ukrdc import PatientRecord 
 
 
 def load_xml_from_path(filepath: str):
@@ -7,7 +8,7 @@ def load_xml_from_path(filepath: str):
         data = file.read()
 
     try:
-        xsobject = XmlParser().from_string(data)  # type:ignore
+        xsobject = XmlParser().from_string(data,PatientRecord)  # type:ignore
         return xsobject
 
     except ParserError as e:

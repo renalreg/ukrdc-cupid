@@ -1,5 +1,5 @@
 <ukrdc:PatientRecord xmlns:ukrdc="http://www.rixg.org.uk/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
-    <SendingFacility channelName="UKRDCSampleExtract" schemaVersion="3.3.1" time="2022-07-21T09:00:00">ABC123</SendingFacility>
+    <SendingFacility channelName="UKRDCSampleExtract" schemaVersion="4.0.0" time="2022-07-21T09:00:00">ABC123</SendingFacility>
     <SendingExtract>UKRDC</SendingExtract>
     <Patient>
         <PatientNumbers>
