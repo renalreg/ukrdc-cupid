@@ -1,80 +1,72 @@
 import ukrdc_sqla.ukrdc as sqla
 from sqlalchemy.orm import Session
-from sqlalchemy import select
+from sqlalchemy import inspect
 from datetime import datetime
 from ukrdc_cupid.core.store.models.ukrdc import PatientRecord
+from ukrdc_cupid.core.store.delete import SQL_DELETE
 
 import ukrdc_xsdata.ukrdc as xsd_ukrdc  # type: ignore
 
 from typing import List, Optional, Union
 
-# there might be a neater way of doing this mapping
-SUPPORTED_SQLA = {
-    "address" : sqla.Address,
-    "allergy" : sqla.Allergy,
-    "causeofdeath" : sqla.CauseOfDeath,
-    "clinicalrelationship" : sqla.ClinicalRelationship, 
-    "contactdetail" : sqla.ContactDetail,
-    "diagnosis" : sqla.Diagnosis,
-    "name" : sqla.Name,
-    "patientrecord" : sqla.PatientRecord, 
-    "patient" : sqla.Patient 
-}
 
-def insert_records(
+def add_records(
         ukrdc_session: Session, 
-        orm_class:sqla.Base, 
-        pid:str, 
         incoming_records = List[sqla.Base], 
-        delete:bool = True
     ):
-    """The assumption is the patientrecord is sent in full every time       
-       https://renalregistry.atlassian.net/l/cp/VjGt07Ut
-       with the exception of records with a supplied time range. 
-       The assumption here is that it is quicker to fetch all the records
-       and match them locally. I get the impression this is not how sqla 
-       is designed to be used.  
-    """
+    """This function takes the list of orm objects and adds them to the session. 
+    After this they are treated in 3 different catagories.
+    unchanged: 
 
-    incoming_ids = [incoming_record.id for incoming_record in incoming_records]
-    
-    if delete:
-        # load all existing records for pid, track ids and delete anything not in incoming file 
-        records_to_modify = ukrdc_session.query(orm_class).where(orm_class.pid == pid).all()
-        existing_ids = [record.id for record in records_to_modify]
-        records_to_delete = [record for record in records_to_modify if record.id not in incoming_ids]
-        for record in records_to_delete:
-            ukrdc_session.delete(record)
-    else:
-        records_to_modify = ukrdc_session.query(orm_class).where(orm_class.id.in_(incoming_ids)).all()
-        existing_ids = [record.id for record in records_to_modify]
-
-    # iterate through incoming and update creation date if it already exists
-    for incoming_record in incoming_records:
-        if incoming_record.id in existing_ids: 
-            domain_record = records_to_modify[existing_ids.index(incoming_record.id)]
-            incoming_record.creation_date = domain_record.creation_date
-            # patient record uniquely has a repository created date
-            if incoming_record.__tablename__ == "patientrecord":
-                incoming_record.repositorycreationdate = domain_record.repositorycreationdate                    
-        else:
-            if incoming_record.__tablename__ == "patientrecord":
-                incoming_record.repositorycreationdate = incoming_record.repositoryupdatedate
-
-        ukrdc_session.merge(incoming_record) 
-        
-            
-
-def insert_time_bound(ukrdc_session: Session, records, start:datetime, stop:datetime, no_delete=False):
-    """
     Args:
-        start (datetime): _description_
-        stop (datetime): _description_
-        no_delete (bool, optional): _description_. Defaults to False.
+        ukrdc_session (Session): _description_
+        incoming_records (_type_, optional): _description_. Defaults to List[sqla.Base].
     """
 
+    n_incoming = len(incoming_records)
+    print(f"Total of {len(incoming_records)} incoming records")
 
+    # add loaded records to the session
+    for record in incoming_records:
+        ukrdc_session.merge(record)
+
+    ukrdc_session.flush()
     
+    # modify dirty records 
+    n_dirty = len(ukrdc_session.dirty)
+    print(f"Total of {n_dirty} dirty")
+    for record in ukrdc_session.dirty:
+        print("set any fields required when a record is updated")
+
+    # modify new records
+    n_transient = 0
+    n_dirty = 0    
+    for record in incoming_records:
+        state = inspect(record)
+        if state.transient:
+            n_transient +=1
+
+
+    print(f"Total of {n_transient } new")
+    print(f"Total of {n_incoming - n_dirty- n_transient} unchanged")
+
+
+def delete_records(
+        ukrdc_session: Session, 
+        pid:str,
+        incoming_ids : List[str] 
+    ):
+    print("")
+
+def delete_timebound_records(
+        ukrdc_session: Session, 
+        pid : str,
+        start_time : datetime, 
+        stop_time : datetime 
+    ):
+    print("")
+
+
 def insert_incoming_data(ukrdc_session: Session, pid:str, ukrdcid:str, incoming_xml_file: xsd_ukrdc.PatientRecord, no_delete:bool = False):
     """Insert file into the database having matched to pid.  
 
@@ -92,19 +84,24 @@ def insert_incoming_data(ukrdc_session: Session, pid:str, ukrdcid:str, incoming_
     patient_record.transform(pid=pid, ukrdcid=ukrdcid)
 
     # get records to be inserted in a linear form
-    incoming_records = patient_record.get_contained_records()
+    incoming_records = patient_record.get_orm_dict()
+    all_incoming_records =  [item for sublist in incoming_records.values() for item in sublist]
 
-    # iterate through merging the records 
-    for tablename, records in incoming_records.items():
-        if tablename == "laborder":
-            print("")
-        elif tablename == "observation":
-            print("")
-        elif tablename == "dialysissessions":
-            print("")
-        else:
-            sqla_orm = SUPPORTED_SQLA.get(tablename)
-            if sqla_orm:
-                insert_records(ukrdc_session,sqla_orm,pid,records)
+    # add records to the session
+    add_records(ukrdc_session, all_incoming_records)
+
+    # delete any records we hold which are not in incoming RDA 
+    if no_delete is not True:
+        for tablename, record in incoming_records.items():
+            if tablename in ("laborder", ""):
+                print("")
+            elif tablename in ("score", ):
+                print("")
+            else:
+                delete_record = SQL_DELETE.get(tablename)
+                if delete_record is not None: 
+                    delete_records(ukrdc_session, pid, []) 
+                #delete_time_bound()
+    
 
     ukrdc_session.commit()

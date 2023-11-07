@@ -109,7 +109,7 @@ class Node(ABC):
             self.add_item(property_description, xml_code.description)
             self.add_item(property_std, xml_code.coding_standard)
 
-    def add_children(self, child_node: Type[Node], xml_attr: str):
+    def add_children(self, child_node: Type[Node], xml_attr: str, sequential:bool = False):
         """Function to add a node a child object to the ukrdc store class. 
         All xsdata objects on the xml_attr path will be added as individual child nodes
         For example each lab order will be a child of patient record
@@ -121,6 +121,9 @@ class Node(ABC):
         
         xml_items = self.xml
         for attr in xml_attr.split("."): 
+            if isinstance(xml_items,list):
+                xml_items = xml_items[0]
+
             if xml_items:
                 xml_items = getattr(xml_items, attr, None)
                 # For items which are sent every time we need to retain date range
@@ -134,8 +137,13 @@ class Node(ABC):
                 # for convenience treat singular items as a list
                 xml_items = [xml_items]
 
-            for xml_item in xml_items:
-                node_object = child_node(xml_item)  # type:ignore
+            for seq_no, xml_item in enumerate(xml_items):
+                # Some item are sent in sequential order this order implicitly sets the keys
+                if sequential:
+                    node_object = child_node(xml_item, seq_no)
+                else:
+                    node_object = child_node(xml_item)  # type:ignore
+                
                 node_object.map_xml_to_tree()
                 self.mapped_classes.append(node_object)
 
@@ -144,14 +152,25 @@ class Node(ABC):
         Abstraction to propagate transformation down through dependent classes
         Note that in the case where there are no child classes this function is redundant
         """
-        self.transformer(pid=pid)
+        print(self.seq_no)
+        if self.seq_no is not None:
+            self.transformer(pid=pid, seq_no=self.seq_no)
+        else:
+            self.transformer(pid=pid)
+        
         for child_class in self.mapped_classes:
             child_class.transform(pid=pid)
 
-    def transformer(self, pid: Optional[str], **kwargs: Optional[Dict[str, Any]]):
+    def transformer(self, pid: Optional[str] = None, seq_no: Optional[int] = None):
         self.orm_object.pid = pid
+        if self.seq_no is not None:
+            # This is the pattern in most but not all cases
+            # seq_no enumerates items as they appear in the data file
+            # this allows things like addresses to be distinguished from one another
+            self.orm_object.idx = seq_no
+            self.orm_object.id = key_gen.generate_generic_key(pid, seq_no)
 
-    def get_contained_records(self):
+    def get_orm_dict(self):
         """Function to returns a dictionary containing all the records to be inserted
         """
 
@@ -159,7 +178,7 @@ class Node(ABC):
         orm_objects = {self.orm_object.__tablename__:[self.orm_object]}
         if self.mapped_classes:
             for child_class in self.mapped_classes:
-                child_orm_objects = child_class.get_contained_records()
+                child_orm_objects = child_class.get_orm_dict()
                 for tablename, child_orm in child_orm_objects.items():
                     if orm_objects.get(tablename):
                         orm_objects[tablename] = orm_objects[tablename] + child_orm
@@ -167,7 +186,6 @@ class Node(ABC):
                         orm_objects[tablename] = child_orm
         
         return orm_objects
-
 
     def get_orm_list(self):
         """returns all the orm objects contained within the tree as a flat list as once we have transformed the orm objects trees are an unessarily awkward wase of space."""
@@ -320,24 +338,18 @@ class LabOrder(Node):
 
 
 class PatientNumber(Node):
-    def __init__(self, xml: xsd_types.PatientNumber):
-        super().__init__(xml, sqla.PatientNumber)
+    def __init__(self, xml: xsd_types.PatientNumber, seq_no:int):
+        super().__init__(xml, sqla.PatientNumber, seq_no)
 
     def map_xml_to_tree(self):
         self.add_item("patientid", self.xml.number)
         self.add_item("organization", self.xml.organization)
         self.add_item("numbertype", self.xml.number_type)
 
-    def transformer(self, pid):
-        # TODO: look in java to find the correct way of generating the keys
-        # figure out what to do with creation_date, idx, updatedon, actioncode,
-        # externalid, update_date
-        super().transformer(self, pid)
-
 
 class Name(Node):
-    def __init__(self, xml: xsd_types.Name):
-        super().__init__(xml, sqla.Name)
+    def __init__(self, xml: xsd_types.Name, seq_no):
+        super().__init__(xml, sqla.Name, seq_no)
 
     def map_xml_to_tree(self):
         self.add_item("nameuse", self.xml.use)
@@ -346,29 +358,19 @@ class Name(Node):
         self.add_item("given", self.xml.given)
         self.add_item("othergivennames", self.xml.other_given_names)
         self.add_item("suffix", self.xml.suffix)
-    
-    def transformer(self, pid: str, seq_no:int):
-        super().transformer(pid)
-        self.orm_object.id = key_gen.generate_generic_key(pid, seq_no)
-        self.orm_object.idx = seq_no
 
 class ContactDetail(Node):
-    def __init__(self, xml: xsd_types.ContactDetail):
-        super().__init__(xml, sqla.ContactDetail)
+    def __init__(self, xml: xsd_types.ContactDetail, seq_no:int):
+        super().__init__(xml, sqla.ContactDetail, seq_no)
 
     def map_xml_to_tree(self):
         self.add_item("contactuse", self.xml.use)
         self.add_item("contactvalue", self.xml.value)
         self.add_item("commenttext", self.xml.comments)
 
-    def transformer(self, pid, seq_no):
-        super().transformer(pid)
-        self.orm_object.id = key_gen.generate_generic_key(pid, seq_no)
-        self.orm_object.idx = seq_no
-
 class Address(Node):
-    def __init__(self, xml: xsd_types.Address):
-        super().__init__(xml, sqla.Address)
+    def __init__(self, xml: xsd_types.Address, seq_no:int):
+        super().__init__(xml, sqla.Address, seq_no)
 
     def map_xml_to_tree(self):
         self.add_item("addressuse", self.xml.use)
@@ -379,11 +381,6 @@ class Address(Node):
         self.add_item("county", self.xml.county)
         self.add_item("postcode", self.xml.postcode)
         self.add_code("countrycode", "countrycodestd", "countrydesc", self.xml.country)
-
-    def transformer(self, pid, seq_no):
-        super().transformer(pid)
-        self.orm_object.id = key_gen.generate_generic_key(pid, seq_no)
-        self.orm_object.idx = seq_no
 
 class FamilyDoctor(Node):
     def __init__(self, xml: xsd_types.FamilyDoctor):
@@ -474,33 +471,13 @@ class Patient(Node):
         self.add_item("bloodgroup", self.xml.blood_group)
         self.add_item("bloodrhesus", self.xml.blood_rhesus)
 
-        # relationships
-        self.add_children(PatientNumber, "patient_numbers.patient_number")
-        self.add_children(Name, "names.name")
-        self.add_children(ContactDetail, "contact_details.contact_detail")
-        self.add_children(Address, "addresses.address")
+        # relationships these are all sequential
+        self.add_children(PatientNumber, "patient_numbers.patient_number", True)
+        self.add_children(Name, "names.name", True)
+        self.add_children(ContactDetail, "contact_details.contact_detail", True)
+        self.add_children(Address, "addresses.address", True)
         self.add_children(FamilyDoctor, "family_doctor")
 
-    def transform(self, pid: str):
-        self.transformer(pid=pid)
-        seq_no_name = 0
-        seq_no_contact = 0
-        seq_no_address = 0 
-        for child_class in self.mapped_classes:
-            if child_class.orm_object.__tablename__ == "name":
-                # in principle there can be a many to one relationship between 
-                # name and pid the sequence no only ever appears to be 0 in the data 
-                # version 5 of the dataset allows multiple cause of death 
-                child_class.transformer(pid=pid, seq_no = seq_no_name)
-                seq_no_name+=1
-            elif child_class.orm_object.__tablename__ == "contactdetail":
-                child_class.transformer(pid=pid, seq_no = seq_no_contact)
-                seq_no_contact+=1
-            elif child_class.orm_object.__tablename__ == "address":
-                child_class.transformer(pid=pid, seq_no = seq_no_address)
-                seq_no_address+=1
-            else:
-                child_class.transformer(pid=pid)
 
 class SocialHistory(Node):
     def __init__(self, xml: xsd_social_history.SocialHistory):
@@ -598,8 +575,8 @@ class Allergy(Node):
 
 
 class Diagnosis(Node):
-    def __init__(self, xml: xsd_diagnosis.Diagnosis):
-        super().__init__(xml, sqla.Diagnosis)
+    def __init__(self, xml: xsd_diagnosis.Diagnosis, seq_no:int):
+        super().__init__(xml, sqla.Diagnosis, seq_no)
 
     def map_xml_to_tree(self):
         self.add_code(
@@ -632,10 +609,8 @@ class Diagnosis(Node):
         self.add_item("updatedon", self.xml.updated_on, optional=True)
         self.add_item("externalid", self.xml.external_id, optional=True)
 
-    def transformer(self, pid: str, seq_no):
-        super().transformer(pid)
-        self.orm_object.id = key_gen.generate_generic_key(pid, seq_no)
-        self.orm_object.idx = seq_no
+    def transformer(self, pid: str, seq_no:int):
+        super().transformer(pid, seq_no)
 
 class CauseOfDeath(Node):
     def __init__(self, xml: xsd_diagnosis.CauseOfDeath):
@@ -714,8 +689,8 @@ class DialysisPrescription(Node):
 
 
 class Medication(Node):
-    def __init__(self, xml: xsd_medication.Medication):
-        super().__init__(xml, sqla.Medication)
+    def __init__(self, xml: xsd_medication.Medication, seq_no:int):
+        super().__init__(xml, sqla.Medication, seq_no)
 
     def add_drug_product(self):
 
@@ -747,12 +722,9 @@ class Medication(Node):
             optional=True,
         )
     
-    def transformer(self, pid: str, repository_update_date:datetime, seq_no:int):
-        super().transformer(pid)
-        #TODO: check the proper way to generate a key 
-        self.id = key_gen.generate_generic_key(pid, seq_no)
-        self.orm_object.repositoryupdatedate = repository_update_date 
-        self.orm_object.idx = seq_no
+    def transformer(self, pid: str, repository_update_date:datetime):
+        super().transformer(pid, self.seq_no)
+        self.orm_object.repositoryupdatedate = repository_update_date
 
     def map_xml_to_tree(self):
         self.add_item("prescriptionnumber", self.xml.prescription_number, optional=True)
@@ -821,8 +793,8 @@ class Procedure(Node):
 
 
 class DialysisSession(Node):
-    def __init__(self, xml: xsd_dialysis_session.DialysisSession):
-        super().__init__(xml, sqla.DialysisSession)
+    def __init__(self, xml: xsd_dialysis_session.DialysisSession, seq_no:int):
+        super().__init__(xml, sqla.DialysisSession, seq_no)
 
     def map_xml_to_tree(self):
         self.add_code(
@@ -850,14 +822,16 @@ class DialysisSession(Node):
 
         # add former attributes
         self.add_item("qhd19", self.xml.symtomatic_hypotension, optional=True)
-        self.add_item("qhd20", self.xml.vascular_access.code, optional=True)
-        self.add_item("qhd21", self.xml.vascular_access_site.code, optional=True)
+        if self.xml.vascular_access:
+            self.add_item("qhd20", self.xml.vascular_access.code, optional=True) 
+        if self.xml.vascular_access_site:
+            self.add_item("qhd21", self.xml.vascular_access_site.code, optional=True)
         self.add_item("qhd31", self.xml.time_dialysed, optional=True)
 
 
 class VascularAccess(Node):
-    def __init__(self, xml: xsd_vascular_accesses.VascularAccess):
-        super().__init__(xml, sqla.VascularAccess)
+    def __init__(self, xml: xsd_vascular_accesses.VascularAccess, seq_no:int):
+        super().__init__(xml, sqla.VascularAccess, seq_no)
 
     def add_acc(self):
         if self.xml.attributes:
@@ -898,8 +872,8 @@ class VascularAccess(Node):
 
 
 class Document(Node):
-    def __init__(self, xml: xsd_documents.Document):
-        super().__init__(xml, sqla.Document)
+    def __init__(self, xml: xsd_documents.Document, seq_no:int):
+        super().__init__(xml, sqla.Document, seq_no)
 
     def map_xml_to_tree(self):
         self.add_item("documenttime", self.xml.document_time, optional=False)
@@ -945,15 +919,13 @@ class Document(Node):
         self.add_item("updatedon", self.xml.updated_on, optional=True)
         self.add_item("externalid", self.xml.external_id, optional=True)
 
-    def transformer(self, pid: str, repository_update_date:datetime, seq_no:int):
-        super().transformer(pid)
-        self.id = key_gen.generate_generic_key(pid, seq_no)
+    def transformer(self, pid: str, repository_update_date:datetime):
+        super().transformer(pid, self.seq_no)
         self.orm_object.repositoryupdatedate = repository_update_date 
-        self.orm_object.idx = seq_no
 
 class Encounter(Node):
-    def __init__(self, xml: xsd_encounters.Encounter):
-        super().__init__(xml, sqla.Encounter)
+    def __init__(self, xml: xsd_encounters.Encounter, seq_no:int):
+        super().__init__(xml, sqla.Encounter, seq_no)
 
     def map_xml_to_tree(self):
         self.add_item("encounternumber", self.xml.encounter_number, optional=True)
@@ -1023,8 +995,8 @@ class Encounter(Node):
 
 
 class Treatment(Node):
-    def __init__(self, xml: xsd_encounters.Treatment):
-        super().__init__(xml, sqla.Treatment)
+    def __init__(self, xml: xsd_encounters.Treatment, seq_no:int):
+        super().__init__(xml, sqla.Treatment, seq_no)
 
     def map_xml_to_tree(self):
         self.add_item("encounternumber", self.xml.encounter_number, optional=True)
@@ -1091,8 +1063,8 @@ class Treatment(Node):
 
 
 class TransplantList(Node):
-    def __init__(self, xml: xsd_encounters.TransplantList):
-        super().__init__(xml, sqla.TransplantList)
+    def __init__(self, xml: xsd_encounters.TransplantList, seq_no:int):
+        super().__init__(xml, sqla.TransplantList, seq_no)
 
     def map_xml_to_tree(self):
         self.add_item("encounternumber", self.xml.encounter_number, optional=False)
@@ -1212,8 +1184,8 @@ class OptOut(Node):
 
 
 class ClinicalRelationship(Node):
-    def __init__(self, xml: xsd_clinical_relationships.ClinicalRelationship):
-        super().__init__(xml, sqla.ClinicalRelationship)
+    def __init__(self, xml: xsd_clinical_relationships.ClinicalRelationship, seq_no:int):
+        super().__init__(xml, sqla.ClinicalRelationship, seq_no)
 
     def map_xml_to_tree(self):
         self.add_code(
@@ -1237,8 +1209,8 @@ class ClinicalRelationship(Node):
 
 
 class Observation(Node):
-    def __init__(self, xml: xsd_observations.Observation):
-        super().__init__(xml, sqla.Observation)
+    def __init__(self, xml: xsd_observations.Observation, seq_no: int):
+        super().__init__(xml, sqla.Observation, seq_no)
 
     def map_xml_to_tree(self):
         self.add_item("observationtime", self.xml.observation_time, optional=False)
@@ -1273,8 +1245,8 @@ class Observation(Node):
 
 
 class Transplant(Node):
-    def __init__(self, xml: xsd_transplants.TransplantProcedure):
-        super().__init__(xml, sqla.Transplant)
+    def __init__(self, xml: xsd_transplants.TransplantProcedure, seq_no:int):
+        super().__init__(xml, sqla.Transplant, seq_no)
 
     def map_xml_to_tree(self):
         self.add_code(
@@ -1367,30 +1339,31 @@ class PatientRecord(Node):
         self.add_children(SocialHistory, "social_histories.social_history")
         self.add_children(FamilyHistory, "family_histories.family_history")
         self.add_children(Allergy, "allergies.allergy")
-        self.add_children(Medication, "medications.medication")
+        self.add_children(Medication, "medications.medication", True)
 
         # diagnosis child objects
-        self.add_children(Diagnosis, "diagnoses.diagnosis")
+        self.add_children(Diagnosis, "diagnoses.diagnosis", True)
+        # These will be sequential with updates to the ukrdc database
         self.add_children(CauseOfDeath, "diagnoses.cause_of_death")
         self.add_children(RenalDiagnosis, "diagnoses.renal_diagnosis")
 
         # proceedure child objects
-        self.add_children(Procedure, "procedures.procedure")
-        self.add_children(DialysisSession, "procedures.dialysis_sessions.dialysis_session")
-        self.add_children(VascularAccess, "procedures.vascular_access")
-        self.add_children(Transplant, "transplants.transplant")
+        self.add_children(Procedure, "procedures.procedure", True)
+        self.add_children(DialysisSession, "procedures.dialysis_sessions.dialysis_session", True)
+        self.add_children(VascularAccess, "procedures.vascular_access", True)
+        self.add_children(Transplant, "transplants.transplant", True)
 
-        self.add_children(Document, "documents.document")
-        self.add_children(Encounter, "encounters.encounter")
-        self.add_children(Treatment, "encounters.treatment")
-        self.add_children(TransplantList, "encounters.transplant_list")
+        self.add_children(Document, "documents.document", True)
+        self.add_children(Encounter, "encounters.encounter", True)
+        self.add_children(Treatment, "encounters.treatment", True)
+        self.add_children(TransplantList, "encounters.transplant_list", True)
 
-        self.add_children(ProgramMembership, "program_memberships.program_membership")
+        self.add_children(ProgramMembership, "program_memberships.program_membership", )
         self.add_children(OptOut, "opt_outs.opt_out")
         self.add_children(
-            ClinicalRelationship, "clinical_relationships.clinical_relationship"
+            ClinicalRelationship, "clinical_relationships.clinical_relationship", True
         )
-        self.add_children(Observation, "observations.observation")
+        self.add_children(Observation, "observations.observation", True)
         # self.add_children(PVData, "path_to_self_xml")
 
     def transform(self, pid: str, ukrdcid: str):
@@ -1404,10 +1377,7 @@ class PatientRecord(Node):
             if child_class.orm_object.__tablename__ in ("medication", "document"):
                 # transform classes for observation and document require the repository updated time
                 # TODO: add logic to populate seq_no 
-                child_class.transformer(pid=pid, repository_update_date = self.repository_updated_date, seq_no = 0)
-            elif child_class.orm_object.__tablename__ == "diagnosis":
-                 child_class.transformer(pid=pid, seq_no=diagnosis_seq)
-                 diagnosis_seq += 1
+                child_class.transformer(pid=pid, repository_update_date = self.repository_updated_date)
             else:    
                 child_class.transform(pid=pid)
 
@@ -1424,6 +1394,9 @@ class PatientRecord(Node):
             print("This should flag some sort of error")
         
         self.orm_object.repositoryupdatedate = self.repository_updated_date
+        
+        # tempory this needs a bit of thought
+        self.orm_object.repositorycreationdate = self.repository_updated_date
 
 
         
