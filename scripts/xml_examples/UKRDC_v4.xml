@@ -4,7 +4,7 @@
     <Patient>
         <PatientNumbers>
             <PatientNumber>
-                <Number>AAA111B</Number>
+                <Number>AAA111C</Number>
                 <Organization>LOCALHOSP</Organization>
                 <NumberType>MRN</NumberType>
             </PatientNumber>

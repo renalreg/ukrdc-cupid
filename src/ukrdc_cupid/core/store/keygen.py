@@ -9,6 +9,7 @@ from typing import Optional
 
 KEY_SEPERATOR = ":"
 
+
 def mint_new_pid(session: Session):
     """
     Function to mint new pid. This sequence doesn't currently exist in the ukrdc, create by running script make_pid_generation_sequence.py
@@ -18,6 +19,7 @@ def mint_new_pid(session: Session):
 
     return new_pid
 
+
 def mint_new_ukrdcid(session: Session):
     """
     Placeholder function generate a random string for now
@@ -25,7 +27,10 @@ def mint_new_ukrdcid(session: Session):
     Args:
         session (Session): _description_
     """
-    return "".join(random.choice(string.ascii_uppercase + string.digits) for _ in range(10))
+    return "".join(
+        random.choice(string.ascii_uppercase + string.digits) for _ in range(10)
+    )
+
 
 def generate_generic_key(parent: str, seqno: Optional[int] = None):
     # not sure there is much point in this function
@@ -47,6 +52,8 @@ def generate_key_resultitem(resultitem: sqla.ResultItem, order_id: str, seq_no: 
         seq_no (int): _description_
     """
     if resultitem.prepost == "PRE":
-        return f"{order_id}{KEY_SEPERATOR}{resultitem.service_id}{KEY_SEPERATOR}{seq_no}"
+        return (
+            f"{order_id}{KEY_SEPERATOR}{resultitem.service_id}{KEY_SEPERATOR}{seq_no}"
+        )
     else:
         return f"{order_id}{KEY_SEPERATOR}{resultitem.prepost}{KEY_SEPERATOR}{resultitem.service_id}{KEY_SEPERATOR}{seq_no}"

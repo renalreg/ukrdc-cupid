@@ -10,65 +10,15 @@ import ukrdc_xsdata.ukrdc as xsd_ukrdc  # type: ignore
 from typing import List, Optional, Union
 
 
-def add_records(
-        ukrdc_session: Session, 
-        incoming_records = List[sqla.Base], 
-    ):
-    """This function takes the list of orm objects and adds them to the session. 
-    After this they are treated in 3 different catagories.
-    unchanged: 
-
-    Args:
-        ukrdc_session (Session): _description_
-        incoming_records (_type_, optional): _description_. Defaults to List[sqla.Base].
-    """
-
-    n_incoming = len(incoming_records)
-    print(f"Total of {len(incoming_records)} incoming records")
-
-    # add loaded records to the session
-    for record in incoming_records:
-        ukrdc_session.merge(record)
-
-    ukrdc_session.flush()
-    
-    # modify dirty records 
-    n_dirty = len(ukrdc_session.dirty)
-    print(f"Total of {n_dirty} dirty")
-    for record in ukrdc_session.dirty:
-        print("set any fields required when a record is updated")
-
-    # modify new records
-    n_transient = 0
-    n_dirty = 0    
-    for record in incoming_records:
-        state = inspect(record)
-        if state.transient:
-            n_transient +=1
-
-
-    print(f"Total of {n_transient } new")
-    print(f"Total of {n_incoming - n_dirty- n_transient} unchanged")
-
-
-def delete_records(
-        ukrdc_session: Session, 
-        pid:str,
-        incoming_ids : List[str] 
-    ):
-    print("")
-
-def delete_timebound_records(
-        ukrdc_session: Session, 
-        pid : str,
-        start_time : datetime, 
-        stop_time : datetime 
-    ):
-    print("")
-
-
-def insert_incoming_data(ukrdc_session: Session, pid:str, ukrdcid:str, incoming_xml_file: xsd_ukrdc.PatientRecord, no_delete:bool = False):
-    """Insert file into the database having matched to pid.  
+def insert_incoming_data(
+    ukrdc_session: Session,
+    pid: str,
+    ukrdcid: str,
+    incoming_xml_file: xsd_ukrdc.PatientRecord,
+    is_new: bool = False,
+):
+    """Insert file into the database having matched to pid.
+    do we need a no delete mode?
 
     Args:
         pid (str): _description_
@@ -77,31 +27,30 @@ def insert_incoming_data(ukrdc_session: Session, pid:str, ukrdcid:str, incoming_
     """
 
     # load incoming xml file into cupid store models
-    patient_record = PatientRecord(incoming_xml_file)
-    patient_record.map_xml_to_tree()
+    patient_record = PatientRecord(xml=incoming_xml_file)
 
-    # transform records in the file to how they will appear in database
-    patient_record.transform(pid=pid, ukrdcid=ukrdcid)
+    # map xml to rows in the database using the orm
+    patient_record.map_to_database(
+        session=ukrdc_session, ukrdcid=ukrdcid, pid=pid, is_new=is_new
+    )
 
-    # get records to be inserted in a linear form
-    incoming_records = patient_record.get_orm_dict()
-    all_incoming_records =  [item for sublist in incoming_records.values() for item in sublist]
+    # extract a list of records from cupid models
+    incoming_records = patient_record.get_orm_list()
+    ukrdc_session.add_all(incoming_records)
 
-    # add records to the session
-    add_records(ukrdc_session, all_incoming_records)
+    # get list of records to delete
+    records_for_deletion = patient_record.get_orm_deleted()
+    for record in records_for_deletion:
+        ukrdc_session.delete(record)
 
-    # delete any records we hold which are not in incoming RDA 
-    if no_delete is not True:
-        for tablename, record in incoming_records.items():
-            if tablename in ("laborder", ""):
-                print("")
-            elif tablename in ("score", ):
-                print("")
-            else:
-                delete_record = SQL_DELETE.get(tablename)
-                if delete_record is not None: 
-                    delete_records(ukrdc_session, pid, []) 
-                #delete_time_bound()
-    
+    # in principle we could do a bunch of validation here before we commit
+
+    # flush and commit
+    ukrdc_session.flush()
 
     ukrdc_session.commit()
+
+def insert_into_sherlock(investigation, xml_object = None):
+    """placeholder function for inserting workitems and processing diverted files
+    """
+    return

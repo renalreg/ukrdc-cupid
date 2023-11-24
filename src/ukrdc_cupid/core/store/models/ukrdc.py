@@ -3,7 +3,7 @@ Models to create sqla objects from an xml file
 """
 
 from __future__ import annotations  # allows typehint of node class
-from abc import ABC, abstractmethod
+from abc import ABC, abstractmethod, abstractproperty
 from typing import Optional, Union, List, Type, Dict, Any
 from decimal import Decimal
 
@@ -11,6 +11,7 @@ import ukrdc_cupid.core.store.keygen as key_gen  # type: ignore
 import ukrdc_xsdata.ukrdc as xsd_ukrdc  # type: ignore
 import ukrdc_xsdata.ukrdc.lab_orders as xsd_lab_orders  # type: ignore
 import ukrdc_sqla.ukrdc as sqla
+from sqlalchemy.orm import Session
 from datetime import datetime
 import warnings
 
@@ -50,49 +51,44 @@ class Node(ABC):
     def __init__(
         self,
         xml: xsd_all,
-        orm_class: sqla.Base,  # type:ignore
+        orm_model: sqla.Base,  # type:ignore
         seq_no: Optional[int] = None,
     ):
         self.xml = xml  # xml file corresponding to a given
         self.mapped_classes: List[Node] = []  # classes which depend on this one
+        self.deleted_orm: List[sqla.Base] = []  # records staged for deletion
         self.seq_no = seq_no  # should only be need for tables where there is no unique set of varibles
-        if not orm_class:
-            raise NameError("orm_class must be specified in child class")
+        self.orm_model = orm_model  # orm class
+        self.is_new_record: bool = True  # flag if record is new to database
+        self.is_modified: bool = False
+        self.sqla_mapped: Optional[
+            str
+        ] = None  # This holds the attribute of the lazy mapping in sqla i.e [mapped children] = getter(parent orm, self.sqla_mapped)
+        self.pid: Optional[str] = None  # placeholder for pid
 
-        # create orm object which maps to Node
-        self.orm_object = orm_class()  # type:ignore
+    def generate_id(self):
+        # compound whatever we need to identify object
+        return key_gen.generate_generic_key(self.pid, self.seq_no)
 
-    def add_item(
-        self,
-        sqla_property: str,
-        value: Union[str, XmlDateTime, XmlDate, bool, int, Decimal],
-        optional: bool = True,
-    ):
-        """Function to update and item the ORM class instance based on xml.
-        TODO: Do we need to think about type conversion to orm objects to the xml
-        which are mostly strings? maybe this is most straightforwardly handled where
-        it occurs in the xml_matching function.
+    def map_to_database(self, session: Session, pid: str):
+        self.pid = pid
+        id = self.generate_id()
 
-        Args:
-            property (str): _description_
-            value (Union[str, XmlDateTime, xsd_types.Gender]): _description_
-            optional (bool, optional): _description_. Defaults to True.
-        """
+        # Use primary key to fetch record
+        self.orm_object = session.get(self.orm_model, id)
 
-        # add properties which constitute a single value
-        # TODO: flag work item if non optional value doesn't exist
-        if (optional and value is not None) or (not optional):
-            if value is not None:
-                if isinstance(value, (XmlDateTime, XmlDate)):
-                    datetime = value.to_datetime()
-                    setattr(self.orm_object, sqla_property, datetime)
-                elif isinstance(value, (str, int, bool, Decimal)):
-                    setattr(self.orm_object, sqla_property, value)
-                else:
-                    setattr(self.orm_object, sqla_property, value.value)
-        else:
-            if value is not None and getattr(self.orm_object, sqla_property) is None:
-                warnings.warn(f"Property {sqla_property} not added to ORM")
+        # If it doesn't exit create it and flag that you have done that
+        # if it needs a pid add it to the orm
+        if self.orm_object is None:
+            self.orm_object = self.orm_model(id=id)
+            self.is_new_record = True
+            if hasattr(self.orm_object, "pid"):
+                self.orm_object.pid = pid
+
+        if self.seq_no is not None:
+            self.orm_object.idx = self.seq_no
+
+        return id
 
     def add_code(
         self,
@@ -109,83 +105,96 @@ class Node(ABC):
             self.add_item(property_description, xml_code.description)
             self.add_item(property_std, xml_code.coding_standard)
 
-    def add_children(self, child_node: Type[Node], xml_attr: str, sequential:bool = False):
-        """Function to add a node a child object to the ukrdc store class. 
-        All xsdata objects on the xml_attr path will be added as individual child nodes
-        For example each lab order will be a child of patient record
-
+    def add_item(
+        self,
+        sqla_property: str,
+        value: Union[str, XmlDateTime, XmlDate, bool, int, Decimal],
+        optional: bool = True,
+    ):
+        """Function to do the mapping of a specific item from the xml file to the orm object. Since there are a varity of different items which can appear in the xml schema they.
         Args:
-            child_node (Type[Node]): ukrdc store node
-            xml_attr (str): path to 
+            sqla_property (str): This is basically the column name which is being set
+            value (Union[str, XmlDateTime, XmlDate, bool, int, Decimal]): This is the xml which contains the value to set it with
+            optional (bool, optional): This determines whether it is a required field or not
         """
-        
+
+        # add properties which constitute a single value
+        # TODO: flag work item if non optional value doesn't exist
+        if (optional and value is not None) or (not optional):
+            if value is not None:
+                if isinstance(value, (XmlDateTime, XmlDate)):
+                    datetime = value.to_datetime()
+                    setattr(self.orm_object, sqla_property, datetime)
+                elif isinstance(value, (str, int, bool, Decimal)):
+                    setattr(self.orm_object, sqla_property, value)
+                else:
+                    setattr(self.orm_object, sqla_property, value.value)
+        else:
+            # we over write property with null if it doesn't appear in the file
+            setattr(self.orm_object, sqla_property, None)
+            if value is not None and getattr(self.orm_object, sqla_property) is None:
+                # will this ever actually get triggered?
+                warnings.warn(f"Property {sqla_property} not added to ORM")
+
+    def add_children(
+        self,
+        child_node: Type[Node],
+        xml_attr: str,
+        session: Session,
+        sequential: bool = False,
+    ):
+
+        # Step into the xml_file and extract the xml containing incoming data
         xml_items = self.xml
-        for attr in xml_attr.split("."): 
-            if isinstance(xml_items,list):
+        for attr in xml_attr.split("."):
+            if isinstance(xml_items, list):
                 xml_items = xml_items[0]
 
             if xml_items:
                 xml_items = getattr(xml_items, attr, None)
-                # For items which are sent every time we need to retain date range
-                if attr == "lab_orders":
-                    self.lab_order_range = [xml_items.start.to_datetime(), xml_items.stop.to_datetime()]
-                if attr == "observations":
-                    self.obs_range = [xml_items.start.to_datetime(), xml_items.stop.to_datetime()]
 
         if xml_items:
             if not isinstance(xml_items, list):
                 # for convenience treat singular items as a list
                 xml_items = [xml_items]
 
+            mapped_ids = []
             for seq_no, xml_item in enumerate(xml_items):
                 # Some item are sent in sequential order this order implicitly sets the keys
+                # there is a possibility here to sort the items before enumerating them
                 if sequential:
-                    node_object = child_node(xml_item, seq_no)
+                    node_object = child_node(xml=xml_item, seq_no=seq_no)
                 else:
-                    node_object = child_node(xml_item)  # type:ignore
-                
-                node_object.map_xml_to_tree()
+                    node_object = child_node(xml=xml_item)  # type:ignore
+
+                # map to existing object or create new
+                id = node_object.map_to_database(session, self.pid)
+                mapped_ids.append(id)
+
+                # update node from xml and add to collection
+                node_object.map_xml_to_orm(session)
+
+                # currently we add all objects regardless of status sqla flush should be able to detect changes
                 self.mapped_classes.append(node_object)
 
-    def transform(self, pid: str):
-        """
-        Abstraction to propagate transformation down through dependent classes
-        Note that in the case where there are no child classes this function is redundant
-        """
-        print(self.seq_no)
-        if self.seq_no is not None:
-            self.transformer(pid=pid, seq_no=self.seq_no)
+            # stage records for deletion
+            self.add_deleted(node_object.sqla_mapped, mapped_ids)
+
+    def add_deleted(self, sqla_mapped: str, mapped_ids: List[str]):
+        # stage records for deletion using the lazy mapping and a list of ids of records in the file
+        # this is only needed if the is a one to many relationship between parent and child
+        # this function stages for deletion objects which appear mapped but don't appear in incoming file
+        # This highlights a problem with the idx method creating keys. What if an item in the middle of the
+        # order gets deleted then everything below gets bumped up one.
+        mapped_orms = getattr(self.orm_object, sqla_mapped)
+        if isinstance(mapped_orms, list):
+            self.deleted_orm = [
+                record
+                for record in getattr(self.orm_object, sqla_mapped)
+                if record.id not in mapped_ids
+            ]
         else:
-            self.transformer(pid=pid)
-        
-        for child_class in self.mapped_classes:
-            child_class.transform(pid=pid)
-
-    def transformer(self, pid: Optional[str] = None, seq_no: Optional[int] = None):
-        self.orm_object.pid = pid
-        if self.seq_no is not None:
-            # This is the pattern in most but not all cases
-            # seq_no enumerates items as they appear in the data file
-            # this allows things like addresses to be distinguished from one another
-            self.orm_object.idx = seq_no
-            self.orm_object.id = key_gen.generate_generic_key(pid, seq_no)
-
-    def get_orm_dict(self):
-        """Function to returns a dictionary containing all the records to be inserted
-        """
-
-        # label orm with table name
-        orm_objects = {self.orm_object.__tablename__:[self.orm_object]}
-        if self.mapped_classes:
-            for child_class in self.mapped_classes:
-                child_orm_objects = child_class.get_orm_dict()
-                for tablename, child_orm in child_orm_objects.items():
-                    if orm_objects.get(tablename):
-                        orm_objects[tablename] = orm_objects[tablename] + child_orm
-                    else:
-                        orm_objects[tablename] = child_orm
-        
-        return orm_objects
+            self.deleted_orm = []
 
     def get_orm_list(self):
         """returns all the orm objects contained within the tree as a flat list as once we have transformed the orm objects trees are an unessarily awkward wase of space."""
@@ -198,160 +207,76 @@ class Node(ABC):
         else:
             return [self.orm_object]
 
+    def get_orm_deleted(self):
+        if self.mapped_classes:
+            orm_objects = self.deleted_orm
+            for child_class in self.mapped_classes:
+                orm_objects = orm_objects + child_class.get_orm_deleted()
+            return orm_objects
+        else:
+            return self.deleted_orm
+
+    def updated_status(self, session: Session):
+        # function to update things like dates if object is changed
+        # Personally I think this should all be moved to db triggers
+        # Currently it will be null for new records
+        # these type of changes should be made carefully to avoid churn
+
+        # if not self.is_new_record:
+        self.is_modified = session.is_modified(self.orm_object)
+        if self.is_modified is True:
+            print(self.orm_object.__tablename__)
+            self.orm_object.update_date = datetime.now()
+
     @abstractmethod
-    def map_xml_to_tree(self):
+    def map_xml_to_orm(self, session: Session):
+        # bread and butter function the does all the painstaking mapping
         pass
 
 
-class ResultItem(Node):
-    def __init__(self, xml: xsd_lab_orders.ResultItem, seq_no: Optional[int] = None):
-        super().__init__(xml, sqla.ResultItem, seq_no)
+class Observation(Node):
+    def __init__(self, xml: xsd_observations.Observation, seq_no: int):
+        super().__init__(xml, sqla.Observation, seq_no)
+        self.sqla_mapped = "observations"
 
-    def map_xml_to_tree(self):
-        self.add_item("prepost", self.xml.pre_post)
-        self.add_item("interpretationcodes", self.xml.interpretation_codes)
-        self.add_item("status", self.xml.status)
-        self.add_item("resulttype", self.xml.result_type)
-        self.add_item("enteredon", self.xml.entered_on)
+    def map_xml_to_orm(self, session: Session):
 
-        self.add_item("subid", self.xml.sub_id)
-        self.add_item("resultvalue", self.xml.result_value)
-        self.add_item("resultvalueunits", self.xml.result_value_units)
-        self.add_item("referencerange", self.xml.reference_range)
-        self.add_item("observationtime", self.xml.observation_time)
-        self.add_item("commenttext", self.xml.comments)
-        self.add_item("referencecomment", self.xml.reference_comment)
+        # fmt: off
+        self.add_item("observationtime", self.xml.observation_time, optional=False)
+        self.add_code("observationcode", "observationcodestd", "observationdesc", self.xml.observation_code, optional=True)
+        self.add_item("observationvalue", self.xml.observation_value, optional=True)
+        self.add_item("observationunits", self.xml.observation_units, optional=True)
+        self.add_item("prepost", self.xml.pre_post, optional=True)
+        self.add_item("commenttext", self.xml.comments, optional=True)
 
-        self.add_code(
-            "serviceidcode", "serviceidcodestd", "serviceiddesc", self.xml.service_id
-        )
-
-    def transformer(self, **kwargs):
-        seq_no: Optional[int] = kwargs.get("seq_no")
-        order_id: Optional[str] = kwargs.get("order_id")
-
-        self.orm_object.id = key_gen.generate_key_resultitem(
-            self.orm_object, order_id=order_id, seq_no=seq_no
-        )
-
-
-class LabOrder(Node):
-    def __init__(self, xml: xsd_lab_orders.LabOrder, seq_no: Optional[int] = None):
-        super().__init__(xml, sqla.LabOrder, seq_no)
-
-    def map_xml_to_tree(self):
-
-        self.add_item("placerid", self.xml.placer_id, optional=False)
-        self.add_item("fillerid", self.xml.filler_id, optional=True)
-        self.add_item(
-            "specimencollectedtime", self.xml.specimen_collected_time, optional=True
-        )
-        self.add_item("status", self.xml.status, optional=True)
-        self.add_item(
-            "specimenreceivedtime", self.xml.specimen_received_time, optional=True
-        )
-
-        self.add_item("specimensource", self.xml.specimen_source, optional=True)
-        self.add_item("duration", self.xml.duration, optional=True)
-        self.add_item("enteredon", self.xml.entered_on, optional=True)
+        self.add_code("enteredatcode", "enteredatcodestd", "enteredatdesc", self.xml.entered_at, optional=True)
+        self.add_code("enteringorganizationcode", "enteringorganizationcodestd", "enteringorganizationdesc", self.xml.entering_organization, optional=True)
         self.add_item("updatedon", self.xml.updated_on, optional=True)
         self.add_item("externalid", self.xml.external_id, optional=True)
+        # fmt: on
 
-        self.add_code(
-            "receivinglocationcode",
-            "receivinglocationdesc",
-            "receivinglocationcodestd",
-            self.xml.receiving_location,
-            optional=True,
-        )
-        self.add_code(
-            "orderedbycode",
-            "orderedbycodestd",
-            "orderedbydesc",
-            self.xml.ordered_by,
-            optional=True,
-        )
-
-        self.add_code(
-            "orderitemcode",
-            "orderitemcodestd",
-            "orderitemdesc",
-            self.xml.order_item,
-            optional=True,
-        )
-        self.add_code(
-            "ordercategorycode",
-            "ordercategorycodestd",
-            "ordercategorydesc",
-            self.xml.order_category,
-            optional=True,
-        )
-
-        self.add_code(
-            "prioritycode",
-            "prioritycodestd",
-            "prioritydesc",
-            self.xml.priority,
-            optional=True,
-        )
-
-        # self.add_patient_class(self.xml.patient_class)
-        self.add_code(
-            "patientclasscode",
-            "pateintclassdesc",
-            "patientclasscodestd",
-            self.xml.patient_class,
-            optional=True,
-        )
-
-        self.add_code(
-            "enteredatcode",
-            "enteredatdesc",
-            "enteredatcodestd",
-            self.xml.entered_at,
-            optional=True,
-        )
-        self.add_code(
-            "enteringorganizationcode",
-            "enteringorganizationcodestd",
-            "enteringorganizationdesc",
-            self.xml.entering_organization,
-            optional=True,
-        )
-
-        self.add_children(ResultItem, "result_items.result_item")
-
-    def transform(self, pid):
-        self.transformer(pid)
-        # TODO: I'm guessing we need a special order here
-        for seq_no, lab_order in enumerate(self.mapped_classes):
-            lab_order.transformer(
-                order_id=self.orm_object.id,
-                seq_no= seq_no,
-            )
-
-    def transformer(self, pid):
-        # we overwrite the base class because we result item needs extra info
-        self.orm_object.pid = pid
-        id = key_gen.generate_key_laborder(self.orm_object, pid)
-        self.orm_object.id = id
+        self.updated_status(session)
 
 
 class PatientNumber(Node):
-    def __init__(self, xml: xsd_types.PatientNumber, seq_no:int):
+    def __init__(self, xml: xsd_types.PatientNumber, seq_no: int):
         super().__init__(xml, sqla.PatientNumber, seq_no)
+        self.sqla_mapped = "numbers"
 
-    def map_xml_to_tree(self):
+    def map_xml_to_orm(self, session: Session):
         self.add_item("patientid", self.xml.number)
         self.add_item("organization", self.xml.organization)
         self.add_item("numbertype", self.xml.number_type)
+
+        self.updated_status(session)
 
 
 class Name(Node):
     def __init__(self, xml: xsd_types.Name, seq_no):
         super().__init__(xml, sqla.Name, seq_no)
+        self.sqla_mapped = "names"
 
-    def map_xml_to_tree(self):
+    def map_xml_to_orm(self, session: Session):
         self.add_item("nameuse", self.xml.use)
         self.add_item("prefix", self.xml.prefix)
         self.add_item("family", self.xml.family)
@@ -359,20 +284,28 @@ class Name(Node):
         self.add_item("othergivennames", self.xml.other_given_names)
         self.add_item("suffix", self.xml.suffix)
 
-class ContactDetail(Node):
-    def __init__(self, xml: xsd_types.ContactDetail, seq_no:int):
-        super().__init__(xml, sqla.ContactDetail, seq_no)
+        self.updated_status(session)
 
-    def map_xml_to_tree(self):
+
+class ContactDetail(Node):
+    def __init__(self, xml: xsd_types.ContactDetail, seq_no: int):
+        super().__init__(xml, sqla.ContactDetail, seq_no)
+        self.sqla_mapped = "contact_details"
+
+    def map_xml_to_orm(self, session: Session):
         self.add_item("contactuse", self.xml.use)
         self.add_item("contactvalue", self.xml.value)
         self.add_item("commenttext", self.xml.comments)
 
-class Address(Node):
-    def __init__(self, xml: xsd_types.Address, seq_no:int):
-        super().__init__(xml, sqla.Address, seq_no)
+        self.updated_status(session)
 
-    def map_xml_to_tree(self):
+
+class Address(Node):
+    def __init__(self, xml: xsd_types.Address, seq_no: int):
+        super().__init__(xml, sqla.Address, seq_no)
+        self.sqla_mapped = "addresses"
+
+    def map_xml_to_orm(self, session: Session):
         self.add_item("addressuse", self.xml.use)
         self.add_item("fromtime", self.xml.from_time)
         self.add_item("totime", self.xml.to_time)
@@ -382,9 +315,16 @@ class Address(Node):
         self.add_item("postcode", self.xml.postcode)
         self.add_code("countrycode", "countrycodestd", "countrydesc", self.xml.country)
 
+        self.updated_status(session)
+
+
 class FamilyDoctor(Node):
     def __init__(self, xml: xsd_types.FamilyDoctor):
         super().__init__(xml, sqla.FamilyDoctor)
+        self.sqla_mapped = "familydoctor"
+
+    def generate_id(self):
+        return self.pid
 
     def add_gp_address(self, xml: xsd_types.FamilyDoctor):
         if xml.address:
@@ -406,7 +346,7 @@ class FamilyDoctor(Node):
             self.orm_object.contactvalue = xml.country.value
             self.orm_object.commenttext = xml.country.comments
 
-    def map_xml_to_tree(self):
+    def map_xml_to_orm(self, session: Session):
         self.add_item("gpname", self.xml.gpname)
         self.add_item("gpid", self.xml.gpid)
         self.add_item("gppracticeid", self.xml.gppractice_id)
@@ -414,15 +354,16 @@ class FamilyDoctor(Node):
         self.add_gp_address(self.xml)
         self.add_gp_contact_detail(self.xml)
 
-    def transformer(self, pid):
-        self.orm_object.id = pid
+        self.updated_status(session)
+
 
 class Patient(Node):
-    """Initialise node for the patient object"""
-
     def __init__(self, xml: xsd_ukrdc.Patient):
-        orm_class = sqla.Patient
-        super().__init__(xml, orm_class)
+        super().__init__(xml, sqla.Patient)
+        self.sqla_mapped = "patient"
+
+    def generate_id(self):
+        return self.pid
 
     def add_person_to_contact(self, xml: xsd_types.PersonalContactType):
         # handle section of xml which the generic add functions cant handle
@@ -441,7 +382,7 @@ class Patient(Node):
                     self.xml.contact_details[0].use
                 )
 
-    def map_xml_to_tree(self):
+    def map_xml_to_orm(self, session: Session):
 
         self.add_item("birthtime", self.xml.birth_time)
         self.add_item("deathtime", self.xml.death_time)
@@ -472,844 +413,15 @@ class Patient(Node):
         self.add_item("bloodrhesus", self.xml.blood_rhesus)
 
         # relationships these are all sequential
-        self.add_children(PatientNumber, "patient_numbers.patient_number", True)
-        self.add_children(Name, "names.name", True)
-        self.add_children(ContactDetail, "contact_details.contact_detail", True)
-        self.add_children(Address, "addresses.address", True)
-        self.add_children(FamilyDoctor, "family_doctor")
-
-
-class SocialHistory(Node):
-    def __init__(self, xml: xsd_social_history.SocialHistory):
-        super().__init__(xml, sqla.SocialHistory)
-
-    def map_xml_to_tree(self):
-        self.add_code(
-            "socialhabitcode",
-            "socialhabitcodestd",
-            "socialhabitdesc",
-            self.xml.social_habit,
-            optional=False,
-        )
-        self.add_item("updatedon", self.xml.updated_on, optional=True)
-        self.add_item("externalid", self.xml.external_id)
-
-
-class FamilyHistory(Node):
-    def __init__(self, xml: xsd_family_history.FamilyHistory):
-        super().__init__(xml, sqla.FamilyHistory)
-
-    def map_xml_to_tree(self):
-        self.add_code(
-            "familymembercode",
-            "familymembercodestd",
-            "familymemberdesc",
-            self.xml.family_member,
-            optional=True,
-        )
-        self.add_code(
-            "diagnosiscode",
-            "diagnosiscodingstandard",
-            "diagnosisdesc",
-            self.xml.diagnosis,
-            optional=True,
-        )
-        self.add_item("notetext", self.xml.note_text, optional=True)
-        self.add_code(
-            "enteredatcode",
-            "enteredatcodestd",
-            "enteredatdesc",
-            self.xml.entered_at,
-            optional=True,
-        )
-        self.add_item("fromtime", self.xml.from_time, optional=True)
-        self.add_item("totime", self.xml.to_time, optional=True)
-        self.add_item("updatedon", self.xml.updated_on, optional=True)
-        self.add_item("externalid", self.xml.external_id, optional=True)
-
-
-class Allergy(Node):
-    def __init__(self, xml: xsd_allergy.Allergy):
-        super().__init__(xml, sqla.Allergy)
-
-    def map_xml_to_tree(self):
-        self.add_code(
-            "allergycode",
-            "allergycodestd",
-            "allergydesc",
-            self.xml.allergy,
-            optional=False,
-        )
-        self.add_code(
-            "allergycategorycode",
-            "allergycategorycodestd",
-            "allergycategorydesc",
-            self.xml.allergy_category,
-            optional=True,
-        )
-        self.add_code(
-            "severitycode",
-            "severitycodestd",
-            "severitydesc",
-            self.xml.severity,
-            optional=True,
-        )
-        self.add_code(
-            "cliniciancode",
-            "cliniciancodestd",
-            "cliniciandesc",
-            self.xml.clinician,
-            optional=True,
-        )
-        self.add_item("discoverytime", self.xml.discovery_time, optional=True)
-        self.add_item("confirmedtime", self.xml.confirmed_time, optional=True)
-        self.add_item("comments", self.xml.comments, optional=True)
-        self.add_item("inactivetime", self.xml.inactive_time, optional=True)
-        self.add_item("freetextallergy", self.xml.free_text_allergy, optional=True)
-        self.add_item("qualifyingdetails", self.xml.qualifying_details, optional=True)
-
-        # common metadata
-        self.add_item("updatedon", self.xml.updated_on, optional=True)
-        # there is an update_date, actioncode here not sure what it does
-        self.add_item("externalid", self.xml.external_id, optional=True)
-
-
-class Diagnosis(Node):
-    def __init__(self, xml: xsd_diagnosis.Diagnosis, seq_no:int):
-        super().__init__(xml, sqla.Diagnosis, seq_no)
-
-    def map_xml_to_tree(self):
-        self.add_code(
-            "diagnosingcliniciancode",
-            "diagnosingcliniciancodestd",
-            "diagnosingcliniciandesc",
-            self.xml.diagnosing_clinician,
-            optional=True,
-        )
-
-        self.add_code(
-            "diagnosiscode",
-            "diagnosiscodestd",
-            "diagnosisdesc",
-            self.xml.diagnosis,
-            optional=False,
-        )
-
-        # TODO: Add biopsy performed when supported by the database.
-
-        self.add_item("diagnosistype", self.xml.diagnosis_type, optional=True)
-        self.add_item("comments", self.xml.comments, optional=True)
-        self.add_item("identificationtime", self.xml.identification_time, optional=True)
-        self.add_item("onsettime", self.xml.onset_time, optional=True)
-        self.add_item("enteredon", self.xml.entered_on, optional=True)
-        self.add_item("encounternumber", self.xml.encounter_number, optional=True)
-        self.add_item("verificationstatus", self.xml.verification_status, optional=True)
-
-        # common metadata
-        self.add_item("updatedon", self.xml.updated_on, optional=True)
-        self.add_item("externalid", self.xml.external_id, optional=True)
-
-    def transformer(self, pid: str, seq_no:int):
-        super().transformer(pid, seq_no)
-
-class CauseOfDeath(Node):
-    def __init__(self, xml: xsd_diagnosis.CauseOfDeath):
-        super().__init__(xml, sqla.CauseOfDeath)
-
-    def map_xml_to_tree(self):
-        self.add_item("diagnosistype", self.xml.diagnosis_type, optional=False)
-
-        self.add_code(
-            "diagnosiscode",
-            "diagnosiscodestd",
-            "diagnosisdesc",
-            self.xml.diagnosis,
-            optional=False,
-        )
-
-        self.add_item("comments", self.xml.comments, optional=True)
-        if self.xml.verification_status:
-            print(
-                "Cause of Death verification status not currently supported by the UKRDC database"
-            )
-
-        self.add_item("enteredon", self.xml.entered_on, optional=True)
-
-        # common metadata
-        self.add_item("updatedon", self.xml.updated_on, optional=True)
-        self.add_item("externalid", self.xml.external_id, optional=True)
-
-
-class RenalDiagnosis(Node):
-    def __init__(self, xml: xsd_diagnosis.RenalDiagnosis):
-        super().__init__(xml, sqla.RenalDiagnosis)
-
-    def map_xml_to_tree(self):
-        self.add_item("diagnosistype", self.xml.diagnosis_type, optional=False)
-
-        self.add_code(
-            "diagnosingcliniciancode",
-            "diagnosingcliniciancodestd",
-            "diagnosingcliniciandesc",
-            self.xml.diagnosing_clinician,
-            optional=True,
-        )
-
-        self.add_code(
-            "diagnosiscode",
-            "diagnosiscodestd",
-            "diagnosisdesc",
-            self.xml.diagnosis,
-            optional=False,
-        )
-
-        self.add_item("comments", self.xml.comments, optional=True)
-        self.add_item("identificationtime", self.xml.identification_time, optional=True)
-        self.add_item("onsettime", self.xml.onset_time, optional=True)
-        self.add_item("enteredon", self.xml.entered_on, optional=True)
-
-        # common metadata
-        self.add_item("updatedon", self.xml.updated_on, optional=True)
-        self.add_item("externalid", self.xml.external_id, optional=True)
-
-        if self.xml.verification_status:
-            print("Cause of Death verification status not currently supported")
-
-        if self.xml.biopsy_performed:
-            print("Biopsy performed status not currently supported")
-
-
-class DialysisPrescription(Node):
-    def __init__(self, xml: xsd_prescriptions.DialysisPrescription):
-        super().__init__(xml, None)
-
-    def map_xml_to_tree(self):
-        if self.xml.dialysis_session:
-            print("Loading dialysis sessions not currently supported")
-
-
-class Medication(Node):
-    def __init__(self, xml: xsd_medication.Medication, seq_no:int):
-        super().__init__(xml, sqla.Medication, seq_no)
-
-    def add_drug_product(self):
-
-        self.add_code(
-            "drugproductidcode",
-            "drugproductidcodestd",
-            "drugproductiddesc",
-            self.xml.drug_product.id,
-            optional=True,
-        )
-        self.add_item(
-            "drugproductgeneric", self.xml.drug_product.generic, optional=False
-        )
-        self.add_item(
-            "drugproductlabelname", self.xml.drug_product.label_name, optional=True
-        )
-        self.add_code(
-            "drugproductformcode",
-            "drugproductformcodestd",
-            "drugproductformdesc",
-            self.xml.drug_product.form,
-            optional=True,
-        )
-        self.add_code(
-            "drugproductstrengthunitscode",
-            "drugproductstrengthunitscodestd",
-            "drugproductstrengthunitsdesc",
-            self.xml.drug_product.strength_units,
-            optional=True,
-        )
-    
-    def transformer(self, pid: str, repository_update_date:datetime):
-        super().transformer(pid, self.seq_no)
-        self.orm_object.repositoryupdatedate = repository_update_date
-
-    def map_xml_to_tree(self):
-        self.add_item("prescriptionnumber", self.xml.prescription_number, optional=True)
-        self.add_item("fromtime", self.xml.from_time, optional=True)
-        self.add_item("totime", self.xml.to_time, optional=True)
-
-        self.add_code(
-            "enteringorganizationcode",
-            "enteringorganizationcodestd",
-            "enteringorganizationdesc",
-            self.xml.entering_organization,
-            optional=True,
-        )
-        self.add_code(
-            "routecode", "routecodestd", "routedesc", self.xml.route, optional=True
-        )
-        self.add_drug_product()
-        self.add_item("frequency", self.xml.frequency, optional=True)
-        self.add_item("commenttext", self.xml.comments, optional=True)
-        self.add_item("dosequantity", self.xml.dose_quantity, optional=True)
-        self.add_code(
-            "doseuomcode",
-            "doseuomcodestd",
-            "doseuomdesc",
-            self.xml.dose_uo_m,
-            optional=True,
-        )
-        self.add_item("indication", self.xml.indication, optional=True)
-        self.add_item("encounternumber", self.xml.encounter_number, optional=True)
-        self.add_item("updatedon", self.xml.updated_on, optional=True)
-        self.add_item("externalid", self.xml.external_id, optional=True)
-
-
-class Procedure(Node):
-    def __init__(self, xml: xsd_procedure.Procedure):
-        super().__init__(xml, sqla.Procedure)
-
-    def map_xml_to_tree(self):
-        self.add_code(
-            "proceduretypecode",
-            "proceduretypecodestd",
-            "proceduretypedesc",
-            self.xml.procedure_type,
-            optional=False,
-        )
-
-        self.add_item("proceduretime", self.xml.procedure_time, optional=False)
-        self.add_code(
-            "enteredbycode",
-            "enteredbycodestd",
-            "enteredbydesc",
-            self.xml.entered_by,
-            optional=True,
-        )
-        self.add_code(
-            "enteredatcode",
-            "enteredatcodestd",
-            "enteredatdesc",
-            self.xml.entered_at,
-            optional=True,
-        )
-
-        # common metadata
-        self.add_item("updatedon", self.xml.updated_on, optional=True)
-        self.add_item("externalid", self.xml.external_id, optional=True)
-
-
-class DialysisSession(Node):
-    def __init__(self, xml: xsd_dialysis_session.DialysisSession, seq_no:int):
-        super().__init__(xml, sqla.DialysisSession, seq_no)
-
-    def map_xml_to_tree(self):
-        self.add_code(
-            "proceduretypecode",
-            "proceduretypecodestd",
-            "proceduretypedesc",
-            self.xml.procedure_type,
-            optional=False,
-        )
-        self.add_item("proceduretime", self.xml.procedure_time, optional=False)
-        self.add_code(
-            "enteredbycode",
-            "enteredbycodestd",
-            "enteredbydesc",
-            self.xml.entered_by,
-            optional=True,
-        )
-        self.add_code(
-            "enteredatcode",
-            "enteredatcodestd",
-            "enteredatdesc",
-            self.xml.entered_at,
-            optional=True,
-        )
-
-        # add former attributes
-        self.add_item("qhd19", self.xml.symtomatic_hypotension, optional=True)
-        if self.xml.vascular_access:
-            self.add_item("qhd20", self.xml.vascular_access.code, optional=True) 
-        if self.xml.vascular_access_site:
-            self.add_item("qhd21", self.xml.vascular_access_site.code, optional=True)
-        self.add_item("qhd31", self.xml.time_dialysed, optional=True)
-
-
-class VascularAccess(Node):
-    def __init__(self, xml: xsd_vascular_accesses.VascularAccess, seq_no:int):
-        super().__init__(xml, sqla.VascularAccess, seq_no)
-
-    def add_acc(self):
-        if self.xml.attributes:
-            self.add_item("acc19", self.xml.attributes.acc19)
-            self.add_item("acc20", self.xml.attributes.acc20)
-            self.add_item("acc21", self.xml.attributes.acc21)
-            self.add_item("acc22", self.xml.attributes.acc22)
-            self.add_item("acc30", self.xml.attributes.acc30)
-            self.add_item("acc40", self.xml.attributes.acc40)
-
-    def map_xml_to_tree(self):
-        # Map values from XML to ORM object
-        self.add_code(
-            "proceduretypecode",
-            "proceduretypecodestd",
-            "proceduretypedesc",
-            self.xml.procedure_type,
-            optional=False,
-        )
-        self.add_item("proceduretime", self.xml.procedure_time, optional=False)
-        self.add_code(
-            "enteredbycode",
-            "enteredbycodestd",
-            "enteredbydesc",
-            self.xml.entered_by,
-            optional=True,
-        )
-        self.add_code(
-            "enteredatcode",
-            "enteredatcodestd",
-            "enteredatdesc",
-            self.xml.entered_at,
-            optional=True,
-        )
-        self.add_item("updatedon", self.xml.updated_on, optional=True)
-        self.add_item("externalid", self.xml.external_id, optional=True)
-        self.add_acc()
-
-
-class Document(Node):
-    def __init__(self, xml: xsd_documents.Document, seq_no:int):
-        super().__init__(xml, sqla.Document, seq_no)
-
-    def map_xml_to_tree(self):
-        self.add_item("documenttime", self.xml.document_time, optional=False)
-        self.add_item("notetext", self.xml.note_text, optional=True)
-        self.add_code(
-            "documenttypecode",
-            "documenttypecodestd",
-            "documenttypedesc",
-            self.xml.document_type,
-            optional=True,
-        )
-        self.add_code(
-            "cliniciancode",
-            "cliniciancodestd",
-            "cliniciandesc",
-            self.xml.clinician,
-            optional=True,
-        )
-        self.add_item("documentname", self.xml.document_name, optional=True)
-        self.add_code(
-            "statuscode", "statuscodestd", "statusdesc", self.xml.status, optional=True
-        )
-        self.add_code(
-            "enteredbycode",
-            "enteredbycodestd",
-            "enteredbydesc",
-            self.xml.entered_by,
-            optional=True,
-        )
-        self.add_code(
-            "enteredatcode",
-            "enteredatcodestd",
-            "enteredatdesc",
-            self.xml.entered_at,
-            optional=True,
-        )
-        self.add_item("filetype", self.xml.file_type, optional=True)
-        self.add_item("filename", self.xml.file_name, optional=True)
-        self.add_item("stream", self.xml.stream, optional=True)
-        self.add_item("documenturl", self.xml.document_url, optional=True)
-
-        # common metadata
-        self.add_item("updatedon", self.xml.updated_on, optional=True)
-        self.add_item("externalid", self.xml.external_id, optional=True)
-
-    def transformer(self, pid: str, repository_update_date:datetime):
-        super().transformer(pid, self.seq_no)
-        self.orm_object.repositoryupdatedate = repository_update_date 
-
-class Encounter(Node):
-    def __init__(self, xml: xsd_encounters.Encounter, seq_no:int):
-        super().__init__(xml, sqla.Encounter, seq_no)
-
-    def map_xml_to_tree(self):
-        self.add_item("encounternumber", self.xml.encounter_number, optional=True)
-        self.add_item("encountertype", self.xml.encounter_type, optional=False)
-        self.add_item("fromtime", self.xml.from_time, optional=False)
-        self.add_item("totime", self.xml.to_time, optional=True)
-
-        self.add_code(
-            "admittingcliniciancode",
-            "admittingcliniciancodestd",
-            "admittingcliniciandesc",
-            self.xml.admitting_clinician,
-            optional=True,
-        )
-
-        self.add_code(
-            "healthcarefacilitycode",
-            "healthcarefacilitycodestd",
-            "healthcarefacilitydesc",
-            self.xml.health_care_facility,
-            optional=True,
-        )
-
-        self.add_code(
-            "admitreasoncode",
-            "admitreasoncodestd",
-            "admitreasondesc",
-            self.xml.admit_reason,
-            optional=True,
-        )
-
-        self.add_code(
-            "admissionsourcecode",
-            "admissionsourcecodestd",
-            "admissionsourcedesc",
-            self.xml.admission_source,
-            optional=True,
-        )
-
-        self.add_code(
-            "dischargereasoncode",
-            "dischargereasoncodestd",
-            "dischargereasondesc",
-            self.xml.discharge_reason,
-            optional=True,
-        )
-
-        self.add_code(
-            "dischargelocationcode",
-            "dischargelocationcodestd",
-            "dischargelocationdesc",
-            self.xml.discharge_location,
-            optional=True,
-        )
-
-        self.add_code(
-            "enteredatcode",
-            "enteredatcodestd",
-            "enteredatdesc",
-            self.xml.entered_at,
-            optional=True,
-        )
-
-        self.add_item("visitdescription", self.xml.visit_description, optional=True)
-        self.add_item("updatedon", self.xml.updated_on, optional=True)
-        self.add_item("externalid", self.xml.external_id, optional=True)
-
-
-class Treatment(Node):
-    def __init__(self, xml: xsd_encounters.Treatment, seq_no:int):
-        super().__init__(xml, sqla.Treatment, seq_no)
-
-    def map_xml_to_tree(self):
-        self.add_item("encounternumber", self.xml.encounter_number, optional=True)
-        self.add_item("fromtime", self.xml.from_time, optional=False)
-        self.add_item("totime", self.xml.to_time, optional=True)
-        self.add_code(
-            "admittingcliniciancode",
-            "admittingcliniciancodestd",
-            "admittingcliniciandesc",
-            self.xml.admitting_clinician,
-            optional=True,
-        )
-        self.add_code(
-            "healthcarefacilitycode",
-            "healthcarefacilitycodestd",
-            "healthcarefacilitydesc",
-            self.xml.health_care_facility,
-            optional=True,
-        )
-        self.add_code(
-            "admitreasoncode",
-            "admitreasoncodestd",
-            "admitreasondesc",
-            self.xml.admit_reason,
-            optional=True,
-        )
-
-        self.add_code(
-            "admissionsourcecode",
-            "admissionsourcecodestd",
-            "admissionsourcedesc",
-            self.xml.admission_source,
-            optional=True,
-        )
-        self.add_code(
-            "dischargereasoncode",
-            "dischargereasoncodestd",
-            "dischargereasondesc",
-            self.xml.discharge_reason,
-            optional=True,
-        )
-        self.add_code(
-            "dischargelocationcode",
-            "dischargelocationcodestd",
-            "dischargelocationdesc",
-            self.xml.discharge_location,
-            optional=True,
-        )
-
-        self.add_code(
-            "enteredatcode",
-            "enteredatcodestd",
-            "enteredatdesc",
-            self.xml.entered_at,
-            optional=True,
-        )
-
-        self.add_item("visitdescription", self.xml.visit_description, optional=True)
-        self.add_item("qbl05", self.xml.attributes.qbl05, optional=True)
-
-        # common metadata
-        self.add_item("update_date", self.xml.updated_on, optional=True)
-        self.add_item("externalid", self.xml.external_id, optional=True)
-
-
-class TransplantList(Node):
-    def __init__(self, xml: xsd_encounters.TransplantList, seq_no:int):
-        super().__init__(xml, sqla.TransplantList, seq_no)
-
-    def map_xml_to_tree(self):
-        self.add_item("encounternumber", self.xml.encounter_number, optional=False)
-        self.add_item("encountertype", self.xml.encounter_type, optional=True)
-        self.add_item("fromtime", self.xml.from_time, optional=False)
-        self.add_item("totime", self.xml.to_time, optional=True)
-
-        self.add_code(
-            "admittingcliniciancode",
-            "admittingcliniciancodestd",
-            "admittingcliniciandesc",
-            self.xml.admitting_clinician,
-            optional=True,
-        )
-        self.add_code(
-            "healthcarefacilitycode",
-            "healthcarefacilitycodestd",
-            "healthcarefacilitydesc",
-            self.xml.health_care_facility,
-            optional=True,
-        )
-        self.add_code(
-            "admitreasoncode",
-            "admitreasoncodestd",
-            "admitreasondesc",
-            self.xml.admit_reason,
-            optional=True,
-        )
-        self.add_code(
-            "admissionsourcecode",
-            "admissionsourcecodestd",
-            "admissionsourcedesc",
-            self.xml.admission_source,
-            optional=True,
-        )
-        self.add_code(
-            "dischargereasoncode",
-            "dischargereasoncodestd",
-            "dischargereasondesc",
-            self.xml.discharge_reason,
-            optional=True,
-        )
-        self.add_code(
-            "dischargelocationcode",
-            "dischargelocationcodestd",
-            "dischargelocationdesc",
-            self.xml.discharge_location,
-            optional=True,
-        )
-        self.add_code(
-            "enteredatcode",
-            "enteredatcodestd",
-            "enteredatdesc",
-            self.xml.entered_at,
-            optional=True,
-        )
-
-        self.add_item("visitdescription", self.xml.visit_description, optional=True)
-        self.add_item("updatedon", self.xml.updated_on, optional=True)
-        self.add_item("externalid", self.xml.external_id, optional=True)
-
-
-class ProgramMembership(Node):
-    def __init__(self, xml: xsd_program_memberships.ProgramMembership):
-        super().__init__(xml, sqla.ProgramMembership)
-
-    def map_xml_to_tree(self):
-        self.add_code(
-            "enteredbycode",
-            "enteredbycodestd",
-            "enteredbycodedesc",
-            self.xml.entered_by,
-            optional=True,
-        )
-        self.add_code(
-            "enteredatcode",
-            "enteredatcodestd",
-            "enteredatcodedesc",
-            self.xml.entered_at,
-            optional=True,
-        )
-        self.add_item("programname", self.xml.program_name, optional=True)
-        self.add_item("programdescription", self.xml.program_description, optional=True)
-        self.add_item("fromtime", self.xml.from_time, optional=False)
-        self.add_item("totime", self.xml.to_time, optional=True)
-        self.add_item("updatedon", self.xml.updated_on, optional=True)
-        self.add_item("externalid", self.xml.external_id, optional=True)
-
-
-class OptOut(Node):
-    def __init__(self, xml: xsd_opt_outs.OptOut):
-        super().__init__(xml, sqla.OptOut)
-
-    def map_xml_to_tree(self):
-        self.add_item("program_name", self.xml.program_name, optional=False)
-        self.add_item(
-            "program_description", self.xml.program_description, optional=True
-        )
-        self.add_code(
-            "entered_by_code",
-            "entered_by_code_std",
-            "entered_by_desc",
-            self.xml.entered_by,
-            optional=True,
-        )
-        self.add_code(
-            "entered_at_code",
-            "entered_at_code_std",
-            "entered_at_desc",
-            self.xml.entered_at,
-            optional=True,
-        )
-        self.add_item("from_time", self.xml.from_time, optional=False)
-        self.add_item("to_time", self.xml.to_time, optional=True)
-        self.add_item("updated_on", self.xml.updated_on, optional=True)
-        self.add_item("external_id", self.xml.external_id, optional=True)
-
-
-class ClinicalRelationship(Node):
-    def __init__(self, xml: xsd_clinical_relationships.ClinicalRelationship, seq_no:int):
-        super().__init__(xml, sqla.ClinicalRelationship, seq_no)
-
-    def map_xml_to_tree(self):
-        self.add_code(
-            "cliniciancode",
-            "cliniciancodestd",
-            "cliniciandesc",
-            self.xml.clinician,
-            optional=True,
-        )
-        self.add_code(
-            "facilitycode",
-            "facilitycodestd",
-            "facilitydesc",
-            self.xml.facility_code,
-            optional=True,
-        )
-        self.add_item("fromtime", self.xml.from_time, optional=False)
-        self.add_item("totime", self.xml.to_time, optional=True)
-        self.add_item("updatedon", self.xml.updated_on)
-        self.add_item("externalid", self.xml.external_id)
-
-
-class Observation(Node):
-    def __init__(self, xml: xsd_observations.Observation, seq_no: int):
-        super().__init__(xml, sqla.Observation, seq_no)
-
-    def map_xml_to_tree(self):
-        self.add_item("observationtime", self.xml.observation_time, optional=False)
-        self.add_code(
-            "observationcode",
-            "observationcodestd",
-            "observationdesc",
-            self.xml.observation_code,
-            optional=True,
-        )
-        self.add_item("observationvalue", self.xml.observation_value, optional=True)
-        self.add_item("observationunits", self.xml.observation_units, optional=True)
-        self.add_item("prepost", self.xml.pre_post, optional=True)
-        self.add_item("commenttext", self.xml.comments, optional=True)
-
-        self.add_code(
-            "enteredatcode",
-            "enteredatcodestd",
-            "enteredatdesc",
-            self.xml.entered_at,
-            optional=True,
-        )
-        self.add_code(
-            "enteringorganizationcode",
-            "enteringorganizationcodestd",
-            "enteringorganizationdesc",
-            self.xml.entering_organization,
-            optional=True,
-        )
-        self.add_item("updatedon", self.xml.updated_on, optional=True)
-        self.add_item("externalid", self.xml.external_id, optional=True)
-
-
-class Transplant(Node):
-    def __init__(self, xml: xsd_transplants.TransplantProcedure, seq_no:int):
-        super().__init__(xml, sqla.Transplant, seq_no)
-
-    def map_xml_to_tree(self):
-        self.add_code(
-            "proceduretypecode",
-            "proceduretypecodestd",
-            "proceduretypedesc",
-            self.xml.procedure_type,
-            optional=False,
-        )
-        self.add_item("proceduretime", self.xml.procedure_time, optional=False)
-        self.add_code(
-            "enteredbycode", "enteredbycodestd", "enteredbydesc", self.xml.entered_by
-        )
-        self.add_code(
-            "enteredatcode", "enteredatcodestd", "enteredatdesc", self.xml.entered_at
-        )
-
-        self.add_item("updatedon", self.xml.updated_on, optional=True)
-        self.add_item("externalid", self.xml.external_id, optional=True)
-
-        # former attributes
-        self.add_item("tra77", self.xml.donor_type)
-        self.add_item("tra72", self.xml.date_registered)
-        self.add_item("tra64", self.xml.failure_date)
-        self.add_item("tra91", self.xml.cold_ischaemic_time)
-        self.add_item("tra83", self.xml.hlamismatch_a)
-        self.add_item("tra84", self.xml.hlamismatch_b)
-        self.add_item("tra85", self.xml.hlamismatch_c)
-
-
-class Question(Node):
-    def __init__(self, xml: xsd_surveys.Question):
-        super().__init__(xml, sqla.Question)
-
-    def map_xml_to_tree(self):
-        pass
-
-
-
-class Score(Node):
-    def __init__(self, xml: xsd_surveys.Score):
-        super().__init__(xml, sqla.Score)
-
-    def map_xml_to_tree(self):
-        pass
-
-
-class Survey(Node):
-    def __init__(self, xml: xsd_surveys.Survey):
-        super().__init__(xml, sqla.Survey)
-
-    def map_xml_to_tree(self):
-        pass
-
-
-
-class PVData(Node):
-    def __init__(self, xml):
-        super().__init__(xml, sqla.PVData)
-
-    def map_xml_to_tree(self):
-        pass
-
+        self.add_children(
+            PatientNumber, "patient_numbers.patient_number", session, True
+        )
+        self.add_children(Name, "names.name", session, True)
+        self.add_children(
+            ContactDetail, "contact_details.contact_detail", session, True
+        )
+        self.add_children(Address, "addresses.address", session, True)
+        self.add_children(FamilyDoctor, "family_doctor", session)
 
 
 class PatientRecord(Node):
@@ -1320,86 +432,61 @@ class PatientRecord(Node):
         # we will now use this to host the date that gets sent on the sending facility
         self.repository_updated_date = xml.sending_facility.time.to_datetime()
 
-        # Items which get sent every time need to have their date range retained
-        self.lab_order_range : List[datetime] = []
-        self.obs_range : List[datetime] = []
-        
+        if xml.lab_orders:
+            self.lab_order_range = [
+                xml.lab_orders.start.to_datetime(),
+                xml.lab_orders.stop.to_datetime(),
+            ]
 
+        if xml.observations:
+            self.observations = [
+                xml.observations.start.to_datetime(),
+                xml.observations.stop.to_datetime(),
+            ]
 
-    def map_xml_to_tree(self):
+    def updated_status(self, session: Session):
+        super().updated_status(session)
+        if self.is_new_record:
+            self.orm_object.repositorycreationdate = self.repository_updated_date
 
-        # core patient record 
+        if self.is_modified or self.is_new_record:
+            # what is the correct behaviour should this be set if any part of the patient record has been changed?
+            # I think this should be a nullable field
+            self.orm_object.repositoryupdatedate = self.repository_updated_date
+
+    def map_xml_to_orm(self, session: Session):
+
+        # core patient record
         self.add_item("sendingfacility", self.xml.sending_facility)
         self.add_item("sendingextract", self.xml.sending_extract)
-
-
-        # map child objects
-        self.add_children(Patient, "patient")
-        self.add_children(LabOrder, "lab_orders.lab_order")
-        self.add_children(SocialHistory, "social_histories.social_history")
-        self.add_children(FamilyHistory, "family_histories.family_history")
-        self.add_children(Allergy, "allergies.allergy")
-        self.add_children(Medication, "medications.medication", True)
-
-        # diagnosis child objects
-        self.add_children(Diagnosis, "diagnoses.diagnosis", True)
-        # These will be sequential with updates to the ukrdc database
-        self.add_children(CauseOfDeath, "diagnoses.cause_of_death")
-        self.add_children(RenalDiagnosis, "diagnoses.renal_diagnosis")
-
-        # proceedure child objects
-        self.add_children(Procedure, "procedures.procedure", True)
-        self.add_children(DialysisSession, "procedures.dialysis_sessions.dialysis_session", True)
-        self.add_children(VascularAccess, "procedures.vascular_access", True)
-        self.add_children(Transplant, "transplants.transplant", True)
-
-        self.add_children(Document, "documents.document", True)
-        self.add_children(Encounter, "encounters.encounter", True)
-        self.add_children(Treatment, "encounters.treatment", True)
-        self.add_children(TransplantList, "encounters.transplant_list", True)
-
-        self.add_children(ProgramMembership, "program_memberships.program_membership", )
-        self.add_children(OptOut, "opt_outs.opt_out")
-        self.add_children(
-            ClinicalRelationship, "clinical_relationships.clinical_relationship", True
-        )
-        self.add_children(Observation, "observations.observation", True)
-        # self.add_children(PVData, "path_to_self_xml")
-
-    def transform(self, pid: str, ukrdcid: str):
-        """
-        Abstraction to propagate transformation down through dependent classes
-        """
-        self.transformer(pid=pid, ukrdcid = ukrdcid)
-        diagnosis_seq = 0
-        for child_class in self.mapped_classes:
-            print(child_class.orm_object.__tablename__)
-            if child_class.orm_object.__tablename__ in ("medication", "document"):
-                # transform classes for observation and document require the repository updated time
-                # TODO: add logic to populate seq_no 
-                child_class.transformer(pid=pid, repository_update_date = self.repository_updated_date)
-            else:    
-                child_class.transform(pid=pid)
-
-    def transformer(self, pid: str, ukrdcid:str):
-        super().transformer(pid=pid)
-        self.orm_object.ukrdcid = ukrdcid
 
         # get MRN from patient numbers model
         for number in self.xml.patient.patient_numbers[0].patient_number:
             if number.number_type.value == "MRN":
                 self.orm_object.localpatientid = number.number
 
-        if not self.orm_object.localpatientid:
-            print("This should flag some sort of error")
-        
-        self.orm_object.repositoryupdatedate = self.repository_updated_date
-        
-        # tempory this needs a bit of thought
-        self.orm_object.repositorycreationdate = self.repository_updated_date
+        self.add_children(Patient, "patient", session)
+        self.add_children(Observation, "observations.observation", session, True)
 
+        self.updated_status(session)
 
-        
+    def map_to_database(self, pid: str, ukrdcid: str, session: Session, is_new=True):
+        self.pid = pid
+        self.session = session
+        self.is_new_record = is_new
 
+        # load or create the orm
+        if is_new:
+            self.orm_object = self.orm_model(pid=self.pid, ukrdcid=ukrdcid)
+        else:
+            self.orm_object = session.get(self.orm_model, self.pid)
 
+        self.map_xml_to_orm(session)
 
+    def get_orm_deleted(self):
+        # probably don't want to stage patient record for deletion
+        orm_objects = []
+        for child_class in self.mapped_classes:
+            orm_objects = orm_objects + child_class.get_orm_deleted()
+
+        return orm_objects

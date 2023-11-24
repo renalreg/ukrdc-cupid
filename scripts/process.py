@@ -3,10 +3,12 @@ JTrace replacement. The aim here is not to handle any of the merging. Simply
 to load an xml file into a sqla object with all the correct keys.     
 """
 
+import glob
+import os
+
 from ukrdc_cupid.core.parse.utils import load_xml_from_path
-from ukrdc_cupid.core.match.identify import link_patient_number 
-from ukrdc_cupid.core.store.models.ukrdc import PatientRecord
-from ukrdc_cupid.core.store.insert import insert_incoming_data
+from ukrdc_cupid.core.match.identify import identify_patient_feed, read_patient_metadata, identify_across_ukrdc
+from ukrdc_cupid.core.store.insert import insert_incoming_data, insert_into_sherlock
 
 from sqlalchemy.orm import sessionmaker
 from xsdata.exceptions import ParserError
@@ -14,35 +16,61 @@ from sqlalchemy import create_engine
 
 from ukrdc_cupid.core.store.keygen import mint_new_pid, mint_new_ukrdcid
     
-#engine = Connection.get_engine_from_file(key="ukrdc_staging")
-#session = scoped_session(sessionmaker(engine))
+
 url = "postgresql://postgres:postgres@localhost:5432/dummy_ukrdc"
-#engine = create_engine(url, echo = True)
 engine = create_engine(url)
 
 ukrdc3_sessionmaker = sessionmaker(bind=engine)
 session = ukrdc3_sessionmaker()
 
-# load xml file as python object 
-#xml_file = r"Q:\UKRDC\UKRDC Feed Development\RFBAK Leicester\RFBAK_00082_4165311820.xml"
-xml_file = r"scripts/xml_examples/UKRDC_v4.xml"
-xml_object = load_xml_from_path(xml_file)
 
-if isinstance(xml_object, ParserError):
-    print(f"File load failed for the following reason: {xml_object}")
-else: 
-    # link patient to existing record return by order of preference
-    linked_patients = link_patient_number(session=session, xml=xml_object)
+# Specify the directory where your XML files are located
+xml_directory = ".xml_to_load"
 
-    if len(linked_patients) == 0: 
-        # create new pid and load into sqla
+# grab files to load from directory
+xml_files = glob.glob(os.path.join(xml_directory, "*.xml"))
+
+
+for xml_file in xml_files:
+    xml_object = load_xml_from_path(xml_file)
+
+    if isinstance(xml_object, ParserError):
+        raise f"File load failed for the following reason: {xml_object}"
+    
+    # Attempt to identify patient on same feed
+    patient_info = read_patient_metadata(xml_object)
+    pid, ukrdcid, investigation = identify_patient_feed(session=session, patient_info=patient_info)
+
+    # Investigations cause file to be diverted
+    if investigation:
+        insert_into_sherlock(investigation, xml_object)
+        continue 
+
+    # After this point files will be inserted into ukrdc        
+    # Mint a pid if we don't have one
+    if not pid: 
         pid = mint_new_pid(session=session)
-        ukrdcid = mint_new_ukrdcid(session = session)
+        is_new = True # need to revisit this
+    else:
+        is_new = False
 
-    elif len(linked_patients) > 0 :
-        # assign existing pid and ukrdcid 
-        pid = linked_patients[0].pid
-        ukrdcid = linked_patients[0].ukrdcid
+    # Attempt to identify patient across the ukrdc
+    if not ukrdcid:
+        ukrdcid, investigation = identify_across_ukrdc(session, patient_info, pid)
 
-    # map the xml files to ORM objects
-    insert_incoming_data(ukrdc_session=session, pid=pid, ukrdcid = ukrdcid, incoming_xml_file=xml_object)
+    # mint new ukrdcid    
+    if not ukrdcid:
+        ukrdcid = mint_new_ukrdcid(session=session)
+
+    # insert data
+    insert_incoming_data(
+        ukrdc_session=session, 
+        pid=pid, 
+        ukrdcid=ukrdcid, 
+        incoming_xml_file=xml_object,
+        is_new = is_new 
+    )
+
+    # insert investigations
+    if investigation:
+        insert_into_sherlock(investigation)
