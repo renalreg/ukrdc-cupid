@@ -134,29 +134,6 @@
             <ObservationTime>2006-05-04T18:13:51.0</ObservationTime>
             <ObservationCode>
                 <CodingStandard>UKRR</CodingStandard>
-                <Code>QBLG3</Code>
-                <Description>Systolic BP</Description>
-            </ObservationCode>
-            <ObservationValue>150</ObservationValue>
-            <ObservationUnits>mmHg</ObservationUnits>
-            <PrePost>PRE</PrePost>
-            <EnteredAt>
-                <CodingStandard>RR1+</CodingStandard>
-                <Code>ABC123</Code>
-                <Description>Test Hospital</Description>
-            </EnteredAt>
-            <EnteringOrganization>
-                <CodingStandard>RR1+</CodingStandard>
-                <Code>ABC123</Code>
-                <Description>Test Hospital</Description>
-            </EnteringOrganization>
-            <UpdatedOn>2006-05-04T18:13:51.0</UpdatedOn>
-            <ExternalId>88888888</ExternalId>
-        </Observation>
-        <Observation>
-            <ObservationTime>2006-05-04T18:13:51.0</ObservationTime>
-            <ObservationCode>
-                <CodingStandard>UKRR</CodingStandard>
                 <Code>QBLG4</Code>
                 <Description>Diastolic BP</Description>
             </ObservationCode>

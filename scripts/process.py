@@ -15,25 +15,9 @@ from xsdata.exceptions import ParserError
 from sqlalchemy import create_engine
 
 from ukrdc_cupid.core.store.keygen import mint_new_pid, mint_new_ukrdcid
-    
-
-url = "postgresql://postgres:postgres@localhost:5432/dummy_ukrdc"
-engine = create_engine(url)
-
-ukrdc3_sessionmaker = sessionmaker(bind=engine)
-session = ukrdc3_sessionmaker()
 
 
-# Specify the directory where your XML files are located
-xml_directory = ".xml_to_load"
-
-# grab files to load from directory
-xml_files = glob.glob(os.path.join(xml_directory, "*.xml"))
-
-
-for xml_file in xml_files:
-    xml_object = load_xml_from_path(xml_file)
-
+def process_file(xml_object):
     if isinstance(xml_object, ParserError):
         raise f"File load failed for the following reason: {xml_object}"
     
@@ -44,7 +28,7 @@ for xml_file in xml_files:
     # Investigations cause file to be diverted
     if investigation:
         insert_into_sherlock(investigation, xml_object)
-        continue 
+        return
 
     # After this point files will be inserted into ukrdc        
     # Mint a pid if we don't have one
@@ -63,14 +47,35 @@ for xml_file in xml_files:
         ukrdcid = mint_new_ukrdcid(session=session)
 
     # insert data
-    insert_incoming_data(
+    new, dirty, unchanged = insert_incoming_data(
         ukrdc_session=session, 
         pid=pid, 
         ukrdcid=ukrdcid, 
         incoming_xml_file=xml_object,
-        is_new = is_new 
+        is_new = is_new,  
+        debug = True
     )
 
     # insert investigations
     if investigation:
         insert_into_sherlock(investigation)
+
+
+url = "postgresql://postgres:postgres@localhost:5432/dummy_ukrdc"
+engine = create_engine(url)
+
+ukrdc3_sessionmaker = sessionmaker(bind=engine, expire_on_commit=True)
+session = ukrdc3_sessionmaker()
+
+
+# Specify the directory where your XML files are located
+xml_directory = ".xml_to_load"
+
+# grab files to load from directory
+xml_files = glob.glob(os.path.join(xml_directory, "*.xml"))
+
+
+for xml_file in xml_files:
+    xml_object = load_xml_from_path(xml_file)
+    process_file(xml_object)
+

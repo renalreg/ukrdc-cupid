@@ -1,21 +1,53 @@
-import ukrdc_sqla.ukrdc as sqla
+import time
+
 from sqlalchemy.orm import Session
-from sqlalchemy import inspect
-from datetime import datetime
 from ukrdc_cupid.core.store.models.ukrdc import PatientRecord
-from ukrdc_cupid.core.store.delete import SQL_DELETE
+from sqlalchemy.exc import OperationalError
 
 import ukrdc_xsdata.ukrdc as xsd_ukrdc  # type: ignore
 
-from typing import List, Optional, Union
+def advisory_lock(func):
+    def wrapper(ukrdc_session: Session, pid: str, *args, **kwargs):
+        # this wrapper function applies for an advisory lock on a a particular pid
+        # if it isn't available it will keep trying for up to 60 secs to obtain the lock
+
+        start_time = time.time()
+        max_wait_time = 60  # Maximum wait time in seconds
+
+        while time.time() - start_time < max_wait_time:
+            try:
+                # Try to acquire an advisory lock for the specified pid
+                ukrdc_session.execute(f"SELECT pg_advisory_lock({int(pid)}::int)")
+
+            except OperationalError as e:
+                # Handle exceptions, log, or rollback if necessary
+                print(f"Error: {e}")
+                #session.rollback()
+                # Wait for a short period before trying to acquire the lock again
+                time.sleep(1)
+                continue
+
+            else:
+                # Call the wrapped function
+                result = func(ukrdc_session, pid, *args, **kwargs)
+
+                # Release the advisory lock regardless of success or failure
+                ukrdc_session.execute(f"SELECT pg_advisory_unlock({int(pid)}::int)")
+                return result
+            
+        # If the loop runs for the maximum wait time, raise an exception or handle accordingly
+        raise TimeoutError("Unable to acquire advisory lock within the specified time.")
+    return wrapper
 
 
+@advisory_lock
 def insert_incoming_data(
     ukrdc_session: Session,
     pid: str,
     ukrdcid: str,
     incoming_xml_file: xsd_ukrdc.PatientRecord,
     is_new: bool = False,
+    debug: bool = False
 ):
     """Insert file into the database having matched to pid.
     do we need a no delete mode?
@@ -35,8 +67,17 @@ def insert_incoming_data(
     )
 
     # extract a list of records from cupid models
-    incoming_records = patient_record.get_orm_list()
-    ukrdc_session.add_all(incoming_records)
+    if debug:
+        new = patient_record.get_orm_list(is_dirty=False, is_new = True, is_unchanged=False)
+        dirty = patient_record.get_orm_list(is_dirty=True, is_new = False, is_unchanged=False)
+        unchanged = patient_record.get_orm_list(is_dirty=False, is_new = True, is_unchanged=True)
+    else: 
+        new = patient_record.get_orm_list(new = patient_record.get_orm_list(is_dirty=False, is_new = True, is_unchanged=False))
+    
+    ukrdc_session.flush()
+
+    # add new records to the session
+    ukrdc_session.add_all(new)
 
     # get list of records to delete
     records_for_deletion = patient_record.get_orm_deleted()
@@ -45,10 +86,11 @@ def insert_incoming_data(
 
     # in principle we could do a bunch of validation here before we commit
 
-    # flush and commit
-    ukrdc_session.flush()
 
     ukrdc_session.commit()
+
+    if debug:
+        return new, dirty, unchanged
 
 def insert_into_sherlock(investigation, xml_object = None):
     """placeholder function for inserting workitems and processing diverted files
