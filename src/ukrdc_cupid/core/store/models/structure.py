@@ -142,6 +142,17 @@ class Node(ABC):
         session: Session,
         sequential: bool = False,
     ):
+        """ Still not completely happy with this algorithm since it requires the 
+        objects to be added deleted explicitly rather than just being appended
+        maybe this gives more control to fine tune the process. In principle we shouldn't 
+        need the recursive functions at all. 
+
+        Args:
+            child_node (Type[Node]): _description_
+            xml_attr (str): _description_
+            session (Session): _description_
+            sequential (bool, optional): _description_. Defaults to False.
+        """
 
         # Step into the xml_file and extract the xml containing incoming data
         xml_items = self.xml
@@ -212,18 +223,15 @@ class Node(ABC):
 
         orm_objects = []
 
-        # In normal operation we only need to explicitly add new re
-        if self.is_modified:
-            if is_dirty:
-                orm_objects.append(self.orm_object)
+        # In normal operation we only need to explicitly add new records to session
+        if self.is_new_record and is_new:
+            orm_objects.append(self.orm_object)
 
-        elif self.is_new_record:
-            if is_new:
-                orm_objects.append(self.orm_object)
-       
-        else:
-            if is_unchanged:
-                orm_objects.append(self.orm_object)
+        elif self.is_modified and is_dirty:
+            orm_objects.append(self.orm_object)
+
+        elif is_unchanged:
+            orm_objects.append(self.orm_object)
 
         if self.mapped_classes:
             for child_class in self.mapped_classes:
@@ -248,7 +256,6 @@ class Node(ABC):
         # these type of changes should be made carefully to avoid churn
 
         if self.is_modified is True:
-            print(self.orm_object.__tablename__)
             self.orm_object.update_date = datetime.now()
  
     @abstractmethod

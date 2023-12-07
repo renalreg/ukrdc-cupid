@@ -72,27 +72,35 @@ def insert_incoming_data(
         dirty = patient_record.get_orm_list(is_dirty=True, is_new = False, is_unchanged=False)
         unchanged = patient_record.get_orm_list(is_dirty=False, is_new = True, is_unchanged=True)
     else: 
-        new = patient_record.get_orm_list(new = patient_record.get_orm_list(is_dirty=False, is_new = True, is_unchanged=False))
+        new = patient_record.get_orm_list(is_dirty=False, is_new = True, is_unchanged=False)
+
+    # if patient record is new it needs to be added to session
+    ukrdc_session.add_all(new) 
     
-    ukrdc_session.flush()
-
-    # add new records to the session
-    ukrdc_session.add_all(new)
-
     # get list of records to delete
     records_for_deletion = patient_record.get_orm_deleted()
     for record in records_for_deletion:
         ukrdc_session.delete(record)
 
-    # in principle we could do a bunch of validation here before we commit
+    print("================================================")
+    if is_new:
+        print(f"Creating Patient: pid = {pid}, ukrdcid = {ukrdcid}")
+    else:
+        print(f"Updating Patient: pid = {pid}, ukrdcid = {ukrdcid}")
+    
+    print(f"New records: {len(ukrdc_session.new)}")
+    print(f"Updated records: {len(ukrdc_session.dirty)}")
 
+    try:
+        ukrdc_session.flush()
 
-    ukrdc_session.commit()
+        # in principle we could do a bunch of validation here before we commit
+        ukrdc_session.commit()
+
+    except Exception as e:
+        print("we need some more sophisticated error handling here")
+        ukrdc_session.rollback()
 
     if debug:
         return new, dirty, unchanged
-
-def insert_into_sherlock(investigation, xml_object = None):
-    """placeholder function for inserting workitems and processing diverted files
-    """
-    return
+    
