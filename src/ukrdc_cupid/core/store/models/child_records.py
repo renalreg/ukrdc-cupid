@@ -9,15 +9,14 @@ import ukrdc_sqla.ukrdc as sqla
 import ukrdc_xsdata.ukrdc.observations as xsd_observations  # type: ignore
 
 
-
 class Observation(Node):
     def __init__(self, xml: xsd_observations.Observation, seq_no: int):
         super().__init__(xml, sqla.Observation, seq_no)
 
-    def sqla_mapped():
+    def sqla_mapped() -> str:
         return "observations"
 
-    def map_xml_to_orm(self, _ ):
+    def map_xml_to_orm(self, _) -> None:
 
         # fmt: off
         self.add_item("observationtime", self.xml.observation_time, optional=False)

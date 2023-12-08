@@ -6,8 +6,8 @@ with multiple_nhs as (
 	from patientnumber A 
 	inner join patientnumber B
 	on A.patientid = B.patientid
-	where A.organization = 'NHS' 
-	and B.organization = 'NHS'
+	where A.organization in ('NHS', 'CHI', 'HSC') 
+	and B.organization in ('NHS', 'CHI', 'HSC')
 	and A.numbertype = 'NI'
 	and B.numbertype = 'NI'
 	and A.pid <> B.pid
@@ -24,6 +24,28 @@ and B.sendingextract = 'UKRDC'
 and C.sendingextract = 'UKRDC'
 limit(100)
 
+-- pretty much same as above
+with multiple_nhs as (
+	select A.id as id_1, A.pid as pid_1,B.id as id_2, B.pid as pid_2, A.patientid
+	from patientnumber A 
+	inner join patientnumber B
+	on A.patientid = B.patientid
+	where A.organization in ('NHS', 'CHI', 'HSC') 
+	and B.organization in ('NHS', 'CHI', 'HSC')
+	and A.numbertype = 'NI'
+	and B.numbertype = 'NI'
+	and A.pid <> B.pid
+	order by A.patientid
+)
+select patientid from multiple_nhs A
+inner join patientrecord B 
+on A.pid_1 = B.pid
+inner join patientrecord C 
+on A.pid_2 = C.pid
+where B.ukrdcid <> C.ukrdcid
+and B.sendingextract = 'UKRDC' 
+and C.sendingextract = 'UKRDC'
+group by patientid 
 
 -- these records have the same nhs number and different names and ukrdcids
 with nhs_names as (

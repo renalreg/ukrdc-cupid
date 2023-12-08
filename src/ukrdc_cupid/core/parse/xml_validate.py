@@ -13,6 +13,7 @@ from lxml import etree  # nosec B410
 from pydantic import Field
 from pydantic_settings import BaseSettings
 from platformdirs import user_data_dir
+from typing import Tuple, Optional, Dict
 
 
 class Settings(BaseSettings):
@@ -46,7 +47,7 @@ env_variables = Settings()
 SUPPORTED_VERSIONS = ["3.3.0", "3.4.5", "4.0.0"]
 
 
-def download_ukrdc_schema(filepath: str, schema_version: str):
+def download_ukrdc_schema(filepath: str, schema_version: str) -> None:
     """
     Downloads the specified schema version from the GitHub repository. A specific commit id is mapped to each supported version of the schema this is loaded via the environment variables.
 
@@ -77,7 +78,7 @@ def download_ukrdc_schema(filepath: str, schema_version: str):
     shutil.rmtree(repo_dir, ignore_errors=True)
 
 
-def load_schema(schema_version: str):
+def load_schema(schema_version: str) -> Tuple(etree.XMLSchema, str):
     """
     Locate the schema locally and load it into lxml so it can be used for validation.
 
@@ -115,7 +116,9 @@ def load_schema(schema_version: str):
     return etree.XMLSchema(xsd_doc), xsd_file_path
 
 
-def validate_rda_xml_string(rda_xml: str, schema_version: str = "4.0.0"):
+def validate_rda_xml_string(
+    rda_xml: str, schema_version: str = "4.0.0"
+) -> Optional[Dict[str, str]]:
     """
     Validate an RDA XML file against the UKRDC schema. It should be noted that the code assumes the enviroment variables are set up such that the minor release can be thrown away. TODO: maybe this is something to be made more explicit or changed in the future.
 
@@ -132,10 +135,9 @@ def validate_rda_xml_string(rda_xml: str, schema_version: str = "4.0.0"):
     # Load the XML file
     xml_doc = etree.XML(rda_xml.encode())
 
+    # Initially catch errors to allow more specific processing of errors
     try:
         xml_schema.assertValid(xml_doc)
-        # Initially catch errors to allow reporting multiple issues in one file
-        return
 
     except etree.DocumentInvalid:
 

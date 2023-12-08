@@ -4,9 +4,10 @@ from sqlalchemy.orm import sessionmaker, Session
 
 ENV = dotenv_values()
 
-class DatabaseConnection():
-    def __init__(self, prefix:str = "UKRDC"):
-        self.prefix = prefix
+
+class DatabaseConnection:
+    def __init__(self, env_prefix: str = "UKRDC"):
+        self.prefix = env_prefix
 
     @property
     def driver(self) -> str:
@@ -27,7 +28,7 @@ class DatabaseConnection():
     @property
     def name(self) -> str:
         return self.get_env_value("NAME")
-    
+
     def get_env_value(self, field_name: str) -> str:
         env_key = f"{self.prefix}_{field_name}".upper()
         env_value = ENV.get(env_key)

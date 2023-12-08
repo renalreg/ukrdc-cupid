@@ -1,14 +1,12 @@
-
 from __future__ import annotations  # allows typehint of node class
 
 from ukrdc_cupid.core.store.models.structure import Node
-from ukrdc_cupid.core.store.models.patient import Patient 
-from ukrdc_cupid.core.store.models.child_records import Observation 
+from ukrdc_cupid.core.store.models.patient import Patient
+from ukrdc_cupid.core.store.models.child_records import Observation
 
 import ukrdc_xsdata.ukrdc as xsd_ukrdc  # type: ignore
 import ukrdc_sqla.ukrdc as sqla
 from sqlalchemy.orm import Session
-
 
 
 class PatientRecord(Node):
@@ -31,10 +29,10 @@ class PatientRecord(Node):
                 xml.observations.stop.to_datetime(),
             ]
 
-    def sqla_mapped():
+    def sqla_mapped() -> None:
         return None
 
-    def updated_status(self, session: Session):
+    def updated_status(self, session: Session) -> None:
         super().updated_status(session)
         if self.is_new_record:
             self.orm_object.repositorycreationdate = self.repository_updated_date
@@ -44,7 +42,7 @@ class PatientRecord(Node):
             # I think this should be a nullable field
             self.orm_object.repositoryupdatedate = self.repository_updated_date
 
-    def map_xml_to_orm(self, session: Session):
+    def map_xml_to_orm(self, session: Session) -> None:
 
         # core patient record
         self.add_item("sendingfacility", self.xml.sending_facility)
@@ -60,7 +58,9 @@ class PatientRecord(Node):
 
         self.updated_status(session)
 
-    def map_to_database(self, pid: str, ukrdcid: str, session: Session, is_new=True):
+    def map_to_database(
+        self, pid: str, ukrdcid: str, session: Session, is_new=True
+    ) -> None:
         self.pid = pid
         self.session = session
         self.is_new_record = is_new

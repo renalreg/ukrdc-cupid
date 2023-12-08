@@ -3,8 +3,11 @@ import time
 from sqlalchemy.orm import Session
 from ukrdc_cupid.core.store.models.ukrdc import PatientRecord
 from sqlalchemy.exc import OperationalError
+from ukrdc_sqla.ukrdc import Base
 
 import ukrdc_xsdata.ukrdc as xsd_ukrdc  # type: ignore
+from typing import Optional, Tuple
+
 
 def advisory_lock(func):
     def wrapper(ukrdc_session: Session, pid: str, *args, **kwargs):
@@ -22,7 +25,7 @@ def advisory_lock(func):
             except OperationalError as e:
                 # Handle exceptions, log, or rollback if necessary
                 print(f"Error: {e}")
-                #session.rollback()
+                # session.rollback()
                 # Wait for a short period before trying to acquire the lock again
                 time.sleep(1)
                 continue
@@ -34,9 +37,10 @@ def advisory_lock(func):
                 # Release the advisory lock regardless of success or failure
                 ukrdc_session.execute(f"SELECT pg_advisory_unlock({int(pid)}::int)")
                 return result
-            
+
         # If the loop runs for the maximum wait time, raise an exception or handle accordingly
         raise TimeoutError("Unable to acquire advisory lock within the specified time.")
+
     return wrapper
 
 
@@ -47,8 +51,8 @@ def insert_incoming_data(
     ukrdcid: str,
     incoming_xml_file: xsd_ukrdc.PatientRecord,
     is_new: bool = False,
-    debug: bool = False
-):
+    debug: bool = False,
+) -> Tuple[Optional[Base], Optional[Base], Optional[Base]]:
     """Insert file into the database having matched to pid.
     do we need a no delete mode?
 
@@ -68,15 +72,23 @@ def insert_incoming_data(
 
     # extract a list of records from cupid models
     if debug:
-        new = patient_record.get_orm_list(is_dirty=False, is_new = True, is_unchanged=False)
-        dirty = patient_record.get_orm_list(is_dirty=True, is_new = False, is_unchanged=False)
-        unchanged = patient_record.get_orm_list(is_dirty=False, is_new = True, is_unchanged=True)
-    else: 
-        new = patient_record.get_orm_list(is_dirty=False, is_new = True, is_unchanged=False)
+        new = patient_record.get_orm_list(
+            is_dirty=False, is_new=True, is_unchanged=False
+        )
+        dirty = patient_record.get_orm_list(
+            is_dirty=True, is_new=False, is_unchanged=False
+        )
+        unchanged = patient_record.get_orm_list(
+            is_dirty=False, is_new=True, is_unchanged=True
+        )
+    else:
+        new = patient_record.get_orm_list(
+            is_dirty=False, is_new=True, is_unchanged=False
+        )
 
     # if patient record is new it needs to be added to session
-    ukrdc_session.add_all(new) 
-    
+    ukrdc_session.add_all(new)
+
     # get list of records to delete
     records_for_deletion = patient_record.get_orm_deleted()
     for record in records_for_deletion:
@@ -87,7 +99,7 @@ def insert_incoming_data(
         print(f"Creating Patient: pid = {pid}, ukrdcid = {ukrdcid}")
     else:
         print(f"Updating Patient: pid = {pid}, ukrdcid = {ukrdcid}")
-    
+
     print(f"New records: {len(ukrdc_session.new)}")
     print(f"Updated records: {len(ukrdc_session.dirty)}")
 
@@ -103,4 +115,3 @@ def insert_incoming_data(
 
     if debug:
         return new, dirty, unchanged
-    

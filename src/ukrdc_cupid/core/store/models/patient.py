@@ -17,11 +17,11 @@ import ukrdc_xsdata.ukrdc.types as xsd_types  # type: ignore
 class PatientNumber(Node):
     def __init__(self, xml: xsd_types.PatientNumber, seq_no: int):
         super().__init__(xml, sqla.PatientNumber, seq_no)
-    
-    def sqla_mapped():
+
+    def sqla_mapped() -> str:
         return "numbers"
 
-    def map_xml_to_orm(self, _ ):
+    def map_xml_to_orm(self, _) -> None:
         self.add_item("patientid", self.xml.number)
         self.add_item("organization", self.xml.organization)
         self.add_item("numbertype", self.xml.number_type)
@@ -30,11 +30,11 @@ class PatientNumber(Node):
 class Name(Node):
     def __init__(self, xml: xsd_types.Name, seq_no):
         super().__init__(xml, sqla.Name, seq_no)
-        
-    def sqla_mapped():
-        return "names" 
 
-    def map_xml_to_orm(self, _ ):
+    def sqla_mapped() -> str:
+        return "names"
+
+    def map_xml_to_orm(self, _) -> None:
         self.add_item("nameuse", self.xml.use)
         self.add_item("prefix", self.xml.prefix)
         self.add_item("family", self.xml.family)
@@ -46,23 +46,24 @@ class Name(Node):
 class ContactDetail(Node):
     def __init__(self, xml: xsd_types.ContactDetail, seq_no: int):
         super().__init__(xml, sqla.ContactDetail, seq_no)
-        
-    def sqla_mapped():
+
+    def sqla_mapped() -> str:
         return "contact_details"
 
-    def map_xml_to_orm(self, _ ):
+    def map_xml_to_orm(self, _) -> None:
         self.add_item("contactuse", self.xml.use)
         self.add_item("contactvalue", self.xml.value)
         self.add_item("commenttext", self.xml.comments)
 
+
 class Address(Node):
     def __init__(self, xml: xsd_types.Address, seq_no: int):
         super().__init__(xml, sqla.Address, seq_no)
-    
-    def sqla_mapped(): 
+
+    def sqla_mapped() -> str:
         return "addresses"
 
-    def map_xml_to_orm(self, session: Session):
+    def map_xml_to_orm(self, session: Session) -> None:
         self.add_item("addressuse", self.xml.use)
         self.add_item("fromtime", self.xml.from_time)
         self.add_item("totime", self.xml.to_time)
@@ -78,14 +79,14 @@ class Address(Node):
 class FamilyDoctor(Node):
     def __init__(self, xml: xsd_types.FamilyDoctor):
         super().__init__(xml, sqla.FamilyDoctor)
-        
-    def sqla_mapped(): 
+
+    def sqla_mapped() -> None:
         return None
 
-    def generate_id(self):
+    def generate_id(self) -> str:
         return self.pid
 
-    def add_gp_address(self, xml: xsd_types.FamilyDoctor):
+    def add_gp_address(self, xml: xsd_types.FamilyDoctor) -> None:
         if xml.address:
             self.add_item("addressuse", xml.address.use)
             self.add_item("fromtime", xml.address.from_time)
@@ -99,13 +100,13 @@ class FamilyDoctor(Node):
                     "countrycode", "countrycodestd", "countrydesc", xml.country
                 )
 
-    def add_gp_contact_detail(self, xml: xsd_types.FamilyDoctor):
+    def add_gp_contact_detail(self, xml: xsd_types.FamilyDoctor) -> None:
         if xml.contact_detail:
             self.orm_object.contactuse = xml.country.use
             self.orm_object.contactvalue = xml.country.value
             self.orm_object.commenttext = xml.country.comments
 
-    def map_xml_to_orm(self, session: Session):
+    def map_xml_to_orm(self, session: Session) -> None:
         self.add_item("gpname", self.xml.gpname)
         self.add_item("gpid", self.xml.gpid)
         self.add_item("gppracticeid", self.xml.gppractice_id)
@@ -119,14 +120,14 @@ class FamilyDoctor(Node):
 class Patient(Node):
     def __init__(self, xml: xsd_ukrdc.Patient):
         super().__init__(xml, sqla.Patient)
-    
-    def sqla_mapped():
+
+    def sqla_mapped() -> None:
         return None
-    
-    def generate_id(self):
+
+    def generate_id(self) -> str:
         return self.pid
 
-    def add_person_to_contact(self, xml: xsd_types.PersonalContactType):
+    def add_person_to_contact(self, xml: xsd_types.PersonalContactType) -> None:
         # handle section of xml which the generic add functions cant handle
         if xml:
             self.orm_object.persontocontactname = xml.name
@@ -143,7 +144,7 @@ class Patient(Node):
                     self.xml.contact_details[0].use
                 )
 
-    def map_xml_to_orm(self, session: Session):
+    def map_xml_to_orm(self, session: Session) -> None:
 
         self.add_item("birthtime", self.xml.birth_time)
         self.add_item("deathtime", self.xml.death_time)

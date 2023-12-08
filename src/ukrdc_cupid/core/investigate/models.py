@@ -11,7 +11,7 @@ from sqlalchemy import (
     ForeignKey,
     UniqueConstraint,
     Table,
-    text
+    text,
 )
 
 from datetime import datetime
@@ -22,21 +22,21 @@ Base = declarative_base(metadata=metadata)
 
 GLOBAL_LAZY = "dynamic"
 
-# Many to many relationship exists between pateint ids 
+# Many to many relationship exists between pateint ids
 # (internal such as ukrdc and external such as NHS)
-# this table allows a issue_id to allow multiple patientids to be appended to any particular issue 
+# this table allows a issue_id to allow multiple patientids to be appended to any particular issue
 # similarly it makes it easy to look up which issues are already accosiated with a particular id.
 
 association_table = Table(
-    "patientidtoissue", 
-    Base.metadata, 
+    "patientidtoissue",
+    Base.metadata,
     Column("patient_id_id", Integer, ForeignKey("patientid.id")),
-    Column("issue_id", Integer, ForeignKey("issue.id"))
+    Column("issue_id", Integer, ForeignKey("issue.id")),
 )
 
 
-# think we need to specify some sort of model if we want to 
-# use this table 
+# think we need to specify some sort of model if we want to
+# query this table
 """
 class PatientIDtoIssue(Base):
     __tablename__ = "patientidtoissue"
@@ -44,9 +44,10 @@ class PatientIDtoIssue(Base):
     issue_id = Column( Integer, ForeignKey("issue.id"))
 """
 
+
 class PatientID(Base):
     __tablename__ = "patientid"
-    
+
     id = Column(Integer, primary_key=True, autoincrement=True)
     pid = Column(String(50), index=True, nullable=True)
     ukrdcid = Column(String(50), index=True)
@@ -54,13 +55,24 @@ class PatientID(Base):
 
 class Issue(Base):
     __tablename__ = "issue"
-    
+
     id = Column(Integer, primary_key=True, autoincrement=True)
-    issue_type = Column(String(100), nullable=False) 
+
     date_created = Column(DateTime, nullable=False)
     error_message = Column(String(100), nullable=False)
     filename = Column(String(100))
     xml_file = Column(Text)
     is_resolved = Column(Boolean, nullable=False, server_default=text("false"))
+    is_reprocessed = Column(
+        Boolean, server_default=text("false")
+    )  # should be null if file hasn't been diverted
 
-    patients : Mapped[List[PatientID]] = relationship(PatientID, secondary = association_table)
+    patients: Mapped[List[PatientID]] = relationship(
+        PatientID, secondary=association_table
+    )
+
+
+class IssueType(Base):
+    __tablename__ = "issuetype"
+    issue_id = Column(Integer, primary_key=True)
+    issue_type = Column(String(100), nullable=False)
