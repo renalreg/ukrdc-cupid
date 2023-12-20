@@ -78,7 +78,7 @@ def download_ukrdc_schema(filepath: str, schema_version: str) -> None:
     shutil.rmtree(repo_dir, ignore_errors=True)
 
 
-def load_schema(schema_version: str) -> Tuple(etree.XMLSchema, str):
+def load_schema(schema_version: str) -> Tuple[etree.XMLSchema, str]:
     """
     Locate the schema locally and load it into lxml so it can be used for validation.
 

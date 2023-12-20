@@ -34,12 +34,10 @@ class Node(ABC):
         self,
         xml: xsd_all,
         orm_model: sqla.Base,  # type:ignore
-        seq_no: Optional[int] = None,
     ):
         self.xml = xml  # xml file corresponding to a given
         self.mapped_classes: List[Node] = []  # classes which depend on this one
         self.deleted_orm: List[sqla.Base] = []  # records staged for deletion
-        self.seq_no = seq_no  # should only be need for tables where there is no unique set of varibles
         self.orm_model = orm_model  # orm class
         self.is_new_record: bool = True  # flag if record is new to database
         self.is_modified: bool = False
@@ -48,17 +46,17 @@ class Node(ABC):
         ] = None  # This holds the attribute of the lazy mapping in sqla i.e [mapped children] = getter(parent orm, self.sqla_mapped)
         self.pid: Optional[str] = None  # placeholder for pid
 
-    def generate_id(self) -> str:
+    def generate_id(self, seq_no:int) -> str:
         # Each database record has a natural key formed from compounding bits of information
         # the most common key appears to be pid (or parent record id) + enumeration of appearence in xml
-        return key_gen.generate_generic_key(self.pid, self.seq_no)
+        return key_gen.generate_generic_key(self.pid, seq_no)
 
-    def map_to_database(self, session: Session, pid: str) -> str:
+    def map_to_database(self, session: Session, pid:str, seq_no:int) -> str:
         # This is where we get really ORM. The function uses the primary key for the
         # record and loads the
 
         self.pid = pid
-        id = self.generate_id()
+        id = self.generate_id(seq_no)
 
         # Use primary key to fetch record
         self.orm_object = session.get(self.orm_model, id)
@@ -68,13 +66,9 @@ class Node(ABC):
         if self.orm_object is None:
             self.orm_object = self.orm_model(id=id)
             self.is_new_record = True
-            if hasattr(self.orm_object, "pid"):
-                self.orm_object.pid = pid
+
         else:
             self.is_new_record = False
-
-        if self.seq_no is not None:
-            self.orm_object.idx = self.seq_no
 
         return id
 
@@ -92,6 +86,11 @@ class Node(ABC):
             self.add_item(property_code, xml_code.code)
             self.add_item(property_description, xml_code.description)
             self.add_item(property_std, xml_code.coding_standard)
+        else:
+            # we blank the codes if they don't appear in xml
+            self.add_item(property_code, None)
+            self.add_item(property_description, None)
+            self.add_item(property_std, None)
 
     def add_item(
         self,
@@ -116,9 +115,10 @@ class Node(ABC):
                     # To avoid issues when it comes to comparing them have to tell the datetime module that
                     # the persistant datetimes are assumed to be london.
                     if attr_persistant:
-                        local_tz = timezone("Europe/London")
-                        attr_persistant = local_tz.localize(attr_persistant)
-
+                        if isinstance(attr_persistant,datetime): 
+                            local_tz = timezone("Europe/London")
+                            attr_persistant = local_tz.localize(attr_persistant)
+                    
                     attr_value = value.to_datetime()
 
                 elif isinstance(value, (str, int, bool, Decimal)):
@@ -139,13 +139,12 @@ class Node(ABC):
         self,
         child_node: Type[Node],
         xml_attr: str,
-        session: Session,
-        sequential: bool = False,
+        session: Session
     ) -> None:
         """Still not completely happy with this algorithm since it requires the
-        objects to be added deleted explicitly rather than just being appended
-        maybe this gives more control to fine tune the process. In principle we shouldn't
-        need the recursive functions at all.
+        objects to be added and deleted explicitly rather than just being 
+        appended although maybe this gives more control to fine tune the 
+        process. In principle we shouldn't need the recursive functions at all.
 
         Args:
             child_node (Type[Node]): _description_
@@ -158,6 +157,7 @@ class Node(ABC):
         xml_items = self.xml
         for attr in xml_attr.split("."):
             if isinstance(xml_items, list):
+                # this is nessary because of the weirdness of xsdata
                 xml_items = xml_items[0]
 
             if xml_items:
@@ -172,25 +172,32 @@ class Node(ABC):
             for seq_no, xml_item in enumerate(xml_items):
                 # Some item are sent in sequential order this order implicitly sets the keys
                 # there is a possibility here to sort the items before enumerating them
-                if sequential:
-                    node_object = child_node(xml=xml_item, seq_no=seq_no)
-                else:
-                    node_object = child_node(xml=xml_item)  # type:ignore
+                node_object = child_node(xml=xml_item)  # type:ignore
 
                 # map to existing object or create new
-                id = node_object.map_to_database(session, self.pid)
+                id = node_object.map_to_database(session, self.pid, seq_no)
                 mapped_ids.append(id)
+
+                # add parent info
+                # add any foreign keys, enumerations or data which doesn't come
+                # from the xml. 
+                parent_data = self.generate_parent_data(seq_no)
+                for attr, value in parent_data.items():
+                    if hasattr(node_object.orm_object, attr):
+                        setattr(node_object.orm_object, attr, value)       
 
                 # update new or existing using the
                 node_object.map_xml_to_orm(session)
 
                 # modify update_date and updated status
-                node_object.updated_status(session)
+                node_object.updated_status()
 
                 # append to parent
                 self.mapped_classes.append(node_object)
 
         # if there are already objects mapped to record harmonise by deleting anything not in incoming
+        # xml file. This should be skipped for singular and manditory items (like patient) by setting 
+        # self.sqla_relationship to None. 
         sqla_relationship = child_node.sqla_mapped()
         if sqla_relationship:
             self.add_deleted(sqla_relationship, mapped_ids)
@@ -201,7 +208,9 @@ class Node(ABC):
         # this function stages for deletion objects which appear mapped but don't appear in incoming file
         # This highlights a problem with the idx method creating keys. What if an item in the middle of the
         # order gets deleted then everything below gets bumped up one.
+
         mapped_orms = getattr(self.orm_object, sqla_mapped)
+        
         self.deleted_orm = [
             record for record in mapped_orms if record.id not in mapped_ids
         ]
@@ -251,7 +260,7 @@ class Node(ABC):
         else:
             return self.deleted_orm
 
-    def updated_status(self, session: Session) -> None:
+    def updated_status(self) -> None:
         # function to update things like dates if object is changed
         # Personally I think this should all be moved to db triggers
         # Currently it will be null for new records
@@ -259,6 +268,13 @@ class Node(ABC):
 
         if self.is_modified is True:
             self.orm_object.update_date = datetime.now()
+
+
+    def generate_parent_data(self, seq_no:int):
+        # This function allows data not contained in the xml to be generated
+        # An example of this might be a foreign key 
+        return {"pid" : self.pid, "idx":seq_no}
+         
 
     @abstractmethod
     def sqla_mapped():

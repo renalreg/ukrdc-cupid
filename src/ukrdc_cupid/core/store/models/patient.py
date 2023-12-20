@@ -15,8 +15,8 @@ import ukrdc_xsdata.ukrdc.types as xsd_types  # type: ignore
 
 
 class PatientNumber(Node):
-    def __init__(self, xml: xsd_types.PatientNumber, seq_no: int):
-        super().__init__(xml, sqla.PatientNumber, seq_no)
+    def __init__(self, xml: xsd_types.PatientNumber):
+        super().__init__(xml, sqla.PatientNumber)
 
     def sqla_mapped() -> str:
         return "numbers"
@@ -28,8 +28,8 @@ class PatientNumber(Node):
 
 
 class Name(Node):
-    def __init__(self, xml: xsd_types.Name, seq_no):
-        super().__init__(xml, sqla.Name, seq_no)
+    def __init__(self, xml: xsd_types.Name):
+        super().__init__(xml, sqla.Name)
 
     def sqla_mapped() -> str:
         return "names"
@@ -44,8 +44,8 @@ class Name(Node):
 
 
 class ContactDetail(Node):
-    def __init__(self, xml: xsd_types.ContactDetail, seq_no: int):
-        super().__init__(xml, sqla.ContactDetail, seq_no)
+    def __init__(self, xml: xsd_types.ContactDetail):
+        super().__init__(xml, sqla.ContactDetail)
 
     def sqla_mapped() -> str:
         return "contact_details"
@@ -57,8 +57,8 @@ class ContactDetail(Node):
 
 
 class Address(Node):
-    def __init__(self, xml: xsd_types.Address, seq_no: int):
-        super().__init__(xml, sqla.Address, seq_no)
+    def __init__(self, xml: xsd_types.Address):
+        super().__init__(xml, sqla.Address)
 
     def sqla_mapped() -> str:
         return "addresses"
@@ -73,7 +73,6 @@ class Address(Node):
         self.add_item("postcode", self.xml.postcode)
         self.add_code("countrycode", "countrycodestd", "countrydesc", self.xml.country)
 
-        self.updated_status(session)
 
 
 class FamilyDoctor(Node):
@@ -83,7 +82,7 @@ class FamilyDoctor(Node):
     def sqla_mapped() -> None:
         return None
 
-    def generate_id(self) -> str:
+    def generate_id(self, _) -> str:
         return self.pid
 
     def add_gp_address(self, xml: xsd_types.FamilyDoctor) -> None:
@@ -114,8 +113,6 @@ class FamilyDoctor(Node):
         self.add_gp_address(self.xml)
         self.add_gp_contact_detail(self.xml)
 
-        self.updated_status(session)
-
 
 class Patient(Node):
     def __init__(self, xml: xsd_ukrdc.Patient):
@@ -124,7 +121,7 @@ class Patient(Node):
     def sqla_mapped() -> None:
         return None
 
-    def generate_id(self) -> str:
+    def generate_id(self, _) -> str:
         return self.pid
 
     def add_person_to_contact(self, xml: xsd_types.PersonalContactType) -> None:
@@ -175,12 +172,8 @@ class Patient(Node):
         self.add_item("bloodrhesus", self.xml.blood_rhesus)
 
         # relationships these are all sequential
-        self.add_children(
-            PatientNumber, "patient_numbers.patient_number", session, True
-        )
-        self.add_children(Name, "names.name", session, True)
-        self.add_children(
-            ContactDetail, "contact_details.contact_detail", session, True
-        )
-        self.add_children(Address, "addresses.address", session, True)
+        self.add_children(PatientNumber, "patient_numbers.patient_number", session)
+        self.add_children(Name, "names.name", session)
+        self.add_children(ContactDetail, "contact_details.contact_detail", session)
+        self.add_children(Address, "addresses.address", session)
         self.add_children(FamilyDoctor, "family_doctor", session)

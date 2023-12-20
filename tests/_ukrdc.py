@@ -81,7 +81,7 @@ def test_patient():
     assert patient.orm_object.birthtime == birthtime
     assert patient.orm_object.deathtime == deathtime
     assert patient.orm_object.countryofbirth == countrycode
-    assert patient.orm_object.death ==death
+    assert patient.orm_object.death == death
 
     # transform orm
     pid = "pidcue"

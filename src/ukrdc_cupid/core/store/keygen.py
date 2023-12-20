@@ -4,6 +4,7 @@ import string
 from sqlalchemy.orm import Session
 from sqlalchemy import Sequence
 import ukrdc_sqla.ukrdc as sqla
+import ukrdc_xsdata.ukrdc.lab_orders as xsd_lab_orders
 
 from typing import Optional
 
@@ -37,9 +38,9 @@ def generate_generic_key(parent: str, seqno: Optional[int] = None):
     return f"{parent}{KEY_SEPERATOR}{seqno}"
 
 
-def generate_key_laborder(laborder: sqla.LabOrder, pid: str):
+def generate_key_laborder(laborder_xml:xsd_lab_orders, pid: str):
     # generate lab_order consitant with: https://github.com/renalreg/Data-Repository/blob/44d0b9af3eb73705de800fd52fe5a6b847219b31/src/main/java/org/ukrdc/repository/RepositoryManager.java#L679
-    return f"{pid}{KEY_SEPERATOR}{laborder.placerid}"
+    return f"{pid}{KEY_SEPERATOR}{laborder_xml.placer_id}"
 
 
 def generate_key_resultitem(resultitem: sqla.ResultItem, order_id: str, seq_no: int):

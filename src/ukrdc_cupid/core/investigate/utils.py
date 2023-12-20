@@ -1,7 +1,7 @@
 from ukrdc_cupid.core.investigate.models import IssueType
 from ukrdc_cupid.core.utils import DatabaseConnection
 
-from typing import List
+from typing import List, Union
 
 # Connection to database containing issues
 INVESTIGATE_SESSION = DatabaseConnection(env_prefix="INVESTIGATE").create_session()
@@ -16,8 +16,7 @@ ISSUE_PICKLIST = [
     [6, "Ambiguous UKRDCID match: matched to multiple persistant UKRDCIDs"],
 ]
 
-
-def update_issue_types(issues: List[List[int, str]] = ISSUE_PICKLIST) -> None:
+def update_issue_types(issues:List[List[Union[int, str]]]=ISSUE_PICKLIST)->None:
     """
     Update issue lookup table
     """
@@ -26,7 +25,8 @@ def update_issue_types(issues: List[List[int, str]] = ISSUE_PICKLIST) -> None:
         if issue:
             issue.issue_type = issue_type
         else:
-            issue = IssueType(issue_id=issue_id, issue_type=issue_type)
+            issue = IssueType(id=issue_id, issue_type=issue_type)
             INVESTIGATE_SESSION.add(issue)
 
     INVESTIGATE_SESSION.commit()
+

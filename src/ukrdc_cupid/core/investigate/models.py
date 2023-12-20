@@ -57,9 +57,10 @@ class Issue(Base):
     __tablename__ = "issue"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
+    issue_id = Column(Integer, ForeignKey("issuetype.id"))
 
     date_created = Column(DateTime, nullable=False)
-    error_message = Column(String(100), nullable=False)
+    error_message = Column(String(100))
     filename = Column(String(100))
     xml_file = Column(Text)
     is_resolved = Column(Boolean, nullable=False, server_default=text("false"))
@@ -74,5 +75,5 @@ class Issue(Base):
 
 class IssueType(Base):
     __tablename__ = "issuetype"
-    issue_id = Column(Integer, primary_key=True)
+    id = Column(Integer, primary_key=True)
     issue_type = Column(String(100), nullable=False)

@@ -32,14 +32,14 @@ def match_ni(session: Session, patient_info: dict) -> List[Tuple[str, str]]:
     # look up pid by trying to match the NI
     pid_query = (
         select(orm.PatientRecord.pid, orm.PatientRecord.ukrdcid)
-        .join(orm.PatientNumber, orm.PatientNumber.pid == orm.PatientRecord.pid)
-        .where(
-            orm.PatientRecord.sendingextract == patient_info["sending_extract"],
-            orm.PatientRecord.sendingfacility == patient_info["sending_facility"],
-            orm.PatientNumber.numbertype == "NI",
-            and_(
-                tuple_(orm.PatientNumber.patientid, orm.PatientNumber.organization).in_(
-                    patient_info["NI"]
+            .join(orm.PatientNumber, orm.PatientNumber.pid == orm.PatientRecord.pid)
+            .where(
+                orm.PatientRecord.sendingextract == patient_info["sending_extract"],
+                orm.PatientRecord.sendingfacility == patient_info["sending_facility"],
+                orm.PatientNumber.numbertype == "NI",
+                and_(
+                    tuple_(orm.PatientNumber.patientid, orm.PatientNumber.organization).in_(
+                        patient_info["NI"]
                 )
             ),
         )
@@ -131,7 +131,7 @@ def read_patient_metadata(xml: xsd_ukrdc.PatientRecord) -> dict:
 
 def identify_patient_feed(
     session: Session, patient_info: dict
-) -> Tuple(Optional[str], Optional[str], Optional[Investigation]):
+) -> Tuple[Optional[str], Optional[str], Optional[Investigation]]:
     """Identify patient based on patient numbers.
 
     Args:
@@ -146,7 +146,7 @@ def identify_patient_feed(
     # new patient?
     if len(matched_patients_mrn) == 0:
         if len(matched_patients_ni) == 0:
-            return None, None
+            return None, None, None
 
     # unambiguously match to single domain patient?
     if len(matched_patients_mrn) > 1:
@@ -165,7 +165,7 @@ def identify_patient_feed(
         # validate dob, we use same function but implicitly it is only validating on year of birth
         # I'm assumng these patients wont be sent with NIs
         if validate_demog(session, patient_info["date_of_birth"], pid):
-            return pid, ukrdcid
+            return pid, ukrdcid, None
         else:
             investigation = Investigation(matched_patients_mrn, 1).create_issue()
             return None, None, investigation
@@ -179,17 +179,17 @@ def identify_patient_feed(
         return None, None, investigation
 
     # check dob
-    is_valid = validate_demog(session, patient_info["date_of_birth"], pid)
+    is_valid = validate_demog(session, patient_info["birth_time"], pid)
 
     if is_valid:
-        return pid, ukrdcid
+        return pid, ukrdcid, None
     else:
         investigation = Investigation(matched_patients_mrn, 1).create_issue()
         return None, None, investigation
 
 
 def match_ukrdc(
-    session: Session, patient_ids: List[List[str, str]]
+    session: Session, patient_ids: List[List[str]]
 ) -> List[Tuple[str, str]]:
 
     ukrdc_query = (
@@ -208,7 +208,7 @@ def match_ukrdc(
 
 def identify_across_ukrdc(
     session: Session, patient_info: dict
-) -> Tuple(Optional[str], Optional[str], Optional[Investigation]):
+) -> Tuple[Optional[str], Optional[str], Optional[Investigation]]:
     """Since merging and unmerging patients with ukrdc is easier in the case where a problem arises we just create a new patient and load the file.
 
     Args:
