@@ -32,14 +32,14 @@ def match_ni(session: Session, patient_info: dict) -> List[Tuple[str, str]]:
     # look up pid by trying to match the NI
     pid_query = (
         select(orm.PatientRecord.pid, orm.PatientRecord.ukrdcid)
-            .join(orm.PatientNumber, orm.PatientNumber.pid == orm.PatientRecord.pid)
-            .where(
-                orm.PatientRecord.sendingextract == patient_info["sending_extract"],
-                orm.PatientRecord.sendingfacility == patient_info["sending_facility"],
-                orm.PatientNumber.numbertype == "NI",
-                and_(
-                    tuple_(orm.PatientNumber.patientid, orm.PatientNumber.organization).in_(
-                        patient_info["NI"]
+        .join(orm.PatientNumber, orm.PatientNumber.pid == orm.PatientRecord.pid)
+        .where(
+            orm.PatientRecord.sendingextract == patient_info["sending_extract"],
+            orm.PatientRecord.sendingfacility == patient_info["sending_facility"],
+            orm.PatientNumber.numbertype == "NI",
+            and_(
+                tuple_(orm.PatientNumber.patientid, orm.PatientNumber.organization).in_(
+                    patient_info["NI"]
                 )
             ),
         )

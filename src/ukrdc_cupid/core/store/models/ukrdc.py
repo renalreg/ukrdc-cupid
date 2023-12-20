@@ -11,6 +11,7 @@ from sqlalchemy import and_
 
 from typing import List, Type
 
+
 class PatientRecord(Node):
     def __init__(self, xml: xsd_ukrdc.PatientRecord):
         super().__init__(xml, sqla.PatientRecord)
@@ -34,9 +35,11 @@ class PatientRecord(Node):
     def sqla_mapped() -> None:
         return None
 
-    def add_children(self, child_node: type[Node], xml_attr: str, session: Session) -> None:
-        
-        super().add_children(child_node, xml_attr, session) 
+    def add_children(
+        self, child_node: type[Node], xml_attr: str, session: Session
+    ) -> None:
+
+        super().add_children(child_node, xml_attr, session)
 
     def updated_status(self) -> None:
         super().updated_status()
@@ -83,12 +86,17 @@ class PatientRecord(Node):
         # we only delete within a time window for observations and lab orders
         if sqla_mapped == "observations":
             mapped_orms = self.session.query(sqla.Observation)
-        
+
         elif sqla_mapped == "laborders":
-            mapped_orms = self.session.query(sqla.LabOrder).filter(and_(sqla.LabOrder.specimen_collected_time >=self.lab_order_range[0], sqla.LabOrder.specimen_collected_time <= self.lab_order_range[1]))
+            mapped_orms = self.session.query(sqla.LabOrder).filter(
+                and_(
+                    sqla.LabOrder.specimen_collected_time >= self.lab_order_range[0],
+                    sqla.LabOrder.specimen_collected_time <= self.lab_order_range[1],
+                )
+            )
         else:
             mapped_orms = getattr(self.orm_object, sqla_mapped)
-            
+
         self.deleted_orm = [
             record for record in mapped_orms if record.id not in mapped_ids
         ]

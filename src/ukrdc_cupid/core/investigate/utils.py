@@ -16,7 +16,8 @@ ISSUE_PICKLIST = [
     [6, "Ambiguous UKRDCID match: matched to multiple persistant UKRDCIDs"],
 ]
 
-def update_issue_types(issues:List[List[Union[int, str]]]=ISSUE_PICKLIST)->None:
+
+def update_issue_types(issues: List[List[Union[int, str]]] = ISSUE_PICKLIST) -> None:
     """
     Update issue lookup table
     """
@@ -29,4 +30,3 @@ def update_issue_types(issues:List[List[Union[int, str]]]=ISSUE_PICKLIST)->None:
             INVESTIGATE_SESSION.add(issue)
 
     INVESTIGATE_SESSION.commit()
-

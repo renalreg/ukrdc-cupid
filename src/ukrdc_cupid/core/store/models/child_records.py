@@ -13,6 +13,7 @@ import ukrdc_sqla.ukrdc as sqla
 import ukrdc_xsdata.ukrdc.observations as xsd_observations  # type: ignore
 import ukrdc_xsdata.ukrdc.lab_orders as xsd_lab_orders  # type: ignore
 
+
 class Observation(Node):
     def __init__(self, xml: xsd_observations.Observation):
         super().__init__(xml, sqla.Observation)
@@ -36,13 +37,14 @@ class Observation(Node):
         self.add_item("externalid", self.xml.external_id, optional=True)
         # fmt: on
 
+
 class ResultItem(Node):
     def __init__(self, xml: xsd_lab_orders.ResultItem):
         super().__init__(xml, sqla.ResultItem)
 
     def sqla_mapped() -> str:
         return "result_items"
-    
+
     def map_xml_to_orm(self, _):
         # fmt: off
         self.add_item("prepost", self.xml.pre_post)
@@ -64,20 +66,21 @@ class ResultItem(Node):
         )
         # fmt: on
 
+
 class LabOrder(Node):
     def __init__(self, xml: xsd_lab_orders.LabOrder):
         super().__init__(xml, sqla.LabOrder)
 
     def sqla_mapped() -> str:
         return "lab_orders"
-    
-    def generate_id(self, _) -> str:
-        return key_gen.generate_key_laborder(self.xml,self.pid)
-    
-    def generate_parent_data(self, seq_no:int):
-        return {"idx":seq_no, "order_id":self.orm_object.id}
 
-    def map_xml_to_orm(self, session: Session)->None:
+    def generate_id(self, _) -> str:
+        return key_gen.generate_key_laborder(self.xml, self.pid)
+
+    def generate_parent_data(self, seq_no: int):
+        return {"idx": seq_no, "order_id": self.orm_object.id}
+
+    def map_xml_to_orm(self, session: Session) -> None:
 
         self.add_item("placerid", self.xml.placer_id, optional=False)
         self.add_item("fillerid", self.xml.filler_id, optional=True)

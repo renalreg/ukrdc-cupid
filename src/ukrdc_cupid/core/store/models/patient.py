@@ -74,7 +74,6 @@ class Address(Node):
         self.add_code("countrycode", "countrycodestd", "countrydesc", self.xml.country)
 
 
-
 class FamilyDoctor(Node):
     def __init__(self, xml: xsd_types.FamilyDoctor):
         super().__init__(xml, sqla.FamilyDoctor)

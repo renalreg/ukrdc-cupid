@@ -46,12 +46,12 @@ class Node(ABC):
         ] = None  # This holds the attribute of the lazy mapping in sqla i.e [mapped children] = getter(parent orm, self.sqla_mapped)
         self.pid: Optional[str] = None  # placeholder for pid
 
-    def generate_id(self, seq_no:int) -> str:
+    def generate_id(self, seq_no: int) -> str:
         # Each database record has a natural key formed from compounding bits of information
         # the most common key appears to be pid (or parent record id) + enumeration of appearence in xml
         return key_gen.generate_generic_key(self.pid, seq_no)
 
-    def map_to_database(self, session: Session, pid:str, seq_no:int) -> str:
+    def map_to_database(self, session: Session, pid: str, seq_no: int) -> str:
         # This is where we get really ORM. The function uses the primary key for the
         # record and loads the
 
@@ -115,10 +115,10 @@ class Node(ABC):
                     # To avoid issues when it comes to comparing them have to tell the datetime module that
                     # the persistant datetimes are assumed to be london.
                     if attr_persistant:
-                        if isinstance(attr_persistant,datetime): 
+                        if isinstance(attr_persistant, datetime):
                             local_tz = timezone("Europe/London")
                             attr_persistant = local_tz.localize(attr_persistant)
-                    
+
                     attr_value = value.to_datetime()
 
                 elif isinstance(value, (str, int, bool, Decimal)):
@@ -136,14 +136,11 @@ class Node(ABC):
             self.is_modified = True
 
     def add_children(
-        self,
-        child_node: Type[Node],
-        xml_attr: str,
-        session: Session
+        self, child_node: Type[Node], xml_attr: str, session: Session
     ) -> None:
         """Still not completely happy with this algorithm since it requires the
-        objects to be added and deleted explicitly rather than just being 
-        appended although maybe this gives more control to fine tune the 
+        objects to be added and deleted explicitly rather than just being
+        appended although maybe this gives more control to fine tune the
         process. In principle we shouldn't need the recursive functions at all.
 
         Args:
@@ -180,11 +177,11 @@ class Node(ABC):
 
                 # add parent info
                 # add any foreign keys, enumerations or data which doesn't come
-                # from the xml. 
+                # from the xml.
                 parent_data = self.generate_parent_data(seq_no)
                 for attr, value in parent_data.items():
                     if hasattr(node_object.orm_object, attr):
-                        setattr(node_object.orm_object, attr, value)       
+                        setattr(node_object.orm_object, attr, value)
 
                 # update new or existing using the
                 node_object.map_xml_to_orm(session)
@@ -196,8 +193,8 @@ class Node(ABC):
                 self.mapped_classes.append(node_object)
 
         # if there are already objects mapped to record harmonise by deleting anything not in incoming
-        # xml file. This should be skipped for singular and manditory items (like patient) by setting 
-        # self.sqla_relationship to None. 
+        # xml file. This should be skipped for singular and manditory items (like patient) by setting
+        # self.sqla_relationship to None.
         sqla_relationship = child_node.sqla_mapped()
         if sqla_relationship:
             self.add_deleted(sqla_relationship, mapped_ids)
@@ -210,7 +207,7 @@ class Node(ABC):
         # order gets deleted then everything below gets bumped up one.
 
         mapped_orms = getattr(self.orm_object, sqla_mapped)
-        
+
         self.deleted_orm = [
             record for record in mapped_orms if record.id not in mapped_ids
         ]
@@ -269,12 +266,10 @@ class Node(ABC):
         if self.is_modified is True:
             self.orm_object.update_date = datetime.now()
 
-
-    def generate_parent_data(self, seq_no:int):
+    def generate_parent_data(self, seq_no: int):
         # This function allows data not contained in the xml to be generated
-        # An example of this might be a foreign key 
-        return {"pid" : self.pid, "idx":seq_no}
-         
+        # An example of this might be a foreign key
+        return {"pid": self.pid, "idx": seq_no}
 
     @abstractmethod
     def sqla_mapped():
