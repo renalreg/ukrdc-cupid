@@ -3,14 +3,12 @@ from abc import ABC, abstractmethod
 from typing import Optional, Union, List, Type
 from decimal import Decimal
 
-import ukrdc_cupid.core.store.keygen as key_gen  # type: ignore
+import ukrdc_cupid.core.store.keygen as key_gen
 import ukrdc_sqla.ukrdc as sqla
 from sqlalchemy.orm import Session
-from sqlalchemy import inspect
 from datetime import datetime
-import warnings
 
-import ukrdc_xsdata as xsd_all
+import ukrdc_xsdata as xsd_all  # type:ignore
 from xsdata.models.datatype import XmlDateTime, XmlDate
 import ukrdc_xsdata.ukrdc.types as xsd_types  # type: ignore
 
@@ -37,21 +35,25 @@ class Node(ABC):
     ):
         self.xml = xml  # xml file corresponding to a given
         self.mapped_classes: List[Node] = []  # classes which depend on this one
-        self.deleted_orm: List[sqla.Base] = []  # records staged for deletion
+        self.deleted_orm: List[sqla.Base] = []  # type:ignore
         self.orm_model = orm_model  # orm class
         self.is_new_record: bool = True  # flag if record is new to database
         self.is_modified: bool = False
-        self.sqla_mapped: Optional[
-            str
-        ] = None  # This holds the attribute of the lazy mapping in sqla i.e [mapped children] = getter(parent orm, self.sqla_mapped)
         self.pid: Optional[str] = None  # placeholder for pid
 
     def generate_id(self, seq_no: int) -> str:
         # Each database record has a natural key formed from compounding bits of information
         # the most common key appears to be pid (or parent record id) + enumeration of appearence in xml
-        return key_gen.generate_generic_key(self.pid, seq_no)
 
-    def map_to_database(self, session: Session, pid: str, seq_no: int) -> str:
+        if self.pid is not None:
+            id = key_gen.generate_generic_key(self.pid, seq_no)
+        else:
+            id = str(seq_no)
+        return id
+
+    def map_to_database(
+        self, session: Session, pid: Union[str, None], seq_no: int
+    ) -> str:
         # This is where we get really ORM. The function uses the primary key for the
         # record and loads the
 
@@ -64,7 +66,7 @@ class Node(ABC):
         # If it doesn't exit create it and flag that you have done that
         # if it needs a pid add it to the orm
         if self.orm_object is None:
-            self.orm_object = self.orm_model(id=id)
+            self.orm_object = self.orm_model(id=id)  # type:ignore
             self.is_new_record = True
 
         else:
@@ -78,7 +80,7 @@ class Node(ABC):
         property_std: str,
         property_description: str,
         xml_code: xsd_types.CodedField,
-        optional=True,
+        optional: bool = True,
     ) -> None:
         # add properties which are coded fields
         # TODO: flag an error/workitem if it doesn't exist?
@@ -87,7 +89,8 @@ class Node(ABC):
             self.add_item(property_description, xml_code.description)
             self.add_item(property_std, xml_code.coding_standard)
         else:
-            # we blank the codes if they don't appear in xml
+            # this block ensures value gets blanked if its in the orm but not
+            # in incoming code
             self.add_item(property_code, None)
             self.add_item(property_description, None)
             self.add_item(property_std, None)
@@ -95,7 +98,7 @@ class Node(ABC):
     def add_item(
         self,
         sqla_property: str,
-        value: Union[str, XmlDateTime, XmlDate, bool, int, Decimal],
+        value: Optional[Union[str, XmlDateTime, XmlDate, bool, int, Decimal]],
         optional: bool = True,
     ) -> None:
         """Function to do the mapping of a specific item from the xml file to the orm object. Since there are a varity of different items which can appear in the xml schema they.
@@ -105,6 +108,7 @@ class Node(ABC):
             optional (bool, optional): This determines whether it is a required field or not
         """
 
+        attr_value: Union[str, int, bool, Decimal, datetime, None]
         attr_persistant = getattr(self.orm_object, sqla_property)
         # parse value from xml into a python variable
         if (optional and value is not None) or (not optional):
@@ -195,7 +199,7 @@ class Node(ABC):
         # if there are already objects mapped to record harmonise by deleting anything not in incoming
         # xml file. This should be skipped for singular and manditory items (like patient) by setting
         # self.sqla_relationship to None.
-        sqla_relationship = child_node.sqla_mapped()
+        sqla_relationship = child_node.sqla_mapped()  # type : ignore
         if sqla_relationship:
             self.add_deleted(sqla_relationship, mapped_ids)
 
@@ -214,7 +218,7 @@ class Node(ABC):
 
     def get_orm_list(
         self, is_dirty: bool = False, is_new: bool = True, is_unchanged: bool = False
-    ) -> List[sqla.Base]:
+    ) -> list:
         """Utility function to return list of objects depending on their status.
         Theoretically all of this information should be in the session anyway.
 
@@ -247,7 +251,7 @@ class Node(ABC):
 
         return orm_objects
 
-    def get_orm_deleted(self) -> List[sqla.Base]:
+    def get_orm_deleted(self) -> list:
         # function to walk through the patient record structure an retrieve records staged for deletion
         if self.mapped_classes:
             orm_objects = self.deleted_orm
@@ -262,23 +266,24 @@ class Node(ABC):
         # Personally I think this should all be moved to db triggers
         # Currently it will be null for new records
         # these type of changes should be made carefully to avoid churn
-
+        assert self.orm_object is not None  # nosec
         if self.is_modified is True:
             self.orm_object.update_date = datetime.now()
 
-    def generate_parent_data(self, seq_no: int):
+    def generate_parent_data(self, seq_no: int) -> dict:
         # This function allows data not contained in the xml to be generated
         # An example of this might be a foreign key
         return {"pid": self.pid, "idx": seq_no}
 
+    @classmethod
     @abstractmethod
-    def sqla_mapped():
+    def sqla_mapped() -> str:
         # if the parent class has a list like relationship to the Node this should be the name of that relationship
         # otherwise it should be None. In the case of a one to many relationship between parent and child this
         # is used to delete any associated objects which don't appear in the file.
         pass
 
     @abstractmethod
-    def map_xml_to_orm(self, session: Session):
+    def map_xml_to_orm(self, session: Session) -> None:
         # In this function all the idiosyncracies of the xml and the database are hard coded
         pass

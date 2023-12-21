@@ -60,5 +60,5 @@ def process_file(xml_object: PatientRecord, session: Session) -> None:
     if investigation:
         # if there is an investigation raised we will have minted a new ukrdcid
         # this needs to be attached to the issue so it can be resolved
-        patient = get_patients((pid, ukrdcid))
+        patient = get_patients((pid, ukrdcid))  # type : ignore
         investigation.append_patients(patient)

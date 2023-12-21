@@ -1,7 +1,7 @@
-from ukrdc_cupid.core.utils import DatabaseConnection
-from ukrdc_cupid.core.investigate.models import PatientID, Issue, IssueType
+from ukrdc_cupid.core.utils import DatabaseConnection  # type:ignore
+from ukrdc_cupid.core.investigate.models import PatientID, Issue
 from datetime import datetime
-from typing import List, Tuple, Literal
+from typing import List, Tuple
 
 # Connection to database containing issues
 INVESTIGATE_SESSION = DatabaseConnection(env_prefix="INVESTIGATE").create_session()
@@ -80,10 +80,12 @@ class Investigation:
         """
         # append xml and filename to issue
         self.issue.xml = xml
-        self.issue.filename = filename
+        self.issue.filename = filename  # type:ignore
         INVESTIGATE_SESSION.commit()
 
-    def append_patients(self, patients: List[PatientID]):
+        return
+
+    def append_patients(self, patients: list) -> None:
         """Sometimes the patient hasn't been created when the issue is
         raised and you may want to create it later. For example a new
         patient with a ukrdcid validation error would have a new
@@ -94,3 +96,5 @@ class Investigation:
         for patient in patients:
             if patient not in self.issue.issue_to_patients:
                 self.issue.issue_to_patients.append(patient)
+
+        return

@@ -1,10 +1,12 @@
+# type: ignore
+
 """
 Models to create sqla objects from an xml file 
 """
 
 from __future__ import annotations  # allows typehint of node class
 from abc import ABC, abstractmethod
-from typing import Optional, Union, List, Type, Dict, Any
+from typing import Optional, Union, List, Type
 from decimal import Decimal
 
 import ukrdc_cupid.core.store.keygen as key_gen  # type: ignore
@@ -1385,7 +1387,6 @@ class PatientRecord(Node):
         Abstraction to propagate transformation down through dependent classes
         """
         self.transformer(pid=pid, ukrdcid=ukrdcid)
-        diagnosis_seq = 0
         for child_class in self.mapped_classes:
             print(child_class.orm_object.__tablename__)
             if child_class.orm_object.__tablename__ in ("medication", "document"):

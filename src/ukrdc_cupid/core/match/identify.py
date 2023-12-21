@@ -12,10 +12,10 @@ from sqlalchemy import select, and_, tuple_
 from ukrdc_cupid.core.audit.validate_matches import validate_demog, validate_demog_ukrdc
 from ukrdc_cupid.core.investigate.create_investigation import Investigation
 
-from typing import List, Tuple, Optional
+from typing import List, Any
 
 
-def match_ni(session: Session, patient_info: dict) -> List[Tuple[str, str]]:
+def match_ni(session: Session, patient_info: dict) -> Any:
     """This secondary matching query in conjunction with the MRN match. It
     should produce matching results to the match_mrn function on the whole.
 
@@ -49,7 +49,7 @@ def match_ni(session: Session, patient_info: dict) -> List[Tuple[str, str]]:
     return session.execute(pid_query).fetchall()
 
 
-def match_mrn(session: Session, patient_info: dict) -> List[Tuple[str, str]]:
+def match_mrn(session: Session, patient_info: dict) -> Any:
     """CUPID will use matching on the MRN as the primary source of truth. All
     This function looks up the MRN with the sendingfacility and sending
     and return all pids and ukrdcids which match.
@@ -129,9 +129,7 @@ def read_patient_metadata(xml: xsd_ukrdc.PatientRecord) -> dict:
     return patient_info
 
 
-def identify_patient_feed(
-    session: Session, patient_info: dict
-) -> Tuple[Optional[str], Optional[str], Optional[Investigation]]:
+def identify_patient_feed(session: Session, patient_info: dict) -> Any:
     """Identify patient based on patient numbers.
 
     Args:
@@ -188,9 +186,7 @@ def identify_patient_feed(
         return None, None, investigation
 
 
-def match_ukrdc(
-    session: Session, patient_ids: List[List[str]]
-) -> List[Tuple[str, str]]:
+def match_ukrdc(session: Session, patient_ids: List[List[str]]) -> Any:
 
     ukrdc_query = (
         select(orm.PatientRecord.pid, orm.PatientRecord.ukrdcid)
@@ -206,9 +202,7 @@ def match_ukrdc(
     return session.execute(ukrdc_query).fetchall()
 
 
-def identify_across_ukrdc(
-    session: Session, patient_info: dict
-) -> Tuple[Optional[str], Optional[str], Optional[Investigation]]:
+def identify_across_ukrdc(session: Session, patient_info: dict) -> Any:
     """Since merging and unmerging patients with ukrdc is easier in the case where a problem arises we just create a new patient and load the file.
 
     Args:

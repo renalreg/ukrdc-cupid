@@ -1,5 +1,5 @@
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import relationship, Mapped
+from sqlalchemy.orm import relationship
 from sqlalchemy import (
     MetaData,
     Column,
@@ -9,13 +9,10 @@ from sqlalchemy import (
     DateTime,
     Text,
     ForeignKey,
-    UniqueConstraint,
     Table,
     text,
 )
 
-from datetime import datetime
-from typing import List, Optional
 
 metadata = MetaData()
 Base = declarative_base(metadata=metadata)
@@ -29,7 +26,7 @@ GLOBAL_LAZY = "dynamic"
 
 association_table = Table(
     "patientidtoissue",
-    Base.metadata,
+    Base.metadata,  # type:ignore
     Column("patient_id_id", Integer, ForeignKey("patientid.id")),
     Column("issue_id", Integer, ForeignKey("issue.id")),
 )
@@ -45,7 +42,7 @@ class PatientIDtoIssue(Base):
 """
 
 
-class PatientID(Base):
+class PatientID(Base):  # type:ignore
     __tablename__ = "patientid"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
@@ -53,7 +50,7 @@ class PatientID(Base):
     ukrdcid = Column(String(50), index=True)
 
 
-class Issue(Base):
+class Issue(Base):  # type:ignore
     __tablename__ = "issue"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
@@ -68,12 +65,12 @@ class Issue(Base):
         Boolean, server_default=text("false")
     )  # should be null if file hasn't been diverted
 
-    patients: Mapped[List[PatientID]] = relationship(
+    patients = relationship(  # type:ignore
         PatientID, secondary=association_table
     )
 
 
-class IssueType(Base):
+class IssueType(Base):  # type:ignore
     __tablename__ = "issuetype"
     id = Column(Integer, primary_key=True)
     issue_type = Column(String(100), nullable=False)

@@ -8,12 +8,12 @@ Note that the RDA schema versioning is one behind that of the UKRR Dataset
 
 import os
 import shutil
-from git import Repo  # type: ignore
+from git import Repo
 from lxml import etree  # nosec B410
 from pydantic import Field
 from pydantic_settings import BaseSettings
 from platformdirs import user_data_dir
-from typing import Tuple, Optional, Dict
+from typing import Tuple, Union
 
 
 class Settings(BaseSettings):
@@ -23,22 +23,26 @@ class Settings(BaseSettings):
         BaseSettings (_type_): _description_
     """
 
-    appdata_dir: str = Field(env="APPDATA_DIR", default=user_data_dir())
+    appdata_dir: str = Field(env="APPDATA_DIR", default=user_data_dir())  # type:ignore
 
     schema_repo: str = Field(
-        env="SCHEMA_REPO", default="https://github.com/renalreg/resources.git"
+        env="SCHEMA_REPO",
+        default="https://github.com/renalreg/resources.git",  # type:ignore
     )
 
     v3_3_0_commit: str = Field(
-        env="V3_3_0_COMMIT", default="7095add5ea07369dedbd499fa4662f3f72754d31"
+        env="V3_3_0_COMMIT",
+        default="7095add5ea07369dedbd499fa4662f3f72754d31",  # type:ignore
     )
 
     v3_4_5_commit: str = Field(
-        env="V3_4_5_COMMIT", default="14fa420a971e16306de3e00cd1fc51b6e344c596"
+        env="V3_4_5_COMMIT",
+        default="14fa420a971e16306de3e00cd1fc51b6e344c596",  # type:ignore
     )
 
     v4_0_0_commit: str = Field(
-        env="V4_0_0_COMMIT", default="046b25021c52ebeaff1d878a01aa8ec56c4667ed"
+        env="V4_0_0_COMMIT",
+        default="046b25021c52ebeaff1d878a01aa8ec56c4667ed",  # type:ignore
     )
 
 
@@ -118,7 +122,7 @@ def load_schema(schema_version: str) -> Tuple[etree.XMLSchema, str]:
 
 def validate_rda_xml_string(
     rda_xml: str, schema_version: str = "4.0.0"
-) -> Optional[Dict[str, str]]:
+) -> Union[dict, None]:
     """
     Validate an RDA XML file against the UKRDC schema. It should be noted that the code assumes the enviroment variables are set up such that the minor release can be thrown away. TODO: maybe this is something to be made more explicit or changed in the future.
 
@@ -138,6 +142,7 @@ def validate_rda_xml_string(
     # Initially catch errors to allow more specific processing of errors
     try:
         xml_schema.assertValid(xml_doc)
+        return None
 
     except etree.DocumentInvalid:
 

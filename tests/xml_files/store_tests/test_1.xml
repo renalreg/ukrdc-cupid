@@ -28,14 +28,14 @@
         <Gender>1</Gender>
         <Addresses>
             <Address use="H">
-                <FromTime>1969-06-09T00:00:00</FromTime>
-                <ToTime>1969-06-10T00:00:00</ToTime>
+                <FromTime>1969-07-09</FromTime>
+                <ToTime>1969-07-10</ToTime>
                 <Street>59th street</Street>
                 <Town>New York</Town>
                 <County>Cheshire</County>
                 <Postcode>XX78 7DD</Postcode>
                 <Country>
-                    <CodingStandard>NHS</CodingStandard>
+                    <CodingStandard>ISO3166-1</CodingStandard>
                     <Code>USE</Code>
                     <Description>United States of Eurasia</Description>
                 </Country>
@@ -44,12 +44,16 @@
         <ContactDetails>
             <ContactDetail use="PRN">
                 <Value>0117 11111111</Value>
+                <Comments>Primary contact number</Comments>
             </ContactDetail>
         </ContactDetails>
         <CountryOfBirth>MOO</CountryOfBirth>
         <FamilyDoctor>
+            <GPName>Dr Dre</GPName>
             <GPPracticeId>123456</GPPracticeId>
             <GPId>ABCDEF</GPId>
+            <ContactDetail>exclusively by pigeon</ContactDetail>
+            <Email>dr.dre@example.com</Email>
         </FamilyDoctor>
         <Death>true</Death>
     </Patient>

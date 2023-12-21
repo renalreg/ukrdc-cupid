@@ -1,7 +1,5 @@
 from ukrdc_cupid.core.investigate.models import IssueType
-from ukrdc_cupid.core.utils import DatabaseConnection
-
-from typing import List, Union
+from ukrdc_cupid.core.utils import DatabaseConnection  # type:ignore
 
 # Connection to database containing issues
 INVESTIGATE_SESSION = DatabaseConnection(env_prefix="INVESTIGATE").create_session()
@@ -17,9 +15,10 @@ ISSUE_PICKLIST = [
 ]
 
 
-def update_issue_types(issues: List[List[Union[int, str]]] = ISSUE_PICKLIST) -> None:
+def update_issue_types(issues: list = ISSUE_PICKLIST) -> None:
     """
-    Update issue lookup table
+    Update issue lookup table.
+    Note: this needs to be checked to ensure its working/uptodate
     """
     for issue_id, issue_type in issues:
         issue = INVESTIGATE_SESSION.get(IssueType, issue_id)

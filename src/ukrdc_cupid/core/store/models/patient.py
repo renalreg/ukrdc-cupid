@@ -14,6 +14,18 @@ import ukrdc_xsdata.ukrdc as xsd_ukrdc  # type: ignore
 import ukrdc_xsdata.ukrdc.types as xsd_types  # type: ignore
 
 
+def add_address(node: Node, address_xml: xsd_types.Address):
+
+    node.add_item("addressuse", address_xml.use)
+    node.add_item("fromtime", address_xml.from_time)
+    node.add_item("totime", address_xml.to_time)
+    node.add_item("street", address_xml.street)
+    node.add_item("town", address_xml.town)
+    node.add_item("county", address_xml.county)
+    node.add_item("postcode", address_xml.postcode)
+    node.add_code("countrycode", "countrycodestd", "countrydesc", address_xml.country)
+
+
 class PatientNumber(Node):
     def __init__(self, xml: xsd_types.PatientNumber):
         super().__init__(xml, sqla.PatientNumber)
@@ -63,15 +75,9 @@ class Address(Node):
     def sqla_mapped() -> str:
         return "addresses"
 
-    def map_xml_to_orm(self, session: Session) -> None:
-        self.add_item("addressuse", self.xml.use)
-        self.add_item("fromtime", self.xml.from_time)
-        self.add_item("totime", self.xml.to_time)
-        self.add_item("street", self.xml.street)
-        self.add_item("town", self.xml.town)
-        self.add_item("county", self.xml.county)
-        self.add_item("postcode", self.xml.postcode)
-        self.add_code("countrycode", "countrycodestd", "countrydesc", self.xml.country)
+    def map_xml_to_orm(self, _) -> None:
+        # reused function elsewhere
+        add_address(self, self.xml)
 
 
 class FamilyDoctor(Node):
@@ -93,23 +99,22 @@ class FamilyDoctor(Node):
             self.add_item("town", xml.address.town)
             self.add_item("county", xml.address.county)
             self.add_item("postcode", xml.address.postcode)
-            if xml.country:
-                self.add_code(
-                    "countrycode", "countrycodestd", "countrydesc", xml.country
-                )
+            self.add_code("countrycode", "countrycodestd", "countrydesc", xml.country)
 
     def add_gp_contact_detail(self, xml: xsd_types.FamilyDoctor) -> None:
         if xml.contact_detail:
-            self.orm_object.contactuse = xml.country.use
-            self.orm_object.contactvalue = xml.country.value
-            self.orm_object.commenttext = xml.country.comments
+            self.orm_object.contactuse = xml.contact_detail.use
+            self.orm_object.contactvalue = xml.contact_detail.value
+            self.orm_object.commenttext = xml.contact_detail.comments
 
     def map_xml_to_orm(self, session: Session) -> None:
         self.add_item("gpname", self.xml.gpname)
         self.add_item("gpid", self.xml.gpid)
         self.add_item("gppracticeid", self.xml.gppractice_id)
         self.add_item("email", self.xml.email)
-        self.add_gp_address(self.xml)
+        if self.xml.address:
+            add_address(self, self.xml.address)
+
         self.add_gp_contact_detail(self.xml)
 
 

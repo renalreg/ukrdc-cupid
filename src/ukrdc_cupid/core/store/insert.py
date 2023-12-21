@@ -20,7 +20,9 @@ def advisory_lock(func):
         while time.time() - start_time < max_wait_time:
             try:
                 # Try to acquire an advisory lock for the specified pid
-                ukrdc_session.execute(f"SELECT pg_advisory_lock({int(pid)}::int)")
+                ukrdc_session.execute(
+                    f"SELECT pg_advisory_lock({int(pid)}::int)"
+                )  # type:ignore
 
             except OperationalError as e:
                 # Handle exceptions, log, or rollback if necessary
@@ -35,7 +37,9 @@ def advisory_lock(func):
                 result = func(ukrdc_session, pid, *args, **kwargs)
 
                 # Release the advisory lock regardless of success or failure
-                ukrdc_session.execute(f"SELECT pg_advisory_unlock({int(pid)}::int)")
+                ukrdc_session.execute(
+                    f"SELECT pg_advisory_unlock({int(pid)}::int)"
+                )  # type:ignore
                 return result
 
         # If the loop runs for the maximum wait time, raise an exception or handle accordingly
@@ -52,7 +56,7 @@ def insert_incoming_data(
     incoming_xml_file: xsd_ukrdc.PatientRecord,
     is_new: bool = False,
     debug: bool = False,
-) -> Tuple[Optional[Base], Optional[Base], Optional[Base]]:
+) -> Optional[Tuple[Base, Base, Base]]:  # type:ignore
     """Insert file into the database having matched to pid.
     do we need a no delete mode?
 
@@ -109,9 +113,11 @@ def insert_incoming_data(
         # in principle we could do a bunch of validation here before we commit
         ukrdc_session.commit()
 
-    except Exception as e:
+    except Exception:
         print("we need some more sophisticated error handling here")
         ukrdc_session.rollback()
 
     if debug:
         return new, dirty, unchanged
+
+    return None

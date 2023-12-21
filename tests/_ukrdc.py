@@ -1,3 +1,5 @@
+# type: ignore
+
 """ Unit tests for the classes used for storing the data. The easiest 
 way of doing this seems to just be loading a test files with no child objects. 
 TODO: I see problems arising from "null" files this should be integrated into testing.

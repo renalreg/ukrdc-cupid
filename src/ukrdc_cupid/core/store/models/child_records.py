@@ -3,7 +3,6 @@ Models to create sqla objects from an xml file
 """
 
 from __future__ import annotations
-from typing import Optional
 
 from sqlalchemy.orm import Session
 
@@ -81,16 +80,12 @@ class LabOrder(Node):
         return {"idx": seq_no, "order_id": self.orm_object.id}
 
     def map_xml_to_orm(self, session: Session) -> None:
-
+        # fmt: off
         self.add_item("placerid", self.xml.placer_id, optional=False)
         self.add_item("fillerid", self.xml.filler_id, optional=True)
-        self.add_item(
-            "specimencollectedtime", self.xml.specimen_collected_time, optional=True
-        )
+        self.add_item("specimencollectedtime", self.xml.specimen_collected_time, optional=True)
         self.add_item("status", self.xml.status, optional=True)
-        self.add_item(
-            "specimenreceivedtime", self.xml.specimen_received_time, optional=True
-        )
+        self.add_item("specimenreceivedtime", self.xml.specimen_received_time, optional=True)
 
         self.add_item("specimensource", self.xml.specimen_source, optional=True)
         self.add_item("duration", self.xml.duration, optional=True)
@@ -98,66 +93,15 @@ class LabOrder(Node):
         self.add_item("updatedon", self.xml.updated_on, optional=True)
         self.add_item("externalid", self.xml.external_id, optional=True)
 
-        self.add_code(
-            "receivinglocationcode",
-            "receivinglocationdesc",
-            "receivinglocationcodestd",
-            self.xml.receiving_location,
-            optional=True,
-        )
-        self.add_code(
-            "orderedbycode",
-            "orderedbycodestd",
-            "orderedbydesc",
-            self.xml.ordered_by,
-            optional=True,
-        )
-
-        self.add_code(
-            "orderitemcode",
-            "orderitemcodestd",
-            "orderitemdesc",
-            self.xml.order_item,
-            optional=True,
-        )
-        self.add_code(
-            "ordercategorycode",
-            "ordercategorycodestd",
-            "ordercategorydesc",
-            self.xml.order_category,
-            optional=True,
-        )
-
-        self.add_code(
-            "prioritycode",
-            "prioritycodestd",
-            "prioritydesc",
-            self.xml.priority,
-            optional=True,
-        )
-
+        self.add_code("receivinglocationcode","receivinglocationdesc","receivinglocationcodestd",self.xml.receiving_location,optional=True)
+        self.add_code("orderedbycode","orderedbycodestd","orderedbydesc",self.xml.ordered_by,optional=True)
+        self.add_code("orderitemcode","orderitemcodestd","orderitemdesc",self.xml.order_item,optional=True)
+        self.add_code("ordercategorycode","ordercategorycodestd","ordercategorydesc",self.xml.order_category,optional=True)
+        self.add_code("prioritycode","prioritycodestd","prioritydesc",self.xml.priority,optional=True)
         # self.add_patient_class(self.xml.patient_class)
-        self.add_code(
-            "patientclasscode",
-            "patientclassdesc",
-            "patientclasscodestd",
-            self.xml.patient_class,
-            optional=True,
-        )
-
-        self.add_code(
-            "enteredatcode",
-            "enteredatdesc",
-            "enteredatcodestd",
-            self.xml.entered_at,
-            optional=True,
-        )
-        self.add_code(
-            "enteringorganizationcode",
-            "enteringorganizationcodestd",
-            "enteringorganizationdesc",
-            self.xml.entering_organization,
-            optional=True,
-        )
-
+        self.add_code("patientclasscode", "patientclassdesc", "patientclasscodestd", self.xml.patient_class, optional=True)
+        self.add_code("enteredatcode","enteredatdesc","enteredatcodestd",self.xml.entered_at,optional=True)
+        self.add_code("enteringorganizationcode","enteringorganizationcodestd","enteringorganizationdesc",self.xml.entering_organization,optional=True)
+        
         self.add_children(ResultItem, "result_items.result_item", session)
+        # fmt: on

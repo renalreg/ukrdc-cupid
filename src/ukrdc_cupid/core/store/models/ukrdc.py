@@ -9,7 +9,7 @@ import ukrdc_sqla.ukrdc as sqla
 from sqlalchemy.orm import Session
 from sqlalchemy import and_
 
-from typing import List, Type
+from typing import List
 
 
 class PatientRecord(Node):
@@ -44,12 +44,16 @@ class PatientRecord(Node):
     def updated_status(self) -> None:
         super().updated_status()
         if self.is_new_record:
-            self.orm_object.repositorycreationdate = self.repository_updated_date
+            self.orm_object.repositorycreationdate = (
+                self.repository_updated_date
+            )  # type:ignore
 
         if self.is_modified or self.is_new_record:
             # what is the correct behaviour should this be set if any part of the patient record has been changed?
             # I think this should be a nullable field
-            self.orm_object.repositoryupdatedate = self.repository_updated_date
+            self.orm_object.repositoryupdatedate = (
+                self.repository_updated_date
+            )  # type:ignore
 
     def map_xml_to_orm(self, session: Session) -> None:
 
@@ -60,7 +64,7 @@ class PatientRecord(Node):
         # get MRN from patient numbers model
         for number in self.xml.patient.patient_numbers[0].patient_number:
             if number.number_type.value == "MRN":
-                self.orm_object.localpatientid = number.number
+                self.orm_object.localpatientid = number.number  # type :ignore
 
         self.add_children(Patient, "patient", session)
         self.add_children(Observation, "observations.observation", session)
@@ -75,7 +79,9 @@ class PatientRecord(Node):
 
         # load or create the orm
         if is_new:
-            self.orm_object = self.orm_model(pid=self.pid, ukrdcid=ukrdcid)
+            self.orm_object = self.orm_model(
+                pid=self.pid, ukrdcid=ukrdcid
+            )  # type:ignore
         else:
             self.orm_object = session.get(self.orm_model, self.pid)
 

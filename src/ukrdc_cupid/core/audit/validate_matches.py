@@ -1,8 +1,7 @@
 from datetime import datetime
 from sqlalchemy.orm import Session
 import ukrdc_sqla.ukrdc as orm
-from sqlalchemy import select, and_
-from typing import List
+from sqlalchemy import select
 
 
 def validate_demog(session: Session, dob: datetime, pid: str) -> bool:
@@ -33,10 +32,10 @@ def validate_demog(session: Session, dob: datetime, pid: str) -> bool:
         raise Exception("something has gone very wrong in the bigger picture")
     else:
         domain_dob = domain_dob[0][0]
-        return domain_dob.date() == dob.date()
+        return domain_dob.date() == dob.date()  # type:ignore
 
 
-def validate_demog_ukrdc(session: Session, dob: datetime, ukrdcid: str):
+def validate_demog_ukrdc(session: Session, dob: datetime, ukrdcid: str) -> bool:
     """Currently I (PM) think its a bit over the top validating the
     demographics when you match ukrdcid but will leave it for now.
 
