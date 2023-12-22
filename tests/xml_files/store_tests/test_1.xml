@@ -1,5 +1,5 @@
-<PatientRecord xmlns:ukrdc="http://www.rixg.org.uk/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
-    <SendingFacility channelName="UKRDCSampleExtract" schemaVersion="4.0.0" time="2022-07-21T09:00:00">RFCAT</SendingFacility>
+<ukrdc:PatientRecord xmlns:ukrdc="http://www.rixg.org.uk/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+    <SendingFacility channelName="UKRDCSampleExtract" time="2022-07-21T09:00:00" schemaVersion="4.0.0" >RFCAT</SendingFacility>
 	<SendingExtract>UKRDC</SendingExtract>
     <Patient>
         <PatientNumbers>
@@ -17,8 +17,8 @@
         <Names>
             <Name use="L">
                 <Prefix>Dr</Prefix>
-                <Given>Bob</Given>
                 <Family>Smith</Family>
+                <Given>Bob</Given>
                 <OtherGivenNames>Horatio Augustus</OtherGivenNames>
                 <Suffix>Snr</Suffix>
             </Name>
@@ -50,11 +50,14 @@
         <CountryOfBirth>MOO</CountryOfBirth>
         <FamilyDoctor>
             <GPName>Dr Dre</GPName>
-            <GPPracticeId>123456</GPPracticeId>
-            <GPId>ABCDEF</GPId>
-            <ContactDetail>exclusively by pigeon</ContactDetail>
+            <GPPracticeId>A12345</GPPracticeId>
+            <GPId>G1234567</GPId>
+            <ContactDetail use="PRN">
+                <Value>pidgeon</Value>
+                <Comments>try birdseed I guess</Comments>
+            </ContactDetail>            
             <Email>dr.dre@example.com</Email>
         </FamilyDoctor>
         <Death>true</Death>
     </Patient>
-</PatientRecord>
+</ukrdc:PatientRecord>

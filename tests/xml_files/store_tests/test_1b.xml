@@ -1,49 +1,23 @@
-<PatientRecord>
-    <SendingFacility>RFCAT</SendingFacility>
+<ukrdc:PatientRecord xmlns:ukrdc="http://www.rixg.org.uk/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+    <SendingFacility channelName="UKRDCSampleExtract" time="2022-07-21T09:00:00" schemaVersion="4.0.0" >RFCAT</SendingFacility>
 	<SendingExtract>UKRDC</SendingExtract>
-    <Patient xmlns="http://www.rixg.org.uk/" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+    <Patient>
         <PatientNumbers>
-            <Number>200012345</Number>
-            <Organization>UKRR</Organization>
-            <NumberType>NI</NumberType>
+            <PatientNumber>
+                <Number>AAA111B</Number>
+                <Organization>LOCALHOSP</Organization>
+                <NumberType>MRN</NumberType>
+            </PatientNumber>
+            <PatientNumber>
+                <Number>1111111111</Number>
+                <Organization>NHS</Organization>
+                <NumberType>NI</NumberType>
+            </PatientNumber>
         </PatientNumbers>
         <Names>
-            <Name use="L">
-                <Prefix>Dr</Prefix>
-                <Given>Bob</Given>
-                <Family>Smith</Family>
-                <OtherGivenNames>Horatio Augustus</OtherGivenNames>
-                <Suffix>Snr</Suffix>
-            </Name>
+            <Name use="L"/>
         </Names>
         <BirthTime>1969-06-09T00:00:00</BirthTime>
-        <DeathTime>1984-06-09T00:00:00</DeathTime>
         <Gender>1</Gender>
-        <Addresses>
-            <Address use="H">
-                <FromTime>1969-06-09T00:00:00</FromTime>
-                <ToTime>1969-06-10T00:00:00</ToTime>
-                <Street>59th street</Street>
-                <Town>New York</Town>
-                <County>Cheshire</County>
-                <Postcode>XX78 7DD</Postcode>
-                <Country>
-                    <CodingStandard>NHS</CodingStandard>
-                    <Code>USE</Code>
-                    <Description>United States of Eurasia</Description>
-                </Country>
-            </Address>
-        </Addresses>
-        <ContactDetails>
-            <ContactDetail use="PRN">
-                <Value>0117 11111111</Value>
-            </ContactDetail>
-        </ContactDetails>
-        <CountryOfBirth>MOO</CountryOfBirth>
-        <FamilyDoctor>
-            <GPPracticeId>123456</GPPracticeId>
-            <GPId>ABCDEF</GPId>
-        </FamilyDoctor>
-        <Death>true</Death>
     </Patient>
-</PatientRecord>
+</ukrdc:PatientRecord>

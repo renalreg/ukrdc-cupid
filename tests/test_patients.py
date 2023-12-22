@@ -1,12 +1,23 @@
+""" Testing philosophy here is to create a middle ground between unit testing
+and black box testing. Fundimentally the xml files are input which triggers a
+change to the state of the database, or alternatively causes an error, or an 
+investigation. We then use xml files load them and check they trigger the
+desired change to the database. To get more in the spirit of unit tests, xml
+files target specific areas of the code. 
+
+xml files used:
+test_1.xml
+
+Still to do: 
+1) test removal of elements
+2) ensure full coverage of all possible xml items 
+"""
+
 from conftest import ukrdc3_session
-from sqlalchemy.orm import Session
 from ukrdc_cupid.core.store.models.ukrdc import PatientRecord
-from ukrdc_cupid.core.store.models.patient import Patient, PatientNumber,Name,ContactDetail,Address,FamilyDoctor
 from ukrdc_cupid.core.parse.utils import load_xml_from_path
 from typing import Tuple
-from datetime import datetime
 import ukrdc_xsdata.ukrdc as xsd # type: ignore
-import glob
 import os
 import pytest
 
@@ -15,8 +26,6 @@ TEST_UKRDCID = "test_ukrdc:543"
 
 @pytest.fixture(scope="function")
 def test_patient_objects():
-    # the basic philosophy of the cupid models is to extend the ukrdc sqla to
-    # take xml as an input.  
     xml_test_1 = load_xml_from_path(
         os.path.join("tests","xml_files","store_tests","test_1.xml")
     )
