@@ -93,7 +93,7 @@ class LabOrder(Node):
         self.add_item("updatedon", self.xml.updated_on, optional=True)
         self.add_item("externalid", self.xml.external_id, optional=True)
 
-        self.add_code("receivinglocationcode","receivinglocationdesc","receivinglocationcodestd",self.xml.receiving_location,optional=True)
+        self.add_code("receivinglocationcode","receivinglocationcodestd","receivinglocationdesc",self.xml.receiving_location,optional=True)
         self.add_code("orderedbycode","orderedbycodestd","orderedbydesc",self.xml.ordered_by,optional=True)
         self.add_code("orderitemcode","orderitemcodestd","orderitemdesc",self.xml.order_item,optional=True)
         self.add_code("ordercategorycode","ordercategorycodestd","ordercategorydesc",self.xml.order_category,optional=True)
