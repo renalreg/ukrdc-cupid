@@ -24,32 +24,36 @@ class Settings(BaseSettings):
         BaseSettings (_type_): _description_
     """
 
-    appdata_dir: str = Field(env="APPDATA_DIR", default=user_data_dir())
+    appdata_dir: str = Field(env="APPDATA_DIR", default=user_data_dir())  # type: ignore
 
-    schema_repo: str = Field(
+    schema_repo: str = Field(  # type: ignore
         env="SCHEMA_REPO", default="https://github.com/renalreg/resources.git"
     )
 
-    v3_3_0_commit: str = Field(
+    v3_3_0_commit: str = Field(  # type: ignore
         env="V3_3_0_COMMIT", default="7095add5ea07369dedbd499fa4662f3f72754d31"
     )
 
-    v3_4_5_commit: str = Field(
+    v3_3_1_commit: str = Field(  # type: ignore
+        env="V3_3_1_COMMIT", default="d5a23051fbf194c462a4c90ba5ac2f44049f88bd"
+    )
+
+    v3_4_5_commit: str = Field(  # type: ignore
         env="V3_4_5_COMMIT", default="14fa420a971e16306de3e00cd1fc51b6e344c596"
     )
 
-    v4_0_0_commit: str = Field(
+    v4_0_0_commit: str = Field(  # type: ignore
         env="V4_0_0_COMMIT", default="046b25021c52ebeaff1d878a01aa8ec56c4667ed"
     )
 
-    v4_1_0_commit: str = Field(
+    v4_1_0_commit: str = Field(  # type: ignore
         env="V4_1_0_COMMIT", default="ce0f8618a0712c86e895f302d99bfda94a2787c4"
     )
 
 
 env_variables = Settings()
 
-SUPPORTED_VERSIONS = ["3.3.0", "3.4.5", "4.0.0", "4.1.0"]
+SUPPORTED_VERSIONS = ["3.3.0", "3.3.1", "3.4.5", "4.0.0", "4.1.0"]
 
 
 def download_ukrdc_schema(filepath: str, schema_version: str):
@@ -69,7 +73,7 @@ def download_ukrdc_schema(filepath: str, schema_version: str):
         version = "v" + schema_version.replace(".", "_")
         commit = getattr(env_variables, f"{version}_commit")
     else:
-        raise ValueError("Unsupported schema version {schema_version}")
+        raise ValueError(f"Unsupported schema version {schema_version}")
 
     print(commit)
 
@@ -144,7 +148,6 @@ def validate_rda_xml_string(rda_xml: str, schema_version: str = "4.0.0"):
         return
 
     except etree.DocumentInvalid:
-
         # return errors as dictionary
         errors = {}
         ## what reason is there for not just returning the error log
