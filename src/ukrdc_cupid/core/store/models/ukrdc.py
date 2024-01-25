@@ -93,14 +93,21 @@ class PatientRecord(Node):
         if sqla_mapped == "observations":
             mapped_orms = self.session.query(sqla.Observation)
 
-        elif sqla_mapped == "laborders":
-            mapped_orms = self.session.query(sqla.LabOrder).filter(
-                and_(
-                    sqla.LabOrder.specimen_collected_time >= self.lab_order_range[0],
-                    sqla.LabOrder.specimen_collected_time <= self.lab_order_range[1],
+        elif sqla_mapped == "lab_orders" and hasattr(self, "lab_order_range"):
+            mapped_orms = (
+                self.session.query(sqla.LabOrder)
+                .filter(
+                    and_(
+                        sqla.LabOrder.specimen_collected_time
+                        >= self.lab_order_range[0],
+                        sqla.LabOrder.specimen_collected_time
+                        <= self.lab_order_range[1],
+                    )
                 )
+                .all()
             )
         else:
+            # In most cases we can just use the lazy mapping from the sqla models
             mapped_orms = getattr(self.orm_object, sqla_mapped)
 
         self.deleted_orm = [

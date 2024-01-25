@@ -1,8 +1,7 @@
-from typing import List
 from sqlalchemy.orm import Session
 from ukrdc_cupid.core.store.models.structure import Node
 from xsdata.models.datatype import XmlDateTime
-from conftest import ukrdc3_session
+from conftest import create_test_session, TEST_DB_URL
 from datetime import datetime
 import ukrdc_sqla.ukrdc as sqla
 import ukrdc_xsdata.ukrdc as xsd_ukrdc 
@@ -41,8 +40,10 @@ class PatientNumber(Node):
 
 
 @pytest.fixture(scope="function")
-def test_ukrdc_session():
-    return ukrdc3_session
+def ukrdc_test_session():
+    session = create_test_session(TEST_DB_URL)
+    yield session
+    session.close()
 
 # set up patient node
 @pytest.fixture(scope="function")
@@ -130,9 +131,9 @@ def test_add_item( patient_node:Node):
     assert patient_node.orm_object.birthtime == dob_datetime
 
 @pytest.mark.parametrize("seq_no", [0, 1])
-def test_add_children(test_ukrdc_session: Session, patient_node: Node, seq_no:int):
+def test_add_children(ukrdc_test_session: Session, patient_node: Node, seq_no:int):
     # test parsing of xml attributes accross a couple of levels
-    patient_node.add_children(PatientNumber,"patient_numbers.patient_number", test_ukrdc_session)
+    patient_node.add_children(PatientNumber,"patient_numbers.patient_number", ukrdc_test_session)
     
     # test parsing on single level
     node = patient_node.mapped_classes[seq_no]
