@@ -26,6 +26,7 @@ black = {version = "^22.10.0", allow-prereleases = true}
 ruff = "^0.0.263"
 tox = "^4.5.1"
 bandit = "^1.7.5"
+pytest = "<7.4.3"
 
 [build-system]
 build-backend = "poetry.core.masonry.api"
