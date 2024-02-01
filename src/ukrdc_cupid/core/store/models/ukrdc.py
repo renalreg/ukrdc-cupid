@@ -2,7 +2,11 @@ from __future__ import annotations  # allows typehint of node class
 
 from ukrdc_cupid.core.store.models.structure import Node
 from ukrdc_cupid.core.store.models.patient import Patient
-from ukrdc_cupid.core.store.models.child_records import Observation, LabOrder
+from ukrdc_cupid.core.store.models.child_records import (
+    Observation,
+    LabOrder,
+    DialysisSession,
+)
 
 import ukrdc_xsdata.ukrdc as xsd_ukrdc  # type: ignore
 import ukrdc_sqla.ukrdc as sqla
@@ -69,6 +73,9 @@ class PatientRecord(Node):
         self.add_children(Patient, "patient", session)
         self.add_children(Observation, "observations.observation", session)
         self.add_children(LabOrder, "lab_orders.lab_order", session)
+        self.add_children(
+            DialysisSession, "procedures.dialysis_sessions.dialysis_session", session
+        )
 
     def map_to_database(
         self, pid: str, ukrdcid: str, session: Session, is_new=True
@@ -106,10 +113,16 @@ class PatientRecord(Node):
                 )
                 .all()
             )
+
         else:
             # In most cases we can just use the lazy mapping from the sqla models
             mapped_orms = getattr(self.orm_object, sqla_mapped)
 
-        self.deleted_orm = [
-            record for record in mapped_orms if record.id not in mapped_ids
-        ]
+        # stage records for deletion
+        for record in mapped_orms:
+            if record.id not in mapped_ids:
+                self.deleted_orm.append(record)
+                # we need to nuke result items too
+                if sqla_mapped == "lab_orders":
+                    for result_item in record.result_items:
+                        self.deleted_orm.append(result_item)

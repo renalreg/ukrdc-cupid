@@ -1,3 +1,10 @@
+"""
+Primary keys for the records contained within the ukrdc. Hopefully we simplify
+this at some point in the future. Currently it's designed to replicate the data
+repository however I think a lot of that was hacked together to work with the
+limitations of jtrace. 
+"""
+
 import random
 import string
 
@@ -5,6 +12,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import Sequence
 import ukrdc_sqla.ukrdc as sqla
 import ukrdc_xsdata.ukrdc.lab_orders as xsd_lab_orders  # type:ignore
+import ukrdc_xsdata.ukrdc.dialysis_sessions as xsd_dialysis_sessions
 
 from typing import Optional
 
@@ -61,3 +69,13 @@ def generate_key_resultitem(
         )
     else:
         return f"{order_id}{KEY_SEPERATOR}{resultitem.prepost}{KEY_SEPERATOR}{resultitem.service_id}{KEY_SEPERATOR}{seq_no}"
+
+
+def generate_key_dialysis_session(
+    dialysis_session_xml: xsd_dialysis_sessions.DialysisSession,
+    pid: str,
+    seq_no: int = 0,
+) -> str:
+    procedure_time_uts = dialysis_session_xml.procedure_time.to_datetime().timestamp()
+    procedure_type_code = dialysis_session_xml.procedure_type.code
+    return f"{pid}{KEY_SEPERATOR}{procedure_time_uts}{KEY_SEPERATOR}{procedure_type_code}{KEY_SEPERATOR}{seq_no}"

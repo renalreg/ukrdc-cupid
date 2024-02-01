@@ -65,6 +65,15 @@ def ukrdc_test_2():
         )
     ]
     ukrdc3_session.add_all(lab_orders)
+
+    result_items = [
+        sqla.ResultItem(
+            id = "RI_to_delete_1",
+            order_id = "to_delete_1"
+        ), 
+
+    ]
+    ukrdc3_session.add_all(result_items)
     ukrdc3_session.commit()
     
     loaded_ids = [order.id for order in ukrdc3_session.query(sqla.LabOrder).all()]
@@ -96,7 +105,7 @@ def patient_record(ukrdc_test_2:Session):
 
     return patient_record
 
-def test_lab_orders(patient_record:Tuple[xsd.PatientRecord,dict]):
+def test_lab_orders(patient_record:PatientRecord):
 
     lab_order_orm = False
     for orm_object in patient_record.get_orm_list():
@@ -147,13 +156,67 @@ def test_lab_orders(patient_record:Tuple[xsd.PatientRecord,dict]):
     assert lab_order_orm.updatedon == lab_order_xml.updated_on.to_datetime()
 
 
-def test_laborder_start_stop(patient_record:Tuple[xsd.PatientRecord,dict]):
+def test_laborder_start_stop(patient_record:PatientRecord):
     # Required behaviour here
-    # existing laborders with a observation time within the start stop range should 
-    # be removed if they are not in incoming
+    # existing laborders with a observation time within the start stop range 
+    # should be removed if they are not in incoming any associated result items
+    # should staged for deletion
     
-    ids_to_delete = ["to_delete_1"]
+    ids_to_delete = ["to_delete_1", "RI_to_delete_1"]
     deleted_ids = [orm.id for orm in patient_record.deleted_orm] 
     
     # check the records we expect to delete are staged for deletion
     assert ids_to_delete == deleted_ids
+
+def test_result_items(patient_record:PatientRecord):
+    # check all the result item attributes are being loaded into the orm
+    result_orms = []
+    for orm_object in patient_record.get_orm_list():
+        if orm_object.__tablename__ == "resultitem":
+            result_orms.append(orm_object)
+
+    assert result_orms
+
+    results_xml = patient_record.xml.lab_orders.lab_order[0].result_items.result_item    
+    for result_orm, result_xml in zip(result_orms, results_xml):
+        assert result_orm.resulttype == result_xml.result_type 
+        assert result_orm.enteredon == result_xml.entered_on.to_datetime()
+        assert result_orm.prepost == result_xml.pre_post.value
+        assert result_orm.serviceidcode == result_xml.service_id.code
+        assert result_orm.serviceiddesc == result_xml.service_id.description
+        assert result_orm.serviceidcodestd == result_xml.service_id.coding_standard.value
+        assert result_orm.subid == result_xml.sub_id
+        assert result_orm.resultvalue == result_xml.result_value
+        assert result_orm.resultvalueunits == result_xml.result_value_units
+        assert result_orm.referencerange == result_xml.reference_range
+        assert result_orm.interpretationcodes == result_xml.interpretation_codes
+        assert result_orm.status == result_xml.status
+        assert result_orm.observationtime == result_xml.observation_time.to_datetime()
+        assert result_orm.commenttext== result_xml.comments
+        assert result_orm.referencecomment  == result_xml.reference_comment 
+
+def test_dialysis_session(patient_record:PatientRecord):
+
+    dialysis_session_orms = []
+    for orm_object in patient_record.get_orm_list():
+        if orm_object.__tablename__ == "dialysissession":
+            dialysis_session_orms.append(orm_object)
+
+    assert dialysis_session_orms
+    xml = patient_record.xml.procedures.dialysis_sessions[0].dialysis_session
+
+    for dialysis_session_orm, dialysis_xml in zip(dialysis_session_orms, xml):
+        assert dialysis_session_orm.enteredatcode == dialysis_xml.entered_at.code
+        assert dialysis_session_orm.enteredatcodestd == dialysis_xml.entered_at.coding_standard.value
+        assert dialysis_session_orm.enteredatdesc == dialysis_xml.entered_at.description
+
+        # times
+        assert dialysis_session_orm.proceduretime == dialysis_xml.procedure_time.to_datetime()
+        assert dialysis_session_orm.updatedon == dialysis_xml.updated_on.to_datetime()
+        assert dialysis_session_orm.externalid == dialysis_xml.external_id 
+
+        # values
+        assert dialysis_session_orm.qhd19 == dialysis_xml.symtomatic_hypotension
+        assert dialysis_session_orm.qhd20 == dialysis_xml.vascular_access
+        assert dialysis_session_orm.qhd21 == dialysis_xml.vascular_access_site
+        assert dialysis_session_orm.qhd31 == dialysis_xml.time_dialysed

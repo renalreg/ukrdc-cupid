@@ -271,8 +271,7 @@ class Node(ABC):
             self.orm_object.update_date = datetime.now()
 
     def generate_parent_data(self, seq_no: int) -> dict:
-        # This function allows data not contained in the xml to be generated
-        # An example of this might be a foreign key
+        # This function allows attributes to be passed from parent to child
         return {"pid": self.pid, "idx": seq_no}
 
     @classmethod

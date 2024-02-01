@@ -11,6 +11,7 @@ import ukrdc_cupid.core.store.keygen as key_gen  # type: ignore
 import ukrdc_sqla.ukrdc as sqla
 import ukrdc_xsdata.ukrdc.observations as xsd_observations  # type: ignore
 import ukrdc_xsdata.ukrdc.lab_orders as xsd_lab_orders  # type: ignore
+import ukrdc_xsdata.ukrdc.dialysis_sessions as xsd_dialysis_sessions  # type: ignore
 
 
 class Observation(Node):
@@ -45,24 +46,23 @@ class ResultItem(Node):
         return "result_items"
 
     def map_xml_to_orm(self, _):
-        # fmt: off
-        self.add_item("prepost", self.xml.pre_post)
-        self.add_item("interpretationcodes", self.xml.interpretation_codes)
-        self.add_item("status", self.xml.status)
-        self.add_item("resulttype", self.xml.result_type)
-        self.add_item("enteredon", self.xml.entered_on)
 
+        # fmt: off
+        self.add_item("resulttype", self.xml.result_type)
+        self.add_code(
+            "serviceidcode", "serviceidcodestd", "serviceiddesc", self.xml.service_id
+        )
         self.add_item("subid", self.xml.sub_id)
         self.add_item("resultvalue", self.xml.result_value)
         self.add_item("resultvalueunits", self.xml.result_value_units)
         self.add_item("referencerange", self.xml.reference_range)
+        self.add_item("interpretationcodes", self.xml.interpretation_codes)
+        self.add_item("prepost", self.xml.pre_post)
+        self.add_item("enteredon", self.xml.entered_on)
+        self.add_item("status", self.xml.status)
         self.add_item("observationtime", self.xml.observation_time)
         self.add_item("commenttext", self.xml.comments)
         self.add_item("referencecomment", self.xml.reference_comment)
-
-        self.add_code(
-            "serviceidcode", "serviceidcodestd", "serviceiddesc", self.xml.service_id
-        )
         # fmt: on
 
 
@@ -104,4 +104,36 @@ class LabOrder(Node):
         self.add_code("enteringorganizationcode","enteringorganizationcodestd","enteringorganizationdesc",self.xml.entering_organization,optional=True)
         
         self.add_children(ResultItem, "result_items.result_item", session)
+        # fmt: on
+
+
+class DialysisSession(Node):
+    def __init__(self, xml: xsd_dialysis_sessions):
+        super().__init__(xml, sqla.DialysisSession)
+
+    def sqla_mapped() -> str:
+        return "dialysis_sessions"
+
+    def generate_id(self, _) -> str:
+        return key_gen.generate_key_dialysis_session(self.xml, self.pid)
+
+    def map_xml_to_orm(self, _) -> None:
+        # fmt: off
+        # codes
+        self.add_code("enteredatcode", "enteredatcodestd", "enteredatdesc", self.xml.entered_at)
+        self.add_code("enteredbycode", "enteredbycodestd", "enteredbydesc", self.xml.entered_at)
+        self.add_code("proceduretypecode", "proceduretypecodestd", "proceduretypedesc", self.xml.procedure_type)
+        
+        # times
+        self.add_item("proceduretime", self.xml.procedure_time)
+        self.add_item("updatedon", self.xml.updated_on)
+
+        # ids
+        self.add_item("externalid", self.xml.external_id)
+        
+        # values
+        self.add_item("qhd19", self.xml.symtomatic_hypotension)
+        self.add_item("qhd20", self.xml.vascular_access)
+        self.add_item("qhd21", self.xml.vascular_access_site)
+        self.add_item("qhd31", self.xml.time_dialysed)
         # fmt: on
