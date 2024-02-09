@@ -133,7 +133,9 @@ class DialysisSession(Node):
         
         # values
         self.add_item("qhd19", self.xml.symtomatic_hypotension)
-        self.add_item("qhd20", self.xml.vascular_access)
-        self.add_item("qhd21", self.xml.vascular_access_site)
+        if self.xml.vascular_access:
+            self.add_item("qhd20", self.xml.vascular_access.code)
+        if self.xml.vascular_access_site:
+            self.add_item("qhd21", self.xml.vascular_access_site.code)
         self.add_item("qhd31", self.xml.time_dialysed)
         # fmt: on

@@ -113,8 +113,9 @@ def insert_incoming_data(
         # in principle we could do a bunch of validation here before we commit
         ukrdc_session.commit()
 
-    except Exception:
+    except Exception as e:
         print("we need some more sophisticated error handling here")
+        print(e)
         ukrdc_session.rollback()
 
     if debug:

@@ -4,7 +4,9 @@ from datetime import datetime
 from typing import List, Tuple
 
 # Connection to database containing issues
-INVESTIGATE_SESSION = DatabaseConnection(env_prefix="INVESTIGATE").create_session()
+INVESTIGATE_SESSION = DatabaseConnection(env_prefix="INVESTIGATE").create_session(
+    False, False
+)
 
 
 def get_patients(patient_ids: List[Tuple[str, str]]) -> List[PatientID]:

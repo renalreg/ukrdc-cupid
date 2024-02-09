@@ -130,7 +130,12 @@ def read_patient_metadata(xml: xsd_ukrdc.PatientRecord) -> dict:
 
 
 def identify_patient_feed(session: Session, patient_info: dict) -> Any:
-    """Identify patient based on patient numbers.
+    """Identify patient based on patient numbers. It uses a combination of
+    three different bits of information. The NI, the MRN and the demographics
+    (DOB). In all instances if the three bits of information don't match the
+    file will not load and an investigation will be raised. The MRN can be
+    changed as long as it doesn't match to a different patient feed to the
+    NI.
 
     Args:
         session (Session): SQLAlchemy session
@@ -142,17 +147,23 @@ def identify_patient_feed(session: Session, patient_info: dict) -> Any:
     matched_patients_ni = match_ni(session, patient_info)
 
     # new patient?
-    if len(matched_patients_mrn) == 0:
-        if len(matched_patients_ni) == 0:
+    if len(matched_patients_ni) == 0:
+        # when no match is found with ni we have a go with MRN
+        # if this can be validated against the dob
+        if len(matched_patients_mrn) == 0:
             return None, None, None
+        elif len(matched_patients_mrn) == 1:
+            # we could remove this step if we decide it shouldn't be possible
+            # to overwrite NI
+            pid, ukrdcid = matched_patients_mrn[0]
 
-    # unambiguously match to single domain patient?
+    elif len(matched_patients_ni) == 1:
+        pid, ukrdcid = matched_patients_ni[0]
+
+    # check MRN look up returns a single patient
     if len(matched_patients_mrn) > 1:
-        investigation = Investigation(matched_patients_mrn, 3)
+        investigation = Investigation(matched_patients_mrn, 3).create_issue()
         return None, None, investigation
-
-    # patient should now be singular
-    pid, ukrdcid = matched_patients_mrn[0]
 
     # validate anonymous patients - bit more thought needed here
     # We probably want to flag if they don't have a domain UID and bypass the
@@ -161,7 +172,7 @@ def identify_patient_feed(session: Session, patient_info: dict) -> Any:
 
     if patient_info["MRN"][1] == "UKRR_UID":
         # validate dob, we use same function but implicitly it is only validating on year of birth
-        # I'm assumng these patients wont be sent with NIs
+        # I'm assuming these patients won't be sent with NIs
         if validate_demog(session, patient_info["date_of_birth"], pid):
             return pid, ukrdcid, None
         else:

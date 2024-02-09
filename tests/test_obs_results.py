@@ -5,8 +5,6 @@ This file contains the tests for Observations, Results and
 from conftest import create_test_session, TEST_DB_URL
 from ukrdc_cupid.core.store.models.ukrdc import PatientRecord
 from ukrdc_cupid.core.parse.utils import load_xml_from_path
-from typing import Tuple
-import ukrdc_xsdata.ukrdc as xsd # type: ignore
 import ukrdc_sqla.ukrdc as sqla 
 from sqlalchemy.orm import Session
 from datetime import timedelta
@@ -217,6 +215,8 @@ def test_dialysis_session(patient_record:PatientRecord):
 
         # values
         assert dialysis_session_orm.qhd19 == dialysis_xml.symtomatic_hypotension
-        assert dialysis_session_orm.qhd20 == dialysis_xml.vascular_access
-        assert dialysis_session_orm.qhd21 == dialysis_xml.vascular_access_site
+        if dialysis_xml.vascular_access:
+            assert dialysis_session_orm.qhd20 == dialysis_xml.vascular_access.code
+        if dialysis_xml.vascular_access_site:
+            assert dialysis_session_orm.qhd21 == dialysis_xml.vascular_access_site.code
         assert dialysis_session_orm.qhd31 == dialysis_xml.time_dialysed

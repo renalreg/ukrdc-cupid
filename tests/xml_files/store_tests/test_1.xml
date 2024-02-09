@@ -54,7 +54,7 @@
             <GPId>G1234567</GPId>
             <ContactDetail use="PRN">
                 <Value>pidgeon</Value>
-                <Comments>try birdseed I guess</Comments>
+                <Comments>watch out for hawks</Comments>
             </ContactDetail>            
             <Email>dr.dre@example.com</Email>
         </FamilyDoctor>

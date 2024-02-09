@@ -103,7 +103,7 @@ class FamilyDoctor(Node):
 
     def add_gp_contact_detail(self, xml: xsd_types.FamilyDoctor) -> None:
         if xml.contact_detail:
-            self.orm_object.contactuse = xml.contact_detail.use
+            self.orm_object.contactuse = xml.contact_detail.use.value
             self.orm_object.contactvalue = xml.contact_detail.value
             self.orm_object.commenttext = xml.contact_detail.comments
 

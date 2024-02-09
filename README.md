@@ -14,6 +14,9 @@ Very much WIP. Proper docs and tests to come.
 
 ## Developer notes
 
+### Local Setup
+
+
 ### Build ARCHITECTURE.md
 
 - Install `pipx`

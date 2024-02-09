@@ -1,0 +1,25 @@
+<ukrdc:PatientRecord xmlns:ukrdc="http://www.rixg.org.uk/"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+    <SendingFacility channelName="UKRDCSampleExtract" time="2022-07-21T09:00:00"
+        schemaVersion="4.0.0">RFCAT</SendingFacility>
+    <SendingExtract>UKRDC</SendingExtract>
+    <Patient>
+        <PatientNumbers>
+            <PatientNumber>
+                <Number>AAA111B</Number>
+                <Organization>LOCALHOSP</Organization>
+                <NumberType>MRN</NumberType>
+            </PatientNumber>
+            <PatientNumber>
+                <Number>2222222222</Number>
+                <Organization>CHI</Organization>
+                <NumberType>NI</NumberType>
+            </PatientNumber>
+        </PatientNumbers>
+        <Names>
+            <Name use="L" />
+        </Names>
+        <BirthTime>1969-06-09T00:00:00</BirthTime>
+        <Gender>1</Gender>
+    </Patient>
+</ukrdc:PatientRecord>

@@ -16,9 +16,7 @@ Still to do:
 from conftest import create_test_session, TEST_DB_URL
 from ukrdc_cupid.core.store.models.ukrdc import PatientRecord
 from ukrdc_cupid.core.parse.utils import load_xml_from_path
-from typing import Tuple
 from sqlalchemy.orm import Session
-import ukrdc_xsdata.ukrdc as xsd # type: ignore
 import os
 import pytest
 
