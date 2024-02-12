@@ -1,12 +1,12 @@
+import os
 from dotenv import dotenv_values
 from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker, Session
 from sqlalchemy_utils import database_exists, create_database
 from ukrdc_sqla.ukrdc import Base as UKRDC3Base
 
-# from gp_auto_importer.main import auto as auto_populate_gp
-
-ENV = dotenv_values()
+# Load environment varibles from wither they are found
+ENV = {**dotenv_values(), **os.environ}
 
 
 class DatabaseConnection:
