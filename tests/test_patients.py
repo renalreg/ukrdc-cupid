@@ -13,9 +13,9 @@ Still to do:
 2) ensure full coverage of all possible xml items 
 """
 
-from conftest import create_test_session, TEST_DB_URL
 from ukrdc_cupid.core.store.models.ukrdc import PatientRecord
 from ukrdc_cupid.core.parse.utils import load_xml_from_path
+from ukrdc_cupid.core.utils import DatabaseConnection
 from sqlalchemy.orm import Session
 import os
 import pytest
@@ -30,7 +30,7 @@ def ukrdc_test():
     Create a test database to check patient demographic and identiey based
     stuff.
     """
-    ukrdc3_session = create_test_session(TEST_DB_URL)
+    ukrdc3_session = DatabaseConnection().create_session(clean=True, populate_tables=False)
     yield ukrdc3_session
     ukrdc3_session.close()
 

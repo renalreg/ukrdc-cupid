@@ -1,7 +1,7 @@
 from sqlalchemy.orm import Session
 from ukrdc_cupid.core.store.models.structure import Node
+from ukrdc_cupid.core.utils import DatabaseConnection
 from xsdata.models.datatype import XmlDateTime
-from conftest import create_test_session, TEST_DB_URL
 from datetime import datetime
 import ukrdc_sqla.ukrdc as sqla
 import ukrdc_xsdata.ukrdc as xsd_ukrdc 
@@ -41,7 +41,7 @@ class PatientNumber(Node):
 
 @pytest.fixture(scope="function")
 def ukrdc_test_session():
-    session = create_test_session(TEST_DB_URL)
+    session = DatabaseConnection().create_session(clean=True, populate_tables=False)
     yield session
     session.close()
 

@@ -2,9 +2,10 @@
 This file contains the tests for Observations, Results and 
 """
 
-from conftest import create_test_session, TEST_DB_URL
+
 from ukrdc_cupid.core.store.models.ukrdc import PatientRecord
 from ukrdc_cupid.core.parse.utils import load_xml_from_path
+from ukrdc_cupid.core.utils import DatabaseConnection
 import ukrdc_sqla.ukrdc as sqla 
 from sqlalchemy.orm import Session
 from datetime import timedelta
@@ -27,7 +28,8 @@ def ukrdc_test_2():
         os.path.join("tests","xml_files","store_tests","test_0.xml")
     )
 
-    ukrdc3_session = create_test_session(TEST_DB_URL)
+    ukrdc3_session = DatabaseConnection().create_session(clean=True, populate_tables=False)
+
     patient_record = PatientRecord(xml_test_1)  
     patient_record.map_to_database(TEST_PID, TEST_UKRDCID, ukrdc3_session)
     ukrdc3_session.add_all(patient_record.get_orm_list())

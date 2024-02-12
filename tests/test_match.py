@@ -7,6 +7,7 @@ from ukrdc_cupid.core.match.identify import (
     read_patient_metadata,
     identify_across_ukrdc,
 )
+from ukrdc_cupid.core.utils import DatabaseConnection
 from sqlalchemy import select
 from ukrdc_sqla.ukrdc import PatientNumber
 import pytest
@@ -20,7 +21,7 @@ PATIENT_META_DATA = read_patient_metadata(XML_TEST)
 
 @pytest.fixture(scope="function")
 def ukrdc_test():
-    session = create_test_session(TEST_DB_URL)
+    session = DatabaseConnection().create_session(clean=True, populate_tables=False)
     commit_patient_record(session, TEST_PID, TEST_UKRDCID, XML_TEST)
     yield session
     session.close()

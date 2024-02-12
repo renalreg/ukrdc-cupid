@@ -9,10 +9,11 @@ won't be returned however they will be recorded in the investigations db.
 """
 
 
-
+import pytest
+import os
+from datetime import timedelta
 
 from sqlalchemy.orm import Session
-from conftest import create_test_session, TEST_DB_URL
 from ukrdc_cupid.core.parse.utils import load_xml_from_path
 from ukrdc_cupid.core.store.models.ukrdc import PatientRecord
 from ukrdc_cupid.core.investigate.utils import ISSUE_PICKLIST
@@ -21,9 +22,9 @@ from ukrdc_cupid.core.match.identify import (
     read_patient_metadata,
     identify_across_ukrdc,
 )
-from datetime import timedelta
-import pytest
-import os
+from ukrdc_cupid.core.utils import DatabaseConnection
+
+
 
 TEST_PID = "test_pid:731"
 TEST_UKRDCID = "\(00)/"
@@ -34,7 +35,7 @@ POSSIBLE_ISSUES = [issuetype[0] for issuetype in ISSUE_PICKLIST]
 
 @pytest.fixture(scope="function")
 def ukrdc_test():
-    session = create_test_session(TEST_DB_URL)
+    session = DatabaseConnection.create_session(clean=True, populate_tables=False)
     commit_patient_record(session, TEST_PID, TEST_UKRDCID, XML_TEST)
     yield session
     session.close()
