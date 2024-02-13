@@ -20,7 +20,6 @@ from ukrdc_cupid.core.investigate.utils import ISSUE_PICKLIST
 from ukrdc_cupid.core.match.identify import (
     identify_patient_feed,
     read_patient_metadata,
-    identify_across_ukrdc,
 )
 from ukrdc_cupid.core.utils import DatabaseConnection
 
@@ -35,7 +34,8 @@ POSSIBLE_ISSUES = [issuetype[0] for issuetype in ISSUE_PICKLIST]
 
 @pytest.fixture(scope="function")
 def ukrdc_test():
-    session = DatabaseConnection.create_session(clean=True, populate_tables=False)
+    connector = DatabaseConnection(env_prefix="UKRDC")
+    session = connector.create_session(clean=True, populate_tables=False)
     commit_patient_record(session, TEST_PID, TEST_UKRDCID, XML_TEST)
     yield session
     session.close()
@@ -46,6 +46,8 @@ def commit_patient_record(ukrdc_session:Session, pid, ukrdcid, xml):
     ukrdc_session.add_all(patient_record.get_orm_list())
     ukrdc_session.commit()
     return 
+
+
 
 def test_ambiguous_pid(ukrdc_test:Session):
     """One of the basic investigations arises if the matching flags that there

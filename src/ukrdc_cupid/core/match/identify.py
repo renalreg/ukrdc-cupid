@@ -113,7 +113,7 @@ def read_patient_metadata(xml: xsd_ukrdc.PatientRecord) -> dict:
     }
 
     # main matching against pid and ukrdc is done using patient numbers
-    for number in xml.patient.patient_numbers[0].patient_number:
+    for number in xml.patient.patient_numbers.patient_number:
         if number.number_type.value == "MRN":
             patient_info["MRN"] = [number.number, number.organization.value]
 

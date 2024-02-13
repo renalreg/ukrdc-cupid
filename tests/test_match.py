@@ -1,5 +1,4 @@
 from sqlalchemy.orm import Session
-from conftest import create_test_session, TEST_DB_URL
 from ukrdc_cupid.core.parse.utils import load_xml_from_path
 from ukrdc_cupid.core.store.models.ukrdc import PatientRecord
 from ukrdc_cupid.core.match.identify import (

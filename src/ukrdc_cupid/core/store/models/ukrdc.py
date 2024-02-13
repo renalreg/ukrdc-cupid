@@ -66,7 +66,7 @@ class PatientRecord(Node):
         self.add_item("sendingextract", self.xml.sending_extract)
 
         # get MRN from patient numbers model
-        for number in self.xml.patient.patient_numbers[0].patient_number:
+        for number in self.xml.patient.patient_numbers.patient_number:
             if number.number_type.value == "MRN":
                 self.orm_object.localpatientid = number.number  # type :ignore
 
