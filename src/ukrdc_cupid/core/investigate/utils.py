@@ -1,8 +1,5 @@
+from sqlalchemy.orm import Session
 from ukrdc_cupid.core.investigate.models import IssueType
-from ukrdc_cupid.core.utils import DatabaseConnection  # type:ignore
-
-# Connection to database containing issues
-INVESTIGATE_SESSION = DatabaseConnection(env_prefix="INVESTIGATE").create_session()
 
 # picklist of possible issues
 ISSUE_PICKLIST = [
@@ -15,17 +12,17 @@ ISSUE_PICKLIST = [
 ]
 
 
-def update_issue_types(issues: list = ISSUE_PICKLIST) -> None:
+def update_issue_types(session:Session, issues: list = ISSUE_PICKLIST) -> None:
     """
     Update issue lookup table.
     Note: this needs to be checked to ensure its working/uptodate
     """
     for issue_id, issue_type in issues:
-        issue = INVESTIGATE_SESSION.get(IssueType, issue_id)
+        issue = session.get(IssueType, issue_id)
         if issue:
             issue.issue_type = issue_type
         else:
             issue = IssueType(id=issue_id, issue_type=issue_type)
-            INVESTIGATE_SESSION.add(issue)
+            session.add(issue)
 
-    INVESTIGATE_SESSION.commit()
+    session.commit()

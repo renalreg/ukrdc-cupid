@@ -31,17 +31,6 @@ association_table = Table(
     Column("issue_id", Integer, ForeignKey("issue.id")),
 )
 
-
-# think we need to specify some sort of model if we want to
-# query this table
-"""
-class PatientIDtoIssue(Base):
-    __tablename__ = "patientidtoissue"
-    patient_id_id = Column(Integer, ForeignKey("patientid.id"))
-    issue_id = Column( Integer, ForeignKey("issue.id"))
-"""
-
-
 class PatientID(Base):  # type:ignore
     __tablename__ = "patientid"
 

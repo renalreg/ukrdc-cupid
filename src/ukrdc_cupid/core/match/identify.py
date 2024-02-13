@@ -162,7 +162,7 @@ def identify_patient_feed(session: Session, patient_info: dict) -> Any:
 
     # check MRN look up returns a single patient
     if len(matched_patients_mrn) > 1:
-        investigation = Investigation(matched_patients_mrn, 3).create_issue()
+        investigation = Investigation(matched_patients_mrn, 3)
         return None, None, investigation
 
     # validate anonymous patients - bit more thought needed here

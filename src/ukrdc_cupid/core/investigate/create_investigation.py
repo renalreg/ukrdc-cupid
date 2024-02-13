@@ -5,7 +5,7 @@ from typing import List, Tuple
 
 # Connection to database containing issues
 INVESTIGATE_SESSION = DatabaseConnection(env_prefix="INVESTIGATE").create_session(
-    False, False
+    True, False
 )
 
 

@@ -5,6 +5,9 @@ from sqlalchemy.orm import sessionmaker, Session
 from sqlalchemy_utils import database_exists, create_database
 from ukrdc_sqla.ukrdc import Base as UKRDC3Base
 
+from ukrdc_cupid.core.investigate.models import Base as Investibase
+from ukrdc_cupid.core.investigate.utils import update_issue_types
+
 # Load environment varibles from wither they are found
 ENV = {**os.environ, **dotenv_values()}
 
@@ -47,7 +50,8 @@ class DatabaseConnection:
         self, clean: bool = False, populate_tables: bool = False
     ) -> Session:
         # returns a squeaky clean (or otherwise if desired) session on db
-        # defined by the environment variables.
+        # defined by the environment variables. This might need to be thought
+        # out more carefully when used on a live system.
         url = self.generate_database_url()
         if clean:
             if not database_exists(url):
@@ -59,24 +63,33 @@ class DatabaseConnection:
         # just to be super sure we're not committing to something real
         db_real = self.name == "UKRDC3" or self.user != "postgres"
 
-        if clean and self.name != "UKRDC3" or not db_real:
-            # Create the database schema, tables, etc.
-            UKRDC3Base.metadata.drop_all(bind=engine)
-            UKRDC3Base.metadata.create_all(bind=engine)
 
-            # initiate generation sequences for ids
-            if self.prefix == "UKRDC" and clean:
+        if clean:
+            # build a clean ukrdc 
+            if self.prefix == "UKRDC" or not db_real:
+                # Create the database schema, tables, etc.
+                UKRDC3Base.metadata.drop_all(bind=engine)
+                UKRDC3Base.metadata.create_all(bind=engine)
+
+                # initiate generation sequences for ids
+
                 create_id_generation(session)
                 print("pid generation")
 
-            if populate_tables:
-                # we need to populate the gp tables for cupid to work
-                # auto_populate_gp()
-                print(
-                    "you need to import gp codes manually because of dependency conflicts"
-                )
-                print("this can be done by running g")
-                # we should also copy codes from other lookup tables
+                if populate_tables:
+                    # we need to populate the gp tables for cupid to work
+                    # auto_populate_gp()
+                    print(
+                        "you need to import gp codes manually because of dependency conflicts"
+                    )
+                    print("this can be done by running g")
+                    # we should also copy codes from other lookup tables
+
+            if self.prefix == "INVESTIGATE":
+                Investibase.metadata.drop_all(bind=engine)
+                Investibase.metadata.create_all(bind=engine)
+                update_issue_types(session)
+
 
         return session
 
