@@ -26,13 +26,9 @@ TEST_UKRDCID = "test_ukrdc:543"
 
 @pytest.fixture(scope="function")
 def ukrdc_test():
-    """
-    Create a test database to check patient demographic and identiey based
-    stuff.
-    """
-    ukrdc3_session = DatabaseConnection().create_session(clean=True, populate_tables=False)
-    yield ukrdc3_session
-    ukrdc3_session.close()
+    connector = DatabaseConnection(env_prefix="UKRDC")
+    with connector.create_session(clean=True, populate_tables=False)() as session:
+        yield session
 
 @pytest.fixture(scope="function")
 def patient_record(ukrdc_test:Session):
@@ -40,7 +36,7 @@ def patient_record(ukrdc_test:Session):
         os.path.join("tests","xml_files","store_tests","test_1.xml")
     )
     patient_record = PatientRecord(xml_test_1)
-    patient_record.map_to_database(TEST_PID, TEST_UKRDCID,ukrdc_test)
+    patient_record.map_to_database(TEST_PID, TEST_UKRDCID, ukrdc_test)
 
     return patient_record
 

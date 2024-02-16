@@ -129,7 +129,9 @@ def read_patient_metadata(xml: xsd_ukrdc.PatientRecord) -> dict:
     return patient_info
 
 
-def identify_patient_feed(session: Session, patient_info: dict) -> Any:
+def identify_patient_feed(
+    ukrdc_session: Session, investigations_session: Session, patient_info: dict
+) -> Any:
     """Identify patient based on patient numbers. It uses a combination of
     three different bits of information. The NI, the MRN and the demographics
     (DOB). In all instances if the three bits of information don't match the
@@ -143,8 +145,8 @@ def identify_patient_feed(session: Session, patient_info: dict) -> Any:
     """
 
     # match patients on mrn
-    matched_patients_mrn = match_mrn(session, patient_info)
-    matched_patients_ni = match_ni(session, patient_info)
+    matched_patients_mrn = match_mrn(ukrdc_session, patient_info)
+    matched_patients_ni = match_ni(ukrdc_session, patient_info)
 
     # new patient?
     if len(matched_patients_ni) == 0:
@@ -162,7 +164,7 @@ def identify_patient_feed(session: Session, patient_info: dict) -> Any:
 
     # check MRN look up returns a single patient
     if len(matched_patients_mrn) > 1:
-        investigation = Investigation(matched_patients_mrn, 3)
+        investigation = Investigation(investigations_session, matched_patients_mrn, 3)
         return None, None, investigation
 
     # validate anonymous patients - bit more thought needed here
@@ -173,27 +175,31 @@ def identify_patient_feed(session: Session, patient_info: dict) -> Any:
     if patient_info["MRN"][1] == "UKRR_UID":
         # validate dob, we use same function but implicitly it is only validating on year of birth
         # I'm assuming these patients won't be sent with NIs
-        if validate_demog(session, patient_info["date_of_birth"], pid):
+        if validate_demog(ukrdc_session, patient_info["date_of_birth"], pid):
             return pid, ukrdcid, None
         else:
-            investigation = Investigation(matched_patients_mrn, 1).create_issue()
+            investigation = Investigation(
+                investigations_session, matched_patients_mrn, 1
+            ).create_issue()
             return None, None, investigation
 
     # check NI and MRN give the same story
     # if the NI's match to anything they should be identical to the MRN
     if matched_patients_mrn != matched_patients_ni and len(matched_patients_ni) != 0:
         investigation = Investigation(
-            matched_patients_mrn + matched_patients_ni, 4
+            investigations_session, matched_patients_mrn + matched_patients_ni, 4
         ).create_issue()
         return None, None, investigation
 
     # check dob
-    is_valid = validate_demog(session, patient_info["birth_time"], pid)
+    is_valid = validate_demog(ukrdc_session, patient_info["birth_time"], pid)
 
     if is_valid:
         return pid, ukrdcid, None
     else:
-        investigation = Investigation(matched_patients_mrn, 1).create_issue()
+        investigation = Investigation(
+            investigations_session, matched_patients_mrn, 1
+        ).create_issue()
         return None, None, investigation
 
 
@@ -213,7 +219,9 @@ def match_ukrdc(session: Session, patient_ids: List[List[str]]) -> Any:
     return session.execute(ukrdc_query).fetchall()
 
 
-def identify_across_ukrdc(session: Session, patient_info: dict) -> Any:
+def identify_across_ukrdc(
+    ukrdc_session: Session, investigations_session: Session, patient_info: dict
+) -> Any:
     """Since merging and unmerging patients with ukrdc is easier in the case where a problem arises we just create a new patient and load the file.
 
     Args:
@@ -228,7 +236,7 @@ def identify_across_ukrdc(session: Session, patient_info: dict) -> Any:
     if patient_info["MRN"][1] in ["CHI", "HSC", "NHS"]:
         ids = ids + patient_info
 
-    matched_ids = match_ukrdc(session, ids)
+    matched_ids = match_ukrdc(ukrdc_session, ids)
     matched_ukrdcids = []
     for _, ukrdcid in matched_ids:
         if ukrdcid not in matched_ukrdcids:
@@ -241,16 +249,22 @@ def identify_across_ukrdc(session: Session, patient_info: dict) -> Any:
     elif len(matched_ukrdcids) == 1:
         # verify demgraphics
         _, ukrdcid = matched_ukrdcids[0]
-        is_valid = validate_demog_ukrdc(session, patient_info["date_of_birth"], ukrdcid)
+        is_valid = validate_demog_ukrdc(
+            ukrdc_session, patient_info["date_of_birth"], ukrdcid
+        )
         if is_valid:
             return ukrdcid, None
         else:
             investigation = Investigation(
-                matched_ids, "Demographic Validation Failure on UKRDCID Match"
+                investigations_session,
+                matched_ids,
+                69,
             ).create_issue()
             return None, investigation
     else:
         investigation = Investigation(
-            matched_ids, "Ambiguous UKRDC Match: matched to multiple persitent UKRDCIDs"
+            investigations_session,
+            matched_ids,
+            69,
         ).create_issue()
         return None, investigation

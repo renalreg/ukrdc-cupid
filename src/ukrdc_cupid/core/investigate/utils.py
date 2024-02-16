@@ -12,7 +12,7 @@ ISSUE_PICKLIST = [
 ]
 
 
-def update_issue_types(session:Session, issues: list = ISSUE_PICKLIST) -> None:
+def update_issue_types(session: Session, issues: list = ISSUE_PICKLIST) -> None:
     """
     Update issue lookup table.
     Note: this needs to be checked to ensure its working/uptodate

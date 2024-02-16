@@ -4,7 +4,6 @@ from ukrdc_cupid.core.store.models.ukrdc import PatientRecord
 from ukrdc_cupid.core.match.identify import (
     identify_patient_feed,
     read_patient_metadata,
-    identify_across_ukrdc,
 )
 from ukrdc_cupid.core.utils import DatabaseConnection
 from sqlalchemy import select
@@ -20,11 +19,16 @@ PATIENT_META_DATA = read_patient_metadata(XML_TEST)
 
 @pytest.fixture(scope="function")
 def ukrdc_test():
-    session = DatabaseConnection().create_session(clean=True, populate_tables=False)
-    commit_patient_record(session, TEST_PID, TEST_UKRDCID, XML_TEST)
-    yield session
-    session.close()
+    sessionmaker = DatabaseConnection().create_session(clean=True, populate_tables=False)
+    with sessionmaker() as session: 
+        commit_patient_record(session, TEST_PID, TEST_UKRDCID, XML_TEST)
+        yield session
 
+@pytest.fixture(scope="function")
+def investigate_test():
+    connector = DatabaseConnection(env_prefix="INVESTIGATE")
+    with connector.create_session(clean=True, populate_tables=False)() as session:
+        yield session
 
 def commit_patient_record(ukrdc_session:Session, pid, ukrdcid, xml):
     patient_record = PatientRecord(xml)  
@@ -33,18 +37,18 @@ def commit_patient_record(ukrdc_session:Session, pid, ukrdcid, xml):
     ukrdc_session.commit()
     return 
 
-def test_match_ni(ukrdc_test:Session):
+def test_match_ni(ukrdc_test:Session, investigate_test:Session):
     """The primary type of matching. A patient in an incoming file is matched
     to a domain patient record on the national identifier. It then gets
     verified on MRN and dob. 
     """
-    pid, ukrdcid, investigation = identify_patient_feed(ukrdc_test, PATIENT_META_DATA)
+    pid, ukrdcid, investigation = identify_patient_feed(ukrdc_test, investigate_test, PATIENT_META_DATA)
     
     assert pid == TEST_PID
     assert ukrdcid == TEST_UKRDCID 
     assert not investigation
 
-def test_overwrite_with_chi_no(ukrdc_test:Session):
+def test_overwrite_with_chi_no(ukrdc_test:Session, investigate_test:Session):
     """Test the linking of record to existing scottish record if a chi number
     is added into the file. This also tests the process of overwriting a NI.
     In reality I imagine you would just add an extra NI rather than
@@ -53,7 +57,7 @@ def test_overwrite_with_chi_no(ukrdc_test:Session):
     xml_path = os.path.join("tests","xml_files","store_tests","test_3.xml")
     xml_test = load_xml_from_path(xml_path)
     meta_data = read_patient_metadata(xml_test)
-    pid, ukrdcid, investigation = identify_patient_feed(ukrdc_test, meta_data)
+    pid, ukrdcid, investigation = identify_patient_feed(ukrdc_test, investigate_test, meta_data)
     
     assert pid == TEST_PID
     assert ukrdcid == TEST_UKRDCID 

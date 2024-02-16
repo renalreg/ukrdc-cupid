@@ -12,7 +12,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import Sequence
 import ukrdc_sqla.ukrdc as sqla
 import ukrdc_xsdata.ukrdc.lab_orders as xsd_lab_orders  # type:ignore
-import ukrdc_xsdata.ukrdc.dialysis_sessions as xsd_dialysis_sessions
+import ukrdc_xsdata.ukrdc.dialysis_sessions as xsd_dialysis_sessions  # type:ignore
 
 from typing import Optional
 

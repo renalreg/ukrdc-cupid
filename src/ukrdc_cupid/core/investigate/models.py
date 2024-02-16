@@ -31,6 +31,7 @@ association_table = Table(
     Column("issue_id", Integer, ForeignKey("issue.id")),
 )
 
+
 class PatientID(Base):  # type:ignore
     __tablename__ = "patientid"
 

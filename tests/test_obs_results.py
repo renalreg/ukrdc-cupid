@@ -28,61 +28,61 @@ def ukrdc_test_2():
         os.path.join("tests","xml_files","store_tests","test_0.xml")
     )
 
-    ukrdc3_session = DatabaseConnection().create_session(clean=True, populate_tables=False)
+    connector = DatabaseConnection(env_prefix="INVESTIGATE")
+    sessionmaker = connector.create_session(clean=True, populate_tables=False)
 
-    patient_record = PatientRecord(xml_test_1)  
-    patient_record.map_to_database(TEST_PID, TEST_UKRDCID, ukrdc3_session)
-    ukrdc3_session.add_all(patient_record.get_orm_list())
+    with sessionmaker() as ukrdc3_session:
+        patient_record = PatientRecord(xml_test_1)  
+        patient_record.map_to_database(TEST_PID, TEST_UKRDCID, ukrdc3_session)
+        ukrdc3_session.add_all(patient_record.get_orm_list())
 
 
-    xml_test_2 = load_xml_from_path(
-        os.path.join("tests","xml_files","store_tests","test_2.xml")
-    )
-
-    lab_order_start = xml_test_2.lab_orders.start.to_datetime()
-    lab_order_stop = xml_test_2.lab_orders.stop.to_datetime()
-
-    lab_orders = [
-        sqla.LabOrder(
-            pid = TEST_PID, 
-            id = "to_delete_1",
-            specimencollectedtime = lab_order_start + timedelta(weeks=1)
-        ),
-        sqla.LabOrder(
-            pid = TEST_PID, 
-            id = "to_persist_1",
-            specimencollectedtime = lab_order_start - timedelta(weeks=1)
-        ),
-        sqla.LabOrder(
-            pid = TEST_PID, 
-            id = "to_persist_2",
-            specimencollectedtime = lab_order_stop + timedelta(weeks=1)
-        ),
-        sqla.LabOrder(
-            pid = TEST_PID, 
-            id = f"{TEST_PID}:1",
-            specimencollectedtime = lab_order_stop + timedelta(weeks=1)
+        xml_test_2 = load_xml_from_path(
+            os.path.join("tests","xml_files","store_tests","test_2.xml")
         )
-    ]
-    ukrdc3_session.add_all(lab_orders)
 
-    result_items = [
-        sqla.ResultItem(
-            id = "RI_to_delete_1",
-            order_id = "to_delete_1"
-        ), 
+        lab_order_start = xml_test_2.lab_orders.start.to_datetime()
+        lab_order_stop = xml_test_2.lab_orders.stop.to_datetime()
 
-    ]
-    ukrdc3_session.add_all(result_items)
-    ukrdc3_session.commit()
-    
-    loaded_ids = [order.id for order in ukrdc3_session.query(sqla.LabOrder).all()]
-    for order in lab_orders:
-        assert order.id in loaded_ids 
+        lab_orders = [
+            sqla.LabOrder(
+                pid = TEST_PID, 
+                id = "to_delete_1",
+                specimencollectedtime = lab_order_start + timedelta(weeks=1)
+            ),
+            sqla.LabOrder(
+                pid = TEST_PID, 
+                id = "to_persist_1",
+                specimencollectedtime = lab_order_start - timedelta(weeks=1)
+            ),
+            sqla.LabOrder(
+                pid = TEST_PID, 
+                id = "to_persist_2",
+                specimencollectedtime = lab_order_stop + timedelta(weeks=1)
+            ),
+            sqla.LabOrder(
+                pid = TEST_PID, 
+                id = f"{TEST_PID}:1",
+                specimencollectedtime = lab_order_stop + timedelta(weeks=1)
+            )
+        ]
+        ukrdc3_session.add_all(lab_orders)
 
-    yield ukrdc3_session
+        result_items = [
+            sqla.ResultItem(
+                id = "RI_to_delete_1",
+                order_id = "to_delete_1"
+            ), 
 
-    ukrdc3_session.close()
+        ]
+        ukrdc3_session.add_all(result_items)
+        ukrdc3_session.commit()
+        
+        loaded_ids = [order.id for order in ukrdc3_session.query(sqla.LabOrder).all()]
+        for order in lab_orders:
+            assert order.id in loaded_ids 
+
+        yield ukrdc3_session
 
 
 @pytest.fixture(scope="function")

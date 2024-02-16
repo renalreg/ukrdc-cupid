@@ -1,15 +1,25 @@
-from ukrdc_cupid.core.utils import DatabaseConnection  # type:ignore
 from ukrdc_cupid.core.investigate.models import PatientID, Issue
 from datetime import datetime
 from typing import List, Tuple
-
-# Connection to database containing issues
-INVESTIGATE_SESSION = DatabaseConnection(env_prefix="INVESTIGATE").create_session(
-    True, False
-)
+from sqlalchemy.orm import Session
 
 
-def get_patients(patient_ids: List[Tuple[str, str]]) -> List[PatientID]:
+def get_patients(
+    session: Session, patient_ids: List[Tuple[str, str]]
+) -> List[PatientID]:
+    """The philosophy here is that every patient that raises a investigation
+    will reference a patient which exists in the database already. Any patient
+    the doesn't will be flagged as new. It may not be a unique patient record
+    or in the case of an ukrdcid investigation one that has only just been
+    generated.
+
+    Args:
+        session (Session): _description_
+        patient_ids (List[Tuple[str, str]]): _description_
+
+    Returns:
+        List[PatientID]: _description_
+    """
     patients = []
 
     for pid, ukrdcid in patient_ids:
@@ -18,20 +28,18 @@ def get_patients(patient_ids: List[Tuple[str, str]]) -> List[PatientID]:
 
         # Attempt to retrieve the patient record from the database
         patient_record = (
-            INVESTIGATE_SESSION.query(PatientID)
-            .filter_by(ukrdcid=ukrdcid, pid=pid)
-            .first()
+            session.query(PatientID).filter_by(ukrdcid=ukrdcid, pid=pid).first()
         )
 
         if not patient_record:
             # If the patient doesn't exist, add the new patient to the session
-            INVESTIGATE_SESSION.add(patient)
+            session.add(patient)
 
             # Commit the new patient to the database
-            INVESTIGATE_SESSION.commit()
+            session.commit()
 
             # Refresh the session to get the new patient with the correct database-generated ID
-            INVESTIGATE_SESSION.refresh(patient)
+            session.refresh(patient)
 
             # Assign the refreshed patient to patient_record
             patient_record = patient
@@ -47,9 +55,12 @@ class Investigation:
     resolving the issues.
     """
 
-    def __init__(self, patient_ids: List[Tuple[str, str]], issue_type_id: int) -> None:
+    def __init__(
+        self, session: Session, patient_ids: List[Tuple[str, str]], issue_type_id: int
+    ) -> None:
         self.issue_type_id = issue_type_id
-        self.patients: List[PatientID] = get_patients(patient_ids)
+        self.patients: List[PatientID] = get_patients(session, patient_ids)
+        self.session = session
         self.issue: Issue = self.create_issue()
 
     def create_issue(self) -> Issue:
@@ -67,8 +78,8 @@ class Investigation:
         )
 
         # Link the issue to patients
-        INVESTIGATE_SESSION.add(new_issue)
-        INVESTIGATE_SESSION.commit()
+        self.session.add(new_issue)
+        self.session.commit()
 
         return new_issue
 
@@ -83,7 +94,7 @@ class Investigation:
         # append xml and filename to issue
         self.issue.xml = xml
         self.issue.filename = filename  # type:ignore
-        INVESTIGATE_SESSION.commit()
+        self.session.commit()
 
         return
 

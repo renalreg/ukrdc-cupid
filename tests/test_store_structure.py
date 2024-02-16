@@ -38,12 +38,11 @@ class PatientNumber(Node):
         self.add_item("organization", self.xml.organization)
         self.add_item("numbertype", self.xml.number_type)
 
-
 @pytest.fixture(scope="function")
 def ukrdc_test_session():
-    session = DatabaseConnection().create_session(clean=True, populate_tables=False)
-    yield session
-    session.close()
+    connector = DatabaseConnection(env_prefix="UKRDC")
+    with connector.create_session(clean=True, populate_tables=False)() as session:
+        yield session
 
 # set up patient node
 @pytest.fixture(scope="function")
@@ -139,4 +138,3 @@ def test_add_children(ukrdc_test_session: Session, patient_node: Node, seq_no:in
     node = patient_node.mapped_classes[seq_no]
     assert isinstance(node, PatientNumber)
     assert isinstance(node.orm_object, sqla.PatientNumber)
-    #assert node.seq_no == seq_no
