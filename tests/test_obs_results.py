@@ -28,7 +28,7 @@ def ukrdc_test_2():
         os.path.join("tests","xml_files","store_tests","test_0.xml")
     )
 
-    connector = DatabaseConnection(env_prefix="INVESTIGATE")
+    connector = DatabaseConnection(env_prefix="UKRDC")
     sessionmaker = connector.create_session(clean=True, populate_tables=False)
 
     with sessionmaker() as ukrdc3_session:
@@ -83,6 +83,8 @@ def ukrdc_test_2():
             assert order.id in loaded_ids 
 
         yield ukrdc3_session
+
+    connector.teardown_db()
 
 
 @pytest.fixture(scope="function")

@@ -2,7 +2,11 @@ import os
 from dotenv import dotenv_values
 from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker, Session
-from sqlalchemy_utils import database_exists, create_database  # type:ignore
+from sqlalchemy_utils import (
+    database_exists,
+    create_database,
+    drop_database,
+)  # type:ignore
 from ukrdc_sqla.ukrdc import Base as UKRDC3Base
 
 from ukrdc_cupid.core.investigate.models import Base as InvestiBase
@@ -14,8 +18,12 @@ ENV = {**os.environ, **dotenv_values()}
 
 
 class DatabaseConnection:
-    def __init__(self, env_prefix: str = "UKRDC"):
+    def __init__(self, env_prefix: str = "UKRDC", url=None):
         self.prefix = env_prefix
+        if not url:
+            self.url = self.generate_database_url()
+        else:
+            self.url = url
 
     @property
     def driver(self) -> str:
@@ -53,12 +61,12 @@ class DatabaseConnection:
         # returns a squeaky clean (or otherwise if desired) session on db
         # defined by the environment variables. This might need to be thought
         # out more carefully when used on a live system.
-        url = self.generate_database_url()
-        if clean:
-            if not database_exists(url):
-                create_database(url)
 
-        engine = create_engine(url=url)
+        if clean:
+            if not database_exists(self.url):
+                create_database(self.url)
+
+        engine = create_engine(url=self.url)
         db_sessionmaker = sessionmaker(bind=engine)
 
         with db_sessionmaker() as session:
@@ -67,7 +75,7 @@ class DatabaseConnection:
 
             if clean:
                 # build a clean ukrdc
-                if self.prefix == "UKRDC" or not db_real:
+                if self.prefix == "UKRDC" and not db_real:
                     # Create the database schema, tables, etc.
                     UKRDC3Base.metadata.drop_all(bind=engine)
                     UKRDC3Base.metadata.create_all(bind=engine)
@@ -76,7 +84,7 @@ class DatabaseConnection:
                     create_id_generation(session)
 
                 if self.prefix == "INVESTIGATE":
-                    # Investibase.metadata.drop_all(bind=engine)
+                    InvestiBase.metadata.drop_all(bind=engine)
                     InvestiBase.metadata.create_all(bind=engine)
 
                 if populate_tables and self.prefix == "UKRDC":
@@ -88,6 +96,10 @@ class DatabaseConnection:
                     update_issue_types(session)
 
         return db_sessionmaker
+
+    def teardown_db(self):
+        if database_exists(self.url):
+            drop_database(self.url)
 
 
 def create_id_generation(ukrdc3: Session):

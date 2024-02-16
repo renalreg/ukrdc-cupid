@@ -10,6 +10,8 @@ from sqlalchemy import select
 from ukrdc_sqla.ukrdc import PatientNumber
 import pytest
 import os
+import uuid
+
 
 TEST_PID = "test_pid:731"
 TEST_UKRDCID = "\(00)/"
@@ -19,16 +21,24 @@ PATIENT_META_DATA = read_patient_metadata(XML_TEST)
 
 @pytest.fixture(scope="function")
 def ukrdc_test():
-    sessionmaker = DatabaseConnection().create_session(clean=True, populate_tables=False)
-    with sessionmaker() as session: 
+    # Generate a random string as part of the URL
+    random_string = str(uuid.uuid4()).replace("-", "")
+    url = f'postgresql://postgres:postgres@localhost:5432/test_ukrdc_{random_string}'
+    connector = DatabaseConnection(env_prefix="UKRDC", url = url)
+    with connector.create_session(clean=True, populate_tables=False)() as session:
         commit_patient_record(session, TEST_PID, TEST_UKRDCID, XML_TEST)
         yield session
+    
+    connector.teardown_db()
 
 @pytest.fixture(scope="function")
 def investigate_test():
-    connector = DatabaseConnection(env_prefix="INVESTIGATE")
-    with connector.create_session(clean=True, populate_tables=False)() as session:
-        yield session
+    random_string = str(uuid.uuid4()).replace("-", "")
+    url = f'postgresql://postgres:postgres@localhost:5432/test_investigations_{random_string}'
+    connector = DatabaseConnection(env_prefix="INVESTIGATE", url = url)
+    with connector.create_session(clean=True, populate_tables=True)() as session:
+        yield session        
+    connector.teardown_db()
 
 def commit_patient_record(ukrdc_session:Session, pid, ukrdcid, xml):
     patient_record = PatientRecord(xml)  
