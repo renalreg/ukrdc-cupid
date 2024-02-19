@@ -1,5 +1,7 @@
 import os
 from dotenv import dotenv_values
+from urllib.parse import urlparse
+
 from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker, Session
 from sqlalchemy_utils import (
@@ -20,37 +22,31 @@ ENV = {**os.environ, **dotenv_values()}
 class DatabaseConnection:
     def __init__(self, env_prefix: str = "UKRDC", url=None):
         self.prefix = env_prefix
-        if not url:
+        self.url = url
+
+        self.driver = self.get_property("driver", "scheme")
+        self.user = self.get_property("user", "username")
+        self.password = self.get_property("password", "password")
+        self.port = self.get_property("port", "port")
+        self.name = self.get_property("name", "path").strip("/")
+        if not self.url:
             self.url = self.generate_database_url()
+
+    def get_property(self, property_name: str, url_property: str) -> str:
+        if self.url:
+            parsed_url = urlparse(self.url)
+            return getattr(parsed_url, url_property, "")
         else:
-            self.url = url
-
-    @property
-    def driver(self) -> str:
-        return self.get_env_value("DRIVER")
-
-    @property
-    def user(self) -> str:
-        return self.get_env_value("USER")
-
-    @property
-    def password(self) -> str:
-        return self.get_env_value("PASS")
-
-    @property
-    def port(self) -> int:
-        return int(self.get_env_value("PORT"))
-
-    @property
-    def name(self) -> str:
-        return self.get_env_value("NAME")
+            return self.get_env_value(property_name)
 
     def get_env_value(self, field_name: str) -> str:
         env_key = f"{self.prefix}_{field_name}".upper()
         env_value = ENV.get(env_key)
-        if env_value is None:
-            raise ValueError(f"Environment variable {env_key} not found.")
-        return env_value
+
+        if env_value:
+            return env_value
+        else:
+            return
 
     def generate_database_url(self) -> str:
         return f"{self.driver}://{self.user}:{self.password}@localhost:{self.port}/{self.name}"
@@ -71,7 +67,7 @@ class DatabaseConnection:
 
         with db_sessionmaker() as session:
             # just to be super sure we're not committing to something real
-            db_real = self.name == "UKRDC3" or self.user != "postgres"
+            db_real = self.name == "UKRDC3" or self.user == "ukrdc"
 
             if clean:
                 # build a clean ukrdc

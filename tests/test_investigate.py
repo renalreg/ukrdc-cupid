@@ -34,7 +34,7 @@ PATIENT_META_DATA = read_patient_metadata(XML_TEST)
 POSSIBLE_ISSUES = [issuetype[0] for issuetype in ISSUE_PICKLIST]
 
 @pytest.fixture(scope="function")
-def ukrdc_test(request):
+def ukrdc_test():
     # Generate a random string as part of the URL
     random_string = str(uuid.uuid4()).replace("-", "")
     db_name = f"test_ukrdc_{random_string}"

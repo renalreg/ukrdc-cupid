@@ -6,7 +6,9 @@ from datetime import datetime
 import ukrdc_sqla.ukrdc as sqla
 import ukrdc_xsdata.ukrdc as xsd_ukrdc 
 import ukrdc_xsdata.ukrdc.types as xsd_types 
+
 import pytest
+import uuid
 
 # Partial sample of Nodes to be static for testing
 class Patient(Node):
@@ -40,7 +42,10 @@ class PatientNumber(Node):
 
 @pytest.fixture(scope="function")
 def ukrdc_test_session():
-    connector = DatabaseConnection(env_prefix="UKRDC")
+    random_string = str(uuid.uuid4()).replace("-", "")
+    db_name = f"test_ukrdc_{random_string}"
+    url = f'postgresql://postgres:postgres@localhost:5432/{db_name}'
+    connector = DatabaseConnection(env_prefix="UKRDC", url = url)
     with connector.create_session(clean=True, populate_tables=False)() as session:
         yield session
 

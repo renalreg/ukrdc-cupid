@@ -11,6 +11,7 @@ from sqlalchemy.orm import Session
 from datetime import timedelta
 import os
 import pytest
+import uuid
 
 TEST_PID = "test_pid"
 TEST_UKRDCID = "test_id"
@@ -28,7 +29,12 @@ def ukrdc_test_2():
         os.path.join("tests","xml_files","store_tests","test_0.xml")
     )
 
-    connector = DatabaseConnection(env_prefix="UKRDC")
+    # Generate a random string as part of the URL
+    random_string = str(uuid.uuid4()).replace("-", "")
+    db_name = f"test_ukrdc_{random_string}"
+    url = f'postgresql://postgres:postgres@localhost:5432/{db_name}'
+
+    connector = DatabaseConnection(env_prefix="UKRDC", url = url)
     sessionmaker = connector.create_session(clean=True, populate_tables=False)
 
     with sessionmaker() as ukrdc3_session:
