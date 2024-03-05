@@ -6,6 +6,7 @@ from sqlalchemy import (
     Integer,
     Boolean,
     String,
+    JSON,
     DateTime,
     Text,
     ForeignKey,
@@ -14,7 +15,7 @@ from sqlalchemy import (
 )
 
 
-metadata = MetaData()
+metadata = MetaData(schema="investigations")
 Base = declarative_base(metadata=metadata)
 
 GLOBAL_LAZY = "dynamic"
@@ -29,6 +30,7 @@ association_table = Table(
     Base.metadata,  # type:ignore
     Column("patient_id_id", Integer, ForeignKey("patientid.id")),
     Column("issue_id", Integer, ForeignKey("issue.id")),
+    Column("rank", nullable =True)
 )
 
 
@@ -54,6 +56,15 @@ class Issue(Base):  # type:ignore
     is_reprocessed = Column(
         Boolean, server_default=text("false")
     )  # should be null if file hasn't been diverted
+
+    # Mirroring Jira board statuses (e.g. Open, Closed, Waiting for Unit, Pending Discussion etc)
+    status = Column(Integer, nullable = True)
+
+    # This creates scope for automated functions to produce low priority investigations 
+    priority = Column(Integer, nullable = True)
+
+    # Snapshot of the data which caused a investigation to be raised
+    mismatching_attributes = Column(JSON, nullable=True)
 
     patients = relationship(  # type:ignore
         PatientID, secondary=association_table

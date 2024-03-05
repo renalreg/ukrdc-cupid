@@ -187,4 +187,67 @@
             </DialysisSession>
         </DialysisSessions>
     </Procedures>
+    <Encounters>
+        <Treatment>
+            <EncounterNumber>9090909</EncounterNumber>
+            <FromTime>2006-05-04</FromTime>
+            <ToTime>2006-05-04</ToTime>
+            <AdmittingClinician></AdmittingClinician>
+            <HealthCareFacility>
+                <CodingStandard>ODS</CodingStandard>
+                <Code>RFDOG</Code>
+            </HealthCareFacility>
+            <AdmitReason>
+                <CodingStandard>CF_RR7_TREATMENT</CodingStandard>
+                <Code>1</Code>
+            </AdmitReason>
+            <Attributes>
+                <QBL05>INCENTRE</QBL05>
+            </Attributes>
+        </Treatment>
+        <Treatment>
+            <EncounterNumber>123456789</EncounterNumber>
+            <FromTime>2006-07-08</FromTime>
+            <ToTime>2007-08-09</ToTime>
+            <AdmittingClinician>
+                <CodingStandard>LOCAL</CodingStandard>
+                <Code>123</Code>
+                <Description>Dr. John Smith</Description>
+            </AdmittingClinician>
+            <HealthCareFacility>
+                <CodingStandard>LOCAL</CodingStandard>
+                <Code>HCF001</Code>
+                <Description>Medical Center</Description>
+            </HealthCareFacility>
+            <AdmitReason>
+                <CodingStandard>CF_RR7_TREATMENT</CodingStandard>
+                <Code>1</Code>
+                <Description>Haemodialysis</Description>
+            </AdmitReason>
+            <AdmissionSource>
+                <CodingStandard>LOCAL</CodingStandard>
+                <Code>RenalUnit01</Code>
+                <Description>Prior Main Renal Unit</Description>
+            </AdmissionSource>
+            <DischargeReason>
+                <CodingStandard>CF_RR7_DISCHARGE</CodingStandard>
+                <Code>38</Code>
+                <Description>Patient transferred Out</Description>
+            </DischargeReason>
+            <DischargeLocation>
+                <CodingStandard>LOCAL</CodingStandard>
+                <Code>RenalUnit02</Code>
+                <Description>Destination Main Renal Unit</Description>
+            </DischargeLocation>
+            <EnteredAt>
+                <CodingStandard>{entered_at_coding_standard}</CodingStandard>
+                <Code>{entered_at_code}</Code>
+                <Description>{entered_at_description}</Description>
+            </EnteredAt>
+            <VisitDescription>{visit_description}</VisitDescription>
+            <Attributes>
+                <QBL05>{qbl05}</QBL05>
+            </Attributes>
+        </Treatment>
+    </Encounters>
 </ukrdc:PatientRecord>

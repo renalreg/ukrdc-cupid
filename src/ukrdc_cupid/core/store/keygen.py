@@ -36,10 +36,9 @@ def mint_new_ukrdcid(session: Session) -> str:
     Args:
         session (Session): _description_
     """
-    return "".join(
-        random.choice(string.ascii_uppercase + string.digits)  # nosec
-        for _ in range(10)
-    )
+    new_ukrdcid = str(session.execute(Sequence("generate_new_ukrdcid")))  # type:ignore
+
+    return new_ukrdcid
 
 
 def generate_generic_key(parent: str, seq_no: Optional[int] = None) -> str:

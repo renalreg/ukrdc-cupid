@@ -13,7 +13,8 @@ from ukrdc_cupid.core.general import process_file
 from ukrdc_cupid.core.parse.xml_validate import validate_rda_xml_string
 
 #session = DatabaseConnection(env_prefix="UKRDC").create_session(clean=True, populate_tables=True
-ukrdc_session = DatabaseConnection(env_prefix="UKRDC").create_session(True, True)
+#ukrdc_session = DatabaseConnection(env_prefix="UKRDC").create_session(clean=True, populate_tables=True)
+ukrdc_session = DatabaseConnection(env_prefix="UKRDC").create_session(clean=False, populate_tables=False)
 investigate_session = DatabaseConnection(env_prefix="INVESTIGATE").create_session(True, True)
 
 # Specify the directory where your XML files are located

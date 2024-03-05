@@ -230,3 +230,72 @@ def test_dialysis_session(patient_record:PatientRecord):
         if dialysis_xml.vascular_access_site:
             assert dialysis_session_orm.qhd21 == dialysis_xml.vascular_access_site.code
         assert dialysis_session_orm.qhd31 == dialysis_xml.time_dialysed
+
+def test_procedure(patient_record:PatientRecord):
+    # This is a bit of a non table
+    assert True
+
+def test_vascular_access(patient_record:PatientRecord):
+    assert True
+
+def test_transplant(patient_record:PatientRecord):
+    assert True
+
+def test_treatment(patient_record:PatientRecord):
+    treatment_orms = []
+    for orm_object in patient_record.get_orm_list():
+        if orm_object.__tablename__ == "treatment":
+            treatment_orms.append(orm_object)
+
+    assert treatment_orms
+    treatment_xml = patient_record.xml.encounters.treatment[0]
+    
+    xml = patient_record.xml.encounters.treatment
+
+    for orm_object, treatment_xml in zip(treatment_orms, xml):
+        assert orm_object.encounternumber == treatment_xml.encounter_number
+        if treatment_xml.admitting_clinician:
+            assert orm_object.admittingcliniciancode == treatment_xml.admitting_clinician.code
+            if treatment_xml.admitting_clinician.coding_standard:
+                assert orm_object.admittingcliniciancodestd == treatment_xml.admitting_clinician.coding_standard.value
+            assert orm_object.admittingcliniciandesc == treatment_xml.admitting_clinician.description
+        
+        if treatment_xml.admit_reason:
+            assert orm_object.admitreasoncode == treatment_xml.admit_reason.code.value
+            if treatment_xml.admit_reason.coding_standard:
+                assert orm_object.admitreasoncodestd == treatment_xml.admit_reason.coding_standard.value
+            assert orm_object.admitreasondesc == treatment_xml.admit_reason.description
+
+        if treatment_xml.admission_source:
+            assert orm_object.admissionsourcecode == treatment_xml.admission_source.code
+            if treatment_xml.admission_source.coding_standard:
+                assert orm_object.admissionsourcecodestd == treatment_xml.admission_source.coding_standard.value
+            #assert orm_object.admissionsourcedesc == treatment_xml.admission_source.code.description
+        
+        if treatment_xml.discharge_reason: 
+            assert orm_object.dischargereasoncode == treatment_xml.discharge_reason.code.value
+            if treatment_xml.discharge_reason.coding_standard:
+                assert orm_object.dischargereasoncodestd == treatment_xml.discharge_reason.coding_standard.value
+            assert orm_object.dischargereasondesc == treatment_xml.discharge_reason.description
+
+        if treatment_xml.discharge_location:
+            assert orm_object.dischargelocationcode == treatment_xml.discharge_location.code
+            if treatment_xml.discharge_location.coding_standard:
+                assert orm_object.dischargelocationcodestd == treatment_xml.discharge_location.coding_standard.value
+            assert orm_object.dischargelocationdesc == treatment_xml.discharge_location.description
+
+        if treatment_xml.health_care_facility:
+            assert orm_object.healthcarefacilitycode == treatment_xml.health_care_facility.code
+            if treatment_xml.health_care_facility.coding_standard:
+                assert orm_object.healthcarefacilitycodestd == treatment_xml.health_care_facility.coding_standard.value
+            assert orm_object.healthcarefacilitydesc == treatment_xml.health_care_facility.description
+
+        if treatment_xml.entered_at:
+            assert orm_object.enteredatcode == treatment_xml.entered_at.code
+            if treatment_xml.entered_at.coding_standard:
+                assert orm_object.enteredatcodestd == treatment_xml.entered_at.coding_standard
+            assert orm_object.enteredatdesc == treatment_xml.entered_at.description
+
+
+        assert orm_object.visitdescription == treatment_xml.visit_description
+        #assert orm_object.qbl05 == treatment_xml.qbl05
