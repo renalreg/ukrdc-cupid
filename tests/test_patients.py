@@ -15,7 +15,6 @@ Still to do:
 
 from ukrdc_cupid.core.store.models.ukrdc import PatientRecord
 from ukrdc_cupid.core.parse.utils import load_xml_from_path
-from ukrdc_cupid.core.utils import DatabaseConnection
 from sqlalchemy.orm import Session
 
 import os
@@ -27,23 +26,12 @@ TEST_UKRDCID = "test_ukrdc:543"
 
 
 @pytest.fixture(scope="function")
-def ukrdc_test():
-    # Generate a random string as part of the URL
-    random_string = str(uuid.uuid4()).replace("-", "")
-    db_name = f"test_ukrdc_{random_string}"
-    url = f'postgresql://postgres:postgres@localhost:5432/{db_name}'
-
-    connector = DatabaseConnection(env_prefix="UKRDC", url = url)
-    with connector.create_session(clean=True, populate_tables=False)() as session:
-        yield session
-
-@pytest.fixture(scope="function")
-def patient_record(ukrdc_test:Session):
+def patient_record(ukrdc_test_session:Session):
     xml_test_1 = load_xml_from_path(
         os.path.join("tests","xml_files","store_tests","test_1.xml")
     )
     patient_record = PatientRecord(xml_test_1)
-    patient_record.map_to_database(TEST_PID, TEST_UKRDCID, ukrdc_test)
+    patient_record.map_to_database(TEST_PID, TEST_UKRDCID, ukrdc_test_session)
 
     return patient_record
 

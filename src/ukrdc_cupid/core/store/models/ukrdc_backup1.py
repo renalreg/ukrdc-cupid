@@ -1371,7 +1371,9 @@ class PatientRecord(Node):
         self.add_children(Treatment, "encounters.treatment", True)
         self.add_children(TransplantList, "encounters.transplant_list", True)
 
-        self.add_children(ProgramMembership,"program_memberships.program_membership",
+        self.add_children(
+            ProgramMembership,
+            "program_memberships.program_membership",
         )
         self.add_children(OptOut, "opt_outs.opt_out")
         self.add_children(

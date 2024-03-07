@@ -1,6 +1,5 @@
 from sqlalchemy.orm import Session
 from ukrdc_cupid.core.store.models.structure import Node
-from ukrdc_cupid.core.utils import DatabaseConnection
 from xsdata.models.datatype import XmlDateTime
 from datetime import datetime
 import ukrdc_sqla.ukrdc as sqla
@@ -8,7 +7,7 @@ import ukrdc_xsdata.ukrdc as xsd_ukrdc
 import ukrdc_xsdata.ukrdc.types as xsd_types 
 
 import pytest
-import uuid
+
 
 # Partial sample of Nodes to be static for testing
 class Patient(Node):
@@ -39,15 +38,6 @@ class PatientNumber(Node):
         self.add_item("patientid", self.xml.number)
         self.add_item("organization", self.xml.organization)
         self.add_item("numbertype", self.xml.number_type)
-
-@pytest.fixture(scope="function")
-def ukrdc_test_session():
-    random_string = str(uuid.uuid4()).replace("-", "")
-    db_name = f"test_ukrdc_{random_string}"
-    url = f'postgresql://postgres:postgres@localhost:5432/{db_name}'
-    connector = DatabaseConnection(env_prefix="UKRDC", url = url)
-    with connector.create_session(clean=True, populate_tables=False)() as session:
-        yield session
 
 # set up patient node
 @pytest.fixture(scope="function")

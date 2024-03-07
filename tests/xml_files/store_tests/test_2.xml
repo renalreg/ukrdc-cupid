@@ -144,11 +144,6 @@
                     <Description>Haemodialysis</Description>
                 </ProcedureType>
                 <ProcedureTime>2006-05-04T18:13:51.0</ProcedureTime>
-                <EnteredBy>
-                    <CodingStandard>ODS</CodingStandard>
-                    <Code>ABC123</Code>
-                    <Description>Dr Foster</Description>
-                </EnteredBy>
                 <EnteredAt>
                     <CodingStandard>RR1+</CodingStandard>
                     <Code>ABC123</Code>
@@ -164,11 +159,6 @@
                     <Description>Description82</Description>
                 </ProcedureType>
                 <ProcedureTime>2006-05-04T18:13:51.0</ProcedureTime>
-                <EnteredBy>
-                    <CodingStandard>ODS</CodingStandard>
-                    <Code>Code84</Code>
-                    <Description>Description84</Description>
-                </EnteredBy>
                 <EnteredAt>
                     <CodingStandard>ODS</CodingStandard>
                     <Code>Code85</Code>
@@ -240,13 +230,13 @@
                 <Description>Destination Main Renal Unit</Description>
             </DischargeLocation>
             <EnteredAt>
-                <CodingStandard>{entered_at_coding_standard}</CodingStandard>
-                <Code>{entered_at_code}</Code>
-                <Description>{entered_at_description}</Description>
+                <CodingStandard>ODS</CodingStandard>
+                <Code>RFDOG</Code>
+                <Description>whoof</Description>
             </EnteredAt>
-            <VisitDescription>{visit_description}</VisitDescription>
+            <VisitDescription>here things happened</VisitDescription>
             <Attributes>
-                <QBL05>{qbl05}</QBL05>
+                <QBL05>HOME</QBL05>
             </Attributes>
         </Treatment>
     </Encounters>

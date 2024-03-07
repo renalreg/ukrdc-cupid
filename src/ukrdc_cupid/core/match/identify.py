@@ -129,9 +129,7 @@ def read_patient_metadata(xml: xsd_ukrdc.PatientRecord) -> dict:
     return patient_info
 
 
-def identify_patient_feed(
-    ukrdc_session: Session, investigations_session: Session, patient_info: dict
-) -> Any:
+def identify_patient_feed(ukrdc_session: Session, patient_info: dict) -> Any:
     """Identify patient based on patient numbers. It uses a combination of
     three different bits of information. The NI, the MRN and the demographics
     (DOB). In all instances if the three bits of information don't match the
@@ -164,7 +162,7 @@ def identify_patient_feed(
 
     # check MRN look up returns a single patient
     if len(matched_patients_mrn) > 1:
-        investigation = Investigation(investigations_session, matched_patients_mrn, 3)
+        investigation = Investigation(ukrdc_session, matched_patients_mrn, 3)
         return None, None, investigation
 
     # validate anonymous patients - bit more thought needed here
@@ -179,7 +177,7 @@ def identify_patient_feed(
             return pid, ukrdcid, None
         else:
             investigation = Investigation(
-                investigations_session, matched_patients_mrn, 1
+                ukrdc_session, matched_patients_mrn, 1
             ).create_issue()
             return None, None, investigation
 
@@ -187,7 +185,7 @@ def identify_patient_feed(
     # if the NI's match to anything they should be identical to the MRN
     if matched_patients_mrn != matched_patients_ni and len(matched_patients_ni) != 0:
         investigation = Investigation(
-            investigations_session, matched_patients_mrn + matched_patients_ni, 4
+            ukrdc_session, matched_patients_mrn + matched_patients_ni, 4
         ).create_issue()
         return None, None, investigation
 
@@ -198,7 +196,7 @@ def identify_patient_feed(
         return pid, ukrdcid, None
     else:
         investigation = Investigation(
-            investigations_session, matched_patients_mrn, 1
+            ukrdc_session, matched_patients_mrn, 1
         ).create_issue()
         return None, None, investigation
 
@@ -219,9 +217,7 @@ def match_ukrdc(session: Session, patient_ids: List[List[str]]) -> Any:
     return session.execute(ukrdc_query).fetchall()
 
 
-def identify_across_ukrdc(
-    ukrdc_session: Session, investigations_session: Session, patient_info: dict
-) -> Any:
+def identify_across_ukrdc(ukrdc_session: Session, patient_info: dict) -> Any:
     """Since merging and unmerging patients with ukrdc is easier in the case where a problem arises we just create a new patient and load the file.
 
     Args:
@@ -256,14 +252,14 @@ def identify_across_ukrdc(
             return ukrdcid, None
         else:
             investigation = Investigation(
-                investigations_session,
+                ukrdc_session,
                 matched_ids,
                 69,
             ).create_issue()
             return None, investigation
     else:
         investigation = Investigation(
-            investigations_session,
+            ukrdc_session,
             matched_ids,
             69,
         ).create_issue()

@@ -45,10 +45,18 @@ class Settings(BaseSettings):
         default="046b25021c52ebeaff1d878a01aa8ec56c4667ed",  # type:ignore
     )
 
+    v4_1_0_commit: str = Field(  # type: ignore
+        env="V4_1_0_COMMIT", default="ce0f8618a0712c86e895f302d99bfda94a2787c4"
+    )
+
+    v4_2_0_commit: str = Field(  # type: ignore
+        env="V4_2_0_COMMIT", default="1302c015aebfac25bc462c8d20c0aa31df810b5e"
+    )
+
 
 env_variables = Settings()
 
-SUPPORTED_VERSIONS = ["3.3.0", "3.4.5", "4.0.0"]
+SUPPORTED_VERSIONS = ["3.3.0", "3.4.5", "4.0.0", "4.1.0", "4.2.0"]
 
 
 def download_ukrdc_schema(filepath: str, schema_version: str) -> None:
