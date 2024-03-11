@@ -3,56 +3,42 @@ JTrace replacement. The aim here is not to handle any of the merging. Simply
 to load an xml file into a sqla object with all the correct keys.     
 """
 
-from ukrdc_cupid.core.parse.utils import load_xml_from_path
-from ukrdc_cupid.core.match.identify import link_patient_number 
-from ukrdc_cupid.core.store.models.ukrdc import PatientRecord
+import glob
+import os
 
-from sqlalchemy.orm import sessionmaker
 from xsdata.exceptions import ParserError
-from sqlalchemy import create_engine
+from ukrdc_cupid.core.utils import DatabaseConnection
+from ukrdc_cupid.core.parse.utils import load_xml_from_path
+from ukrdc_cupid.core.general import process_file
+from ukrdc_cupid.core.parse.xml_validate import validate_rda_xml_string
 
-from ukrdc_cupid.core.store.keygen import mint_new_pid
-    
-#engine = Connection.get_engine_from_file(key="ukrdc_staging")
-#session = scoped_session(sessionmaker(engine))
-url = "postgresql://postgres:postgres@localhost:5432/dummy_ukrdc"
-#engine = create_engine(url, echo = True)
-engine = create_engine(url)
+#session = DatabaseConnection(env_prefix="UKRDC").create_session(clean=True, populate_tables=True
+#ukrdc_session = DatabaseConnection(env_prefix="UKRDC").create_session(clean=True, populate_tables=True)
+ukrdc_session = DatabaseConnection(env_prefix="UKRDC").create_session(clean=False, populate_tables=False)
+investigate_session = DatabaseConnection(env_prefix="INVESTIGATE").create_session(True, True)
 
-ukrdc3_sessionmaker = sessionmaker(bind=engine)
-session = ukrdc3_sessionmaker()
+# Specify the directory where your XML files are located
+xml_directory = ".xml_to_load/converted"
 
-# load xml file as python object 
-#xml_file = r"Q:\UKRDC\UKRDC Feed Development\RFBAK Leicester\RFBAK_00082_4165311820.xml"
-xml_file = r"scripts/xml_examples/UKRDC.xml"
-xml_object = load_xml_from_path(xml_file)
+# grab files to load from directory
+xml_files = glob.glob(os.path.join(xml_directory, "*.xml"))
 
-if isinstance(xml_object, ParserError):
-    print(f"File load failed for the following reason: {xml_object}")
-else: 
-    # link patient to existing record 
-    linked_patients = link_patient_number(session=session, xml=xml_object)
+with ukrdc_session() as ukrdc:
+    with investigate_session() as investigate:
+        for xml_file in xml_files:
+            # load file and validate it 
+            xml_object = load_xml_from_path(xml_file)
+            schema_version = xml_object.sending_facility.schema_version
 
-    if len(linked_patients) == 0: 
-        # create new pid and load into sqla
-        pid = mint_new_pid(session=session)
-        patient_record = PatientRecord(xml_object)
-        patient_record.map_xml_to_tree()
-        patient_record.transform(pid)
-        pr_orm = patient_record.get_orm_list()
-        print(pr_orm)
+            investigation = process_file(
+                xml_object, 
+                ukrdc_session=ukrdc, 
+                investigations_session=investigate
+            )
 
-    elif len(linked_patients) == 1:
-        # assign existing pid and ukrdcid 
-        patient_record = PatientRecord(xml_object)
-
-        
-    else:
-        # if multiple matches are returned don't attempt to choose one
-        print("Patient cannot be unambigously matched to multiple records")
-
-
-
-
-
-
+            if investigation:
+                # we add the file to the investigation it has been created
+                investigation.append_file(
+                    xml = str(xml_object),
+                    filename = xml_file
+                )

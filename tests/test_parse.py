@@ -1,5 +1,6 @@
-from lxml import etree 
+import glob
 from ukrdc_cupid.core.parse.xml_validate import validate_rda_xml_string
+from ukrdc_cupid.core.parse.xml_validate import SUPPORTED_VERSIONS
 
 def test_transplant_validation():
     # As the source of big headaches elsewhere putting some tests here
@@ -62,3 +63,32 @@ def test_transplant_validation():
 
     errors = validate_rda_xml_string(v4_00_transplant_xml,schema_version="4.0.0")
     assert not errors
+
+def test_check_tests():
+    """We need to ensure that cupid is always supporting the most recent
+    version of the xsd schema. 
+    """ 
+
+    # Grab all XML files in the tests directory and subdirectories
+    #xml_files = glob.glob("tests/**/*.xml", recursive=True)
+    xml_files = glob.glob("tests/xml_files/store_tests/*.xml")
+
+    # Assuming you have a list of XML files, replace 'xml_files' with the actual list
+    xml_strings = [open(xml_file).read() for xml_file in xml_files]
+
+    # Select the maximum version from SUPPORTED_VERSIONS
+    most_recent_version = max(SUPPORTED_VERSIONS)
+
+    # Validate each XML string against the most recent supported version of the dataset
+    clean = True
+    for xml_file, xml_string in zip(xml_files, xml_strings):
+        errors = validate_rda_xml_string(xml_string, schema_version=most_recent_version)
+        
+        # print errors if there are any
+        if errors:
+            for line, error in errors.items():
+                print(xml_file)
+                print(f"{line} - {error}")
+                clean = False
+
+    assert clean

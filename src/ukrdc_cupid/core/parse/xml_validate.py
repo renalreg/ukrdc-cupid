@@ -8,11 +8,12 @@ Note that the RDA schema versioning is one behind that of the UKRR Dataset
 
 import os
 import shutil
-from git import Repo  # type: ignore
+from git import Repo
 from lxml import etree  # nosec B410
 from pydantic import Field
 from pydantic_settings import BaseSettings
 from platformdirs import user_data_dir
+from typing import Tuple, Union
 
 
 # TODO: I think this bit of code could be generalised so that new versions of the schema
@@ -24,26 +25,38 @@ class Settings(BaseSettings):
         BaseSettings (_type_): _description_
     """
 
-    appdata_dir: str = Field(env="APPDATA_DIR", default=user_data_dir())  # type: ignore
+    appdata_dir: str = Field(env="APPDATA_DIR", default=user_data_dir())  # type:ignore
 
-    schema_repo: str = Field(  # type: ignore
-        env="SCHEMA_REPO", default="https://github.com/renalreg/resources.git"
+    schema_repo: str = Field(
+        env="SCHEMA_REPO",
+        default="https://github.com/renalreg/resources.git",  # type:ignore
     )
 
-    v3_3_0_commit: str = Field(  # type: ignore
-        env="V3_3_0_COMMIT", default="7095add5ea07369dedbd499fa4662f3f72754d31"
+    v3_3_0_commit: str = Field(
+        env="V3_3_0_COMMIT",
+        default="7095add5ea07369dedbd499fa4662f3f72754d31",  # type:ignore
     )
 
     v3_3_1_commit: str = Field(  # type: ignore
         env="V3_3_1_COMMIT", default="d5a23051fbf194c462a4c90ba5ac2f44049f88bd"
     )
 
-    v3_4_5_commit: str = Field(  # type: ignore
-        env="V3_4_5_COMMIT", default="14fa420a971e16306de3e00cd1fc51b6e344c596"
+    v3_4_5_commit: str = Field(
+        env="V3_4_5_COMMIT",
+        default="14fa420a971e16306de3e00cd1fc51b6e344c596",  # type:ignore
     )
 
-    v4_0_0_commit: str = Field(  # type: ignore
-        env="V4_0_0_COMMIT", default="046b25021c52ebeaff1d878a01aa8ec56c4667ed"
+    v4_0_0_commit: str = Field(
+        env="V4_0_0_COMMIT",
+        default="046b25021c52ebeaff1d878a01aa8ec56c4667ed",  # type:ignore
+    )
+
+    v4_1_0_commit: str = Field(  # type: ignore
+        env="V4_1_0_COMMIT", default="ce0f8618a0712c86e895f302d99bfda94a2787c4"
+    )
+
+    v4_2_0_commit: str = Field(  # type: ignore
+        env="V4_2_0_COMMIT", default="1302c015aebfac25bc462c8d20c0aa31df810b5e"
     )
 
     v4_1_0_commit: str = Field(  # type: ignore
@@ -53,10 +66,10 @@ class Settings(BaseSettings):
 
 env_variables = Settings()
 
-SUPPORTED_VERSIONS = ["3.3.0", "3.3.1", "3.4.5", "4.0.0", "4.1.0"]
+SUPPORTED_VERSIONS = ["3.3.0", "3.3.1", "3.4.5", "4.0.0", "4.1.0", "4.2.0"]
 
 
-def download_ukrdc_schema(filepath: str, schema_version: str):
+def download_ukrdc_schema(filepath: str, schema_version: str) -> None:
     """
     Downloads the specified schema version from the GitHub repository. A specific commit id is mapped to each supported version of the schema this is loaded via the environment variables.
 
@@ -87,7 +100,7 @@ def download_ukrdc_schema(filepath: str, schema_version: str):
     shutil.rmtree(repo_dir, ignore_errors=True)
 
 
-def load_schema(schema_version: str):
+def load_schema(schema_version: str) -> Tuple[etree.XMLSchema, str]:
     """
     Locate the schema locally and load it into lxml so it can be used for validation.
 
@@ -106,7 +119,7 @@ def load_schema(schema_version: str):
         formatted_ver = schema_version.replace(".", "_")
         commit = getattr(env_variables, f"v{formatted_ver}_commit")
     else:
-        raise ValueError("Unsupported schema version {schema_version}")
+        raise ValueError(f"Unsupported schema version {schema_version}")
 
     xsd_file_path = os.path.join(
         env_variables.appdata_dir,
@@ -125,7 +138,9 @@ def load_schema(schema_version: str):
     return etree.XMLSchema(xsd_doc), xsd_file_path
 
 
-def validate_rda_xml_string(rda_xml: str, schema_version: str = "4.0.0"):
+def validate_rda_xml_string(
+    rda_xml: str, schema_version: str = "4.0.0"
+) -> Union[dict, None]:
     """
     Validate an RDA XML file against the UKRDC schema. It should be noted that the code assumes the enviroment variables are set up such that the minor release can be thrown away. TODO: maybe this is something to be made more explicit or changed in the future.
 
@@ -142,10 +157,10 @@ def validate_rda_xml_string(rda_xml: str, schema_version: str = "4.0.0"):
     # Load the XML file
     xml_doc = etree.XML(rda_xml.encode())
 
+    # Initially catch errors to allow more specific processing of errors
     try:
         xml_schema.assertValid(xml_doc)
-        # Initially catch errors to allow reporting multiple issues in one file
-        return
+        return None
 
     except etree.DocumentInvalid:
         # return errors as dictionary

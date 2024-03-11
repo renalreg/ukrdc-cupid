@@ -17,12 +17,17 @@ pydantic = "^2.1.1"
 pydantic-settings = "^2.0.2"
 platformdirs = "^3.9.1"
 ukrdc-xsdata = "^4.0.0"
+psycopg2-binary = "^2.9.9"
+pytz = "^2023.3.post1"
+sqlalchemy-utils = "^0.41.1"
+requests = "^2.31.0"
 
 [tool.poetry.group.dev.dependencies]
 black = {version = "^22.10.0", allow-prereleases = true}
 ruff = "^0.0.263"
 tox = "^4.5.1"
 bandit = "^1.7.5"
+pytest = "<7.4.3"
 
 [build-system]
 build-backend = "poetry.core.masonry.api"

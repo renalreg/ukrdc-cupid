@@ -1,9 +1,21 @@
+"""
+Primary keys for the records contained within the ukrdc. Hopefully we simplify
+this at some point in the future. Currently it's designed to replicate the data
+repository however I think a lot of that was hacked together to work with the
+limitations of jtrace. 
+"""
 from sqlalchemy.orm import Session
 from sqlalchemy import Sequence
 import ukrdc_sqla.ukrdc as sqla
+import ukrdc_xsdata.ukrdc.lab_orders as xsd_lab_orders  # type:ignore
+import ukrdc_xsdata.ukrdc.dialysis_sessions as xsd_dialysis_sessions  # type:ignore
+
+from typing import Optional
+
+KEY_SEPERATOR = ":"
 
 
-def mint_new_pid(session: Session):
+def mint_new_pid(session: Session) -> str:
     """
     Function to mint new pid. This sequence doesn't currently exist in the ukrdc, create by running script make_pid_generation_sequence.py
     """
@@ -13,17 +25,31 @@ def mint_new_pid(session: Session):
     return new_pid
 
 
-def generate_generic_key(parent: str, seqno: int):
+def mint_new_ukrdcid(session: Session) -> str:
+    """
+    Placeholder function generate a random string for now
+
+    Args:
+        session (Session): _description_
+    """
+    new_ukrdcid = str(session.execute(Sequence("generate_new_ukrdcid")))  # type:ignore
+
+    return new_ukrdcid
+
+
+def generate_generic_key(parent: str, seq_no: Optional[int] = None) -> str:
     # not sure there is much point in this function
-    return f"{parent}:{seqno}"
+    return f"{parent}{KEY_SEPERATOR}{seq_no}"
 
 
-def generate_key_laborder(laborder: sqla.LabOrder, pid: str):
+def generate_key_laborder(laborder_xml: xsd_lab_orders, pid: str) -> str:
     # generate lab_order consitant with: https://github.com/renalreg/Data-Repository/blob/44d0b9af3eb73705de800fd52fe5a6b847219b31/src/main/java/org/ukrdc/repository/RepositoryManager.java#L679
-    return f"{pid}:{laborder.placerid}"
+    return f"{pid}{KEY_SEPERATOR}{laborder_xml.placer_id}"
 
 
-def generate_key_resultitem(resultitem: sqla.ResultItem, order_id: str, seq_no: int):
+def generate_key_resultitem(
+    resultitem: sqla.ResultItem, order_id: str, seq_no: int
+) -> str:
     """generates result item key. This is somewhat more complicated than some.
     https://github.com/renalreg/Data-Repository/blob/44d0b9af3eb73705de800fd52fe5a6b847219b31/src/main/java/org/ukrdc/repository/RepositoryManager.java#LL693C5-L693C5
 
@@ -33,6 +59,18 @@ def generate_key_resultitem(resultitem: sqla.ResultItem, order_id: str, seq_no: 
         seq_no (int): _description_
     """
     if resultitem.prepost == "PRE":
-        return f"{order_id}:{resultitem.service_id}:{seq_no}"
+        return (
+            f"{order_id}{KEY_SEPERATOR}{resultitem.service_id}{KEY_SEPERATOR}{seq_no}"
+        )
     else:
-        return f"{order_id}:{resultitem.prepost}:{resultitem.service_id}:{seq_no}"
+        return f"{order_id}{KEY_SEPERATOR}{resultitem.prepost}{KEY_SEPERATOR}{resultitem.service_id}{KEY_SEPERATOR}{seq_no}"
+
+
+def generate_key_dialysis_session(
+    dialysis_session_xml: xsd_dialysis_sessions.DialysisSession,
+    pid: str,
+    seq_no: int = 0,
+) -> str:
+    procedure_time_uts = dialysis_session_xml.procedure_time.to_datetime().timestamp()
+    procedure_type_code = dialysis_session_xml.procedure_type.code
+    return f"{pid}{KEY_SEPERATOR}{procedure_time_uts}{KEY_SEPERATOR}{procedure_type_code}{KEY_SEPERATOR}{seq_no}"

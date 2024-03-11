@@ -1,15 +1,20 @@
 from xsdata.formats.dataclass.parsers import XmlParser
-from xsdata.exceptions import ParserError
+from ukrdc_xsdata.ukrdc import PatientRecord  # type:ignore
+from ukrdc_cupid.core.parse.xml_validate import validate_rda_xml_string
 
 
-def load_xml_from_path(filepath: str):
+def load_xml_from_path(filepath: str) -> PatientRecord:
     with open(filepath, "r") as file:
         data = file.read()
 
-    try:
-        xsobject = XmlParser().from_string(data)  # type:ignore
-        return xsobject
+    xsobject = XmlParser().from_string(data, PatientRecord)  # type:ignore
+    schema_version = xsobject.sending_facility.schema_version
+    errors = validate_rda_xml_string(data, schema_version)
+    if not errors:
+        print(f"file {filepath} successfully validated")
+    else:
+        print(errors)
 
-    except ParserError as e:
-        # print(f"xml file {filepath} failed to parse due to exception: {e}")
-        return e
+    # We validate file before returning
+
+    return xsobject

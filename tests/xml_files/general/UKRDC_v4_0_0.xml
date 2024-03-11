@@ -45,8 +45,8 @@
         </ContactDetails>
         <CountryOfBirth>GBR</CountryOfBirth>
         <FamilyDoctor>
-            <GPPracticeId>J11111</GPPracticeId>
-            <GPId>G2222222</GPId>
+            <GPPracticeId>A81001</GPPracticeId>
+            <GPId>G9996012</GPId>
             <Email>reception@villagegp.nhs.uk</Email>
         </FamilyDoctor>
         <EthnicGroup>
@@ -309,6 +309,7 @@
                 <UpdatedOn>2006-05-04T18:13:51.0</UpdatedOn>
                 <ExternalId>ExternalId20</ExternalId>
                 <SymtomaticHypotension>Y</SymtomaticHypotension><VascularAccess><Code>NLN</Code></VascularAccess><VascularAccessSite><Code>BB</Code></VascularAccessSite><TimeDialysed>200</TimeDialysed></DialysisSession>
+            </DialysisSession>
         </DialysisSessions>
         <Transplant>
             <ProcedureType>
