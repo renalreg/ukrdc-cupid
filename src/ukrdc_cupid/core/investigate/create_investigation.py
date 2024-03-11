@@ -48,6 +48,7 @@ def get_patients(
 
     return patients
 
+
 class Investigation:
     """The Investigation class uses a relatively simple model to link issues to
     pids/ukrdcids. We may wish to add extra fields to enhance the process of

@@ -10,7 +10,7 @@ def validate_demog(session: Session, dob: datetime, pid: str) -> bool:
     Args:
         session (Session): ukrdc sqlachemy session
         dob (datetime): incoming date of birth.
-        pid (str): persistant pid matched to incoming dob
+        pid (str): persistent pid matched to incoming dob
 
     Raises:
         Exception: there should be only 1 (or possibly None) dob per patient

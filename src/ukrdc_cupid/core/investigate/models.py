@@ -68,7 +68,7 @@ class Issue(Base):  # type:ignore
     priority = Column(Integer, nullable=True)
 
     # This should contain any attributes required to fully investigate issue
-    # In particular it should contain the items of data which 
+    # In particular it should contain the items of data which
     attributes = Column(JSON, nullable=True)
 
     patients = relationship(  # type:ignore
