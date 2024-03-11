@@ -67,8 +67,9 @@ class Issue(Base):  # type:ignore
     # This creates scope for automated functions to produce low priority investigations
     priority = Column(Integer, nullable=True)
 
-    # Snapshot of the data which caused a investigation to be raised
-    mismatching_attributes = Column(JSON, nullable=True)
+    # This should contain any attributes required to fully investigate issue
+    # In particular it should contain the items of data which 
+    attributes = Column(JSON, nullable=True)
 
     patients = relationship(  # type:ignore
         PatientID, secondary=association_table
