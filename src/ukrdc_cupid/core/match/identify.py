@@ -142,7 +142,7 @@ def identify_patient_feed(ukrdc_session: Session, patient_info: dict) -> Any:
         xml (xsd_ukrdc.PatientRecord): UKRDC patient record as XML
     """
 
-    # match patients on mrn
+    # match patients on mrn and NI 
     matched_patients_mrn = match_mrn(ukrdc_session, patient_info)
     matched_patients_ni = match_ni(ukrdc_session, patient_info)
 
@@ -163,6 +163,10 @@ def identify_patient_feed(ukrdc_session: Session, patient_info: dict) -> Any:
     # check MRN look up returns a single patient
     if len(matched_patients_mrn) > 1:
         investigation = Investigation(ukrdc_session, matched_patients_mrn, 3)
+
+        # information to store about issue
+        
+        
         return None, None, investigation
 
     # validate anonymous patients - bit more thought needed here

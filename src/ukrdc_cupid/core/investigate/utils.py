@@ -3,12 +3,12 @@ from ukrdc_cupid.core.investigate.models import IssueType
 
 # picklist of possible issues
 ISSUE_PICKLIST = [
-    [1, "Demographic Validation Failure on PID Match"],
-    [2, "Ambiguous PID Match: matched on MRN but not NI"],
-    [3, "Ambiguous PID Match: matched to multiple persitant PIDs"],
-    [4, "Ambiguous PID Match: MRN matches disagree with NI matches"],
-    [5, "Demographic Validation Failure on UKRDCID Match"],
-    [6, "Ambiguous UKRDCID match: matched to multiple persistant UKRDCIDs"],
+    [1, "Demographic validation failure for feed Match"],
+    [2, "Ambiguous feed match: pid identified via MRN but not NI"],
+    [3, "Ambiguous feed match: matched to multiple persistent PIDs"],
+    [4, "Ambiguous feed match: MRN matches disagree with NI matches"],
+    [5, "Demographic validation failure in cross feed matching"],
+    [6, "Ambiguous cross feed match: multiple ukrdcids identified"],
 ]
 
 

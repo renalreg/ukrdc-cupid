@@ -35,6 +35,10 @@ class Settings(BaseSettings):
         default="7095add5ea07369dedbd499fa4662f3f72754d31",  # type:ignore
     )
 
+    v3_3_1_commit: str = Field(  # type: ignore
+        env="V3_3_1_COMMIT", default="d5a23051fbf194c462a4c90ba5ac2f44049f88bd"
+    )
+
     v3_4_5_commit: str = Field(
         env="V3_4_5_COMMIT",
         default="14fa420a971e16306de3e00cd1fc51b6e344c596",  # type:ignore
@@ -56,7 +60,7 @@ class Settings(BaseSettings):
 
 env_variables = Settings()
 
-SUPPORTED_VERSIONS = ["3.3.0", "3.4.5", "4.0.0", "4.1.0", "4.2.0"]
+SUPPORTED_VERSIONS = ["3.3.0", "3.3.1", "3.4.5", "4.0.0", "4.1.0", "4.2.0"]
 
 
 def download_ukrdc_schema(filepath: str, schema_version: str) -> None:
@@ -109,7 +113,7 @@ def load_schema(schema_version: str) -> Tuple[etree.XMLSchema, str]:
         formatted_ver = schema_version.replace(".", "_")
         commit = getattr(env_variables, f"v{formatted_ver}_commit")
     else:
-        raise ValueError("Unsupported schema version {schema_version}")
+        raise ValueError(f"Unsupported schema version {schema_version}")
 
     xsd_file_path = os.path.join(
         env_variables.appdata_dir,
