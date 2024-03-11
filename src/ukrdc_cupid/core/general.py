@@ -11,9 +11,7 @@ from ukrdc_cupid.core.investigate.create_investigation import get_patients
 from ukrdc_xsdata.ukrdc import PatientRecord
 
 
-def process_file(
-    xml_object: PatientRecord, ukrdc_session: Session, investigations_session: Session
-) -> None:
+def process_file(xml_object: PatientRecord, ukrdc_session: Session) -> None:
     """The code for the api will look very similar to this I think.
     until that is written it will have to sit in the utilities.
 
@@ -29,7 +27,6 @@ def process_file(
     patient_info = read_patient_metadata(xml_object)
     pid, ukrdcid, investigation = identify_patient_feed(
         ukrdc_session=ukrdc_session,
-        investigations_session=investigations_session,
         patient_info=patient_info,
     )
 
@@ -44,10 +41,9 @@ def process_file(
         # Attempt to identify patient across the ukrdc
         ukrdcid, investigation = identify_across_ukrdc(
             ukrdc_session=ukrdc_session,
-            investigations_session=investigations_session,
             patient_info=patient_info,
         )
-        is_new = True  # need to revisit whether this is nessary
+        is_new = True  # need to revisit whether this is necessary
     else:
         is_new = False
 

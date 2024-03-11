@@ -142,13 +142,14 @@ class DialysisSession(Node):
         self.add_item("qhd31", self.xml.time_dialysed)
         # fmt: on
 
+
 class Procedure(Node):
-    def __init__(self, xml:xsd_procedures.Procedure):
+    def __init__(self, xml: xsd_procedures.Procedure):
         super().__init__(xml, sqla.Procedure)
-    
+
     def sqla_mapped() -> str:
         return "procedures"
-    
+
     def map_xml_to_orm(self, _) -> None:
         # fmt: off
         # fmt: on
@@ -156,16 +157,17 @@ class Procedure(Node):
 
 
 class VascularAccess(Node):
-    def __init__(self, xml:xsd_vascular_accesses.VascularAccess):
+    def __init__(self, xml: xsd_vascular_accesses.VascularAccess):
         super().__init__(xml, sqla.VascularAccess)
 
     def sqla_mapped() -> str:
         return "vascular_accesses"
-    
+
     def map_xml_to_orm(self, _) -> None:
         # fmt: off
         # fmt: on
         pass
+
 
 class Transplant(Node):
     def __init__(self, xml):
@@ -173,11 +175,12 @@ class Transplant(Node):
 
     def sqla_mapped() -> str:
         return "transplants"
-    
+
     def map_xml_to_orm(self, _) -> None:
         # fmt: off
         # fmt: on
         pass
+
 
 class Treatment(Node):
     def __init__(self, xml: xsd_encounters.Treatment):
@@ -185,7 +188,7 @@ class Treatment(Node):
 
     def sqla_mapped() -> str:
         return "treatments"
-    
+
     def map_xml_to_orm(self, _) -> None:
         # fmt: off
         self.add_item("encounternumber", self.xml.encounter_number, optional=True)
@@ -200,7 +203,9 @@ class Treatment(Node):
         self.add_code("enteredatcode","enteredatcodestd","enteredatdesc",self.xml.entered_at,optional=True)
 
         self.add_item("visitdescription", self.xml.visit_description, optional=True)
-        self.add_item("qbl05", self.xml.attributes.qbl05, optional=True)
+        
+        if self.xml.attributes:
+            self.add_item("qbl05", self.xml.attributes.qbl05, optional=True)
 
         # common metadata
         self.add_item("update_date", self.xml.updated_on, optional=True)

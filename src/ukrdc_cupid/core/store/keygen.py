@@ -4,10 +4,6 @@ this at some point in the future. Currently it's designed to replicate the data
 repository however I think a lot of that was hacked together to work with the
 limitations of jtrace. 
 """
-
-import random
-import string
-
 from sqlalchemy.orm import Session
 from sqlalchemy import Sequence
 import ukrdc_sqla.ukrdc as sqla

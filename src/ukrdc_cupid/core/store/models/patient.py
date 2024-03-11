@@ -7,14 +7,13 @@ from __future__ import annotations  # allows typehint of node class
 
 import ukrdc_sqla.ukrdc as sqla
 from sqlalchemy.orm import Session
-import ukrdc_xsdata as xsd_all
-from ukrdc_sqla.ukrdc import Base
 
 from ukrdc_cupid.core.store.models.structure import Node
 
 import ukrdc_xsdata.ukrdc as xsd_ukrdc  # type: ignore
 import ukrdc_xsdata.ukrdc.types as xsd_types  # type: ignore
 import ukrdc_xsdata.ukrdc.allergies as xsd_allergy  # type: ignore
+
 
 def add_address(node: Node, address_xml: xsd_types.Address):
     # fmt: off
@@ -27,6 +26,7 @@ def add_address(node: Node, address_xml: xsd_types.Address):
     node.add_item("postcode", address_xml.postcode)
     node.add_code("countrycode", "countrycodestd", "countrydesc", address_xml.country)
     # fmt: on
+
 
 class PatientNumber(Node):
     def __init__(self, xml: xsd_types.PatientNumber):
@@ -160,19 +160,21 @@ class Patient(Node):
         self.add_children(FamilyDoctor, "family_doctor", session)
         # fmt: on
 
+
 class SocialHistory(Node):
     def __init__(self, xml: xsd_ukrdc.Patient):
         super().__init__(xml, sqla.SocialHistory)
 
     def sqla_mapped() -> str:
         return "social_histories"
-    
+
     def map_xml_to_orm(self, _):
-        #fmt:off
+        # fmt:off
         self.add_code("socialhabitcode", "socialhabitcodestd", "socialhabitdesc", self.xml.social_habit, optional=False)
         self.add_item("updatedon", self.xml.updated_on)
         self.add_item("externalid", self.xml.external_id)
-        #fmt:on
+        # fmt:on
+
 
 class FamilyHistory(Node):
     def __init__(self, xml):
@@ -180,6 +182,7 @@ class FamilyHistory(Node):
 
     def sqla_mapped() -> str:
         return "family_histories"
+
 
 class Allergy(Node):
     def __init__(self, xml: xsd_allergy.Allergy):
@@ -206,6 +209,7 @@ class Allergy(Node):
         # there is an update_date, actioncode here not sure what it does
         self.add_item("externalid", self.xml.external_id, optional=True)
         # fmt: on
+
 
 class Diagnosis(Node):
     def __init__(self, xml):
@@ -234,6 +238,7 @@ class Diagnosis(Node):
         self.add_item("externalid", self.xml.external_id)
         # fmt: on
 
+
 class RenalDiagnosis(Node):
     def __init__(self, xml):
         super().__init__(xml, sqla.RenalDiagnosis)
@@ -261,14 +266,15 @@ class RenalDiagnosis(Node):
         if self.xml.biopsy_performed:
             print("Biopsy performed status not currently supported")
         # fmt: on
-            
+
+
 class CauseOfDeath(Node):
     def __init__(self, xml):
         super().__init__(xml, sqla.CauseOfDeath)
 
     def sqla_mapped() -> str:
         return "cause_of_death"
-    
+
     def map_xml_to_orm(self, _):
         # fmt: off
         self.add_item("diagnosistype", self.xml.diagnosis_type)
@@ -287,11 +293,12 @@ class CauseOfDeath(Node):
         self.add_item("externalid", self.xml.external_id, optional=True)
         # fmt: on
 
+
 class Medication(Node):
     def __init__(self, xml):
         super().__init__(xml, sqla.Medication)
-    
-    def sqla_mapped( ):
+
+    def sqla_mapped():
         return "medications"
 
     def add_drug_product(self):

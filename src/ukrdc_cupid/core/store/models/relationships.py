@@ -3,7 +3,6 @@ import ukrdc_sqla.ukrdc as sqla
 import ukrdc_xsdata.ukrdc.program_memberships as xsd_program_memberships  # type: ignore
 import ukrdc_xsdata.ukrdc.opt_outs as xsd_opt_outs  # type: ignore
 import ukrdc_xsdata.ukrdc.clinical_relationships as xsd_clinical_relationships  # type: ignore
-import ukrdc_xsdata.ukrdc.documents as xsd_documents  # type: ignore
 
 
 class ProgramMembership(Node):
@@ -25,13 +24,14 @@ class ProgramMembership(Node):
         self.add_item("externalid", self.xml.external_id, optional=True)
         # fmt: on
 
+
 class OptOut(Node):
     def __init__(self, xml: xsd_opt_outs.OptOut):
         super().__init__(xml, sqla.OptOut)
 
     def sqla_mapped() -> str:
         return "opt_outs"
-    
+
     def map_xml_to_tree(self):
         # fmt: off
         self.add_item("program_name", self.xml.program_name)
@@ -44,15 +44,14 @@ class OptOut(Node):
         self.add_item("external_id", self.xml.external_id, optional=True)
         # fmt: on
 
+
 class ClinicalRelationship(Node):
-    def __init__(
-        self, xml: xsd_clinical_relationships.ClinicalRelationship
-    ):
+    def __init__(self, xml: xsd_clinical_relationships.ClinicalRelationship):
         super().__init__(xml, sqla.ClinicalRelationship)
-    
+
     def sqla_mapped() -> str:
         return "clinical_relationships"
-    
+
     def map_xml_to_tree(self):
         # fmt: off
         self.add_code("cliniciancode", "cliniciancodestd", "cliniciandesc", self.xml.clinician)

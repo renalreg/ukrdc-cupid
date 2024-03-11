@@ -1,3 +1,7 @@
+""" Models for the investigations. Since the decision has been made to include
+these models in the ukrdc they should really live in the ukrdc-sqla repo. 
+"""
+
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
 from sqlalchemy import (
@@ -30,7 +34,7 @@ association_table = Table(
     Base.metadata,  # type:ignore
     Column("patient_id_id", Integer, ForeignKey("patientid.id")),
     Column("issue_id", Integer, ForeignKey("issue.id")),
-    Column("rank", nullable =True)
+    Column("rank", Integer, nullable=True),
 )
 
 
@@ -58,10 +62,10 @@ class Issue(Base):  # type:ignore
     )  # should be null if file hasn't been diverted
 
     # Mirroring Jira board statuses (e.g. Open, Closed, Waiting for Unit, Pending Discussion etc)
-    status = Column(Integer, nullable = True)
+    status = Column(Integer, nullable=True)
 
-    # This creates scope for automated functions to produce low priority investigations 
-    priority = Column(Integer, nullable = True)
+    # This creates scope for automated functions to produce low priority investigations
+    priority = Column(Integer, nullable=True)
 
     # Snapshot of the data which caused a investigation to be raised
     mismatching_attributes = Column(JSON, nullable=True)

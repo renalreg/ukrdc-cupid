@@ -11,8 +11,6 @@ from sqlalchemy import select
 from ukrdc_sqla.ukrdc import PatientNumber
 import pytest
 import os
-import uuid
-
 
 TEST_PID = "test_pid:731"
 TEST_UKRDCID = "\(00)/"
@@ -21,25 +19,9 @@ XML_TEST = load_xml_from_path(XML_PATH)
 PATIENT_META_DATA = read_patient_metadata(XML_TEST)
 
 @pytest.fixture(scope="function")
-def ukrdc_test():
-    # Generate a random string as part of the URL
-    random_string = str(uuid.uuid4()).replace("-", "")
-    url = f'postgresql://postgres:postgres@localhost:5432/test_ukrdc_{random_string}'
-    connector = DatabaseConnection(env_prefix="UKRDC", url = url)
-    with connector.create_session(clean=True, populate_tables=False)() as session:
-        commit_patient_record(session, TEST_PID, TEST_UKRDCID, XML_TEST)
-        yield session
-    
-    connector.teardown_db()
-
-@pytest.fixture(scope="function")
-def investigate_test():
-    random_string = str(uuid.uuid4()).replace("-", "")
-    url = f'postgresql://postgres:postgres@localhost:5432/test_investigations_{random_string}'
-    connector = DatabaseConnection(env_prefix="INVESTIGATE", url = url)
-    with connector.create_session(clean=True, populate_tables=True)() as session:
-        yield session        
-    connector.teardown_db()
+def ukrdc_test(ukrdc_test_session:Session):
+    commit_patient_record(ukrdc_test_session, TEST_PID, TEST_UKRDCID, XML_TEST)
+    return ukrdc_test_session
 
 def commit_patient_record(ukrdc_session:Session, pid, ukrdcid, xml):
     patient_record = PatientRecord(xml)  
@@ -48,18 +30,18 @@ def commit_patient_record(ukrdc_session:Session, pid, ukrdcid, xml):
     ukrdc_session.commit()
     return 
 
-def test_match_ni(ukrdc_test:Session, investigate_test:Session):
+def test_match_ni(ukrdc_test:Session):
     """The primary type of matching. A patient in an incoming file is matched
     to a domain patient record on the national identifier. It then gets
     verified on MRN and dob. 
     """
-    pid, ukrdcid, investigation = identify_patient_feed(ukrdc_test, investigate_test, PATIENT_META_DATA)
+    pid, ukrdcid, investigation = identify_patient_feed(ukrdc_test, PATIENT_META_DATA)
     
     assert pid == TEST_PID
     assert ukrdcid == TEST_UKRDCID 
     assert not investigation
 
-def test_overwrite_with_chi_no(ukrdc_test:Session, investigate_test:Session):
+def test_overwrite_with_chi_no(ukrdc_test:Session):
     """Test the linking of record to existing scottish record if a chi number
     is added into the file. This also tests the process of overwriting a NI.
     In reality I imagine you would just add an extra NI rather than
@@ -68,7 +50,7 @@ def test_overwrite_with_chi_no(ukrdc_test:Session, investigate_test:Session):
     xml_path = os.path.join("tests","xml_files","store_tests","test_3.xml")
     xml_test = load_xml_from_path(xml_path)
     meta_data = read_patient_metadata(xml_test)
-    pid, ukrdcid, investigation = identify_patient_feed(ukrdc_test, investigate_test, meta_data)
+    pid, ukrdcid, investigation = identify_patient_feed(ukrdc_test, meta_data)
     
     assert pid == TEST_PID
     assert ukrdcid == TEST_UKRDCID 

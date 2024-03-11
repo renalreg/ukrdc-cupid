@@ -1,5 +1,6 @@
 """
-This file contains the tests for Observations, Results and 
+These tests check that the data which is in the xml gets loaded into the orm
+this is the core functionality of CUPID. 
 """
 
 
@@ -17,7 +18,7 @@ TEST_PID = "test_pid"
 TEST_UKRDCID = "test_id"
 
 @pytest.fixture(scope="function")
-def ukrdc_test_2():
+def ukrdc_test_with_data(ukrdc_test_session:Session):
     """Function creates the database state prior to running cupid. To do this
     we load the generic patient and then add in data that will create the
     behaviour we want to test.  
@@ -29,77 +30,64 @@ def ukrdc_test_2():
         os.path.join("tests","xml_files","store_tests","test_0.xml")
     )
 
-    # Generate a random string as part of the URL
-    random_string = str(uuid.uuid4()).replace("-", "")
-    db_name = f"test_ukrdc_{random_string}"
-    url = f'postgresql://postgres:postgres@localhost:5432/{db_name}'
-
-    connector = DatabaseConnection(env_prefix="UKRDC", url = url)
-    sessionmaker = connector.create_session(clean=True, populate_tables=False)
-
-    with sessionmaker() as ukrdc3_session:
-        patient_record = PatientRecord(xml_test_1)  
-        patient_record.map_to_database(TEST_PID, TEST_UKRDCID, ukrdc3_session)
-        ukrdc3_session.add_all(patient_record.get_orm_list())
+    patient_record = PatientRecord(xml_test_1)  
+    patient_record.map_to_database(TEST_PID, TEST_UKRDCID, ukrdc_test_session)
+    ukrdc_test_session.add_all(patient_record.get_orm_list())
 
 
-        xml_test_2 = load_xml_from_path(
-            os.path.join("tests","xml_files","store_tests","test_2.xml")
+    xml_test_2 = load_xml_from_path(
+        os.path.join("tests","xml_files","store_tests","test_2.xml")
+    )
+
+    lab_order_start = xml_test_2.lab_orders.start.to_datetime()
+    lab_order_stop = xml_test_2.lab_orders.stop.to_datetime()
+
+    lab_orders = [
+        sqla.LabOrder(
+            pid = TEST_PID, 
+            id = "to_delete_1",
+            specimencollectedtime = lab_order_start + timedelta(weeks=1)
+        ),
+        sqla.LabOrder(
+            pid = TEST_PID, 
+            id = "to_persist_1",
+            specimencollectedtime = lab_order_start - timedelta(weeks=1)
+        ),
+        sqla.LabOrder(
+            pid = TEST_PID, 
+            id = "to_persist_2",
+            specimencollectedtime = lab_order_stop + timedelta(weeks=1)
+        ),
+        sqla.LabOrder(
+            pid = TEST_PID, 
+            id = f"{TEST_PID}:1",
+            specimencollectedtime = lab_order_stop + timedelta(weeks=1)
         )
+    ]
+    ukrdc_test_session.add_all(lab_orders)
 
-        lab_order_start = xml_test_2.lab_orders.start.to_datetime()
-        lab_order_stop = xml_test_2.lab_orders.stop.to_datetime()
-
-        lab_orders = [
-            sqla.LabOrder(
-                pid = TEST_PID, 
-                id = "to_delete_1",
-                specimencollectedtime = lab_order_start + timedelta(weeks=1)
-            ),
-            sqla.LabOrder(
-                pid = TEST_PID, 
-                id = "to_persist_1",
-                specimencollectedtime = lab_order_start - timedelta(weeks=1)
-            ),
-            sqla.LabOrder(
-                pid = TEST_PID, 
-                id = "to_persist_2",
-                specimencollectedtime = lab_order_stop + timedelta(weeks=1)
-            ),
-            sqla.LabOrder(
-                pid = TEST_PID, 
-                id = f"{TEST_PID}:1",
-                specimencollectedtime = lab_order_stop + timedelta(weeks=1)
-            )
-        ]
-        ukrdc3_session.add_all(lab_orders)
-
-        result_items = [
-            sqla.ResultItem(
-                id = "RI_to_delete_1",
-                order_id = "to_delete_1"
-            ), 
-
-        ]
-        ukrdc3_session.add_all(result_items)
-        ukrdc3_session.commit()
+    result_items = [
+        sqla.ResultItem(
+            id = "RI_to_delete_1",
+            order_id = "to_delete_1"
+        ), 
+    ]
+    ukrdc_test_session.add_all(result_items)
+    ukrdc_test_session.commit()
         
-        loaded_ids = [order.id for order in ukrdc3_session.query(sqla.LabOrder).all()]
-        for order in lab_orders:
-            assert order.id in loaded_ids 
+    loaded_ids = [order.id for order in ukrdc_test_session.query(sqla.LabOrder).all()]
+    for order in lab_orders:
+        assert order.id in loaded_ids
 
-        yield ukrdc3_session
-
-    connector.teardown_db()
-
+    return ukrdc_test_session
 
 @pytest.fixture(scope="function")
-def patient_record(ukrdc_test_2:Session):
+def patient_record(ukrdc_test_with_data:Session):
     """Run cupid with test file and produce a set of objects for interogation
     with the unit tests.
 
     Args:
-        ukrdc_test_2 (Session): test database session
+        ukrdc_test_with_data (Session): test database session
 
     Returns:
         _type_: _description_
@@ -109,7 +97,7 @@ def patient_record(ukrdc_test_2:Session):
         os.path.join("tests","xml_files","store_tests","test_2.xml")
     )
     patient_record = PatientRecord(xml_test_2)
-    patient_record.map_to_database(TEST_PID, TEST_UKRDCID, ukrdc_test_2)
+    patient_record.map_to_database(TEST_PID, TEST_UKRDCID, ukrdc_test_with_data)
 
     return patient_record
 
@@ -293,7 +281,7 @@ def test_treatment(patient_record:PatientRecord):
         if treatment_xml.entered_at:
             assert orm_object.enteredatcode == treatment_xml.entered_at.code
             if treatment_xml.entered_at.coding_standard:
-                assert orm_object.enteredatcodestd == treatment_xml.entered_at.coding_standard
+                assert orm_object.enteredatcodestd == treatment_xml.entered_at.coding_standard.value
             assert orm_object.enteredatdesc == treatment_xml.entered_at.description
 
 
