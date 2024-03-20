@@ -1,6 +1,8 @@
-<ukrdc:PatientRecord xmlns:ukrdc="http://www.rixg.org.uk/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
-    <SendingFacility channelName="UKRDCSampleExtract" time="2022-07-21T09:00:00" schemaVersion="4.0.0" >RFCAT</SendingFacility>
-	<SendingExtract>UKRDC</SendingExtract>
+<ukrdc:PatientRecord xmlns:ukrdc="http://www.rixg.org.uk/"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+    <SendingFacility channelName="UKRDCSampleExtract" time="2022-07-21T09:00:00"
+        schemaVersion="4.0.0">RFCAT</SendingFacility>
+    <SendingExtract>UKRDC</SendingExtract>
     <Patient>
         <PatientNumbers>
             <PatientNumber>
@@ -55,9 +57,33 @@
             <ContactDetail use="PRN">
                 <Value>pidgeon</Value>
                 <Comments>watch out for hawks</Comments>
-            </ContactDetail>            
+            </ContactDetail>
             <Email>dr.dre@example.com</Email>
         </FamilyDoctor>
         <Death>true</Death>
     </Patient>
+    <FamilyHistories>
+        <FamilyHistory>
+            <FamilyMember>
+                <CodingStandard>LOCAL</CodingStandard>
+                <Code>FM123</Code>
+                <Description>Family Member Description</Description>
+            </FamilyMember>
+            <Diagnosis>
+                <CodingStandard>SNOMED</CodingStandard>
+                <Code>12345678</Code>
+                <Description>Diagnosis Description</Description>
+            </Diagnosis>
+            <NoteText>Some note</NoteText>
+            <EnteredAt>
+                <CodingStandard>ODS</CodingStandard>
+                <Code>ENTERED123</Code>
+                <Description>Entered At Description</Description>
+            </EnteredAt>
+            <FromTime>2012-12-21T00:00:00</FromTime>
+            <ToTime>2012-12-21T00:00:00</ToTime>
+            <UpdatedOn>2012-12-21T00:00:00</UpdatedOn>
+            <ExternalId>ABC123</ExternalId>
+        </FamilyHistory>
+    </FamilyHistories>
 </ukrdc:PatientRecord>

@@ -183,6 +183,18 @@ class FamilyHistory(Node):
     def sqla_mapped() -> str:
         return "family_histories"
 
+    def map_xml_to_orm(self, _):
+        # fmt: off
+        self.add_code("familymembercode", "familymembercodestd", "familymemberdesc", self.xml.family_member, optional=True)
+        self.add_code("diagnosiscode", "diagnosiscodestd", "diagnosisdesc", self.xml.diagnosis, optional=True)
+        self.add_item("notetext", self.xml.note_text, optional=True)
+        self.add_code("enteredatcode", "enteredatcodestd", "enteredatdesc", self.xml.entered_at, optional=True)
+        self.add_item("fromtime", self.xml.from_time, optional=True)
+        self.add_item("totime", self.xml.to_time, optional=True)
+        self.add_item("updatedon", self.xml.updated_on, optional=True)
+        self.add_item("externalid", self.xml.external_id, optional=True)        
+        # fmt: on
+
 
 class Allergy(Node):
     def __init__(self, xml: xsd_allergy.Allergy):
@@ -206,6 +218,7 @@ class Allergy(Node):
 
         # common metadata
         self.add_item("updatedon", self.xml.updated_on, optional=True)
+
         # there is an update_date, actioncode here not sure what it does
         self.add_item("externalid", self.xml.external_id, optional=True)
         # fmt: on
@@ -294,36 +307,5 @@ class CauseOfDeath(Node):
         # fmt: on
 
 
-class Medication(Node):
-    def __init__(self, xml):
-        super().__init__(xml, sqla.Medication)
-
-    def sqla_mapped():
-        return "medications"
-
-    def add_drug_product(self):
-        # fmt: off
-        self.add_code("drugproductidcode", "drugproductidcodestd", "drugproductiddesc", self.xml.drug_product.id)
-        self.add_item("drugproductgeneric", self.xml.drug_product.generic)
-        self.add_item("drugproductlabelname", self.xml.drug_product.label_name)
-        self.add_code("drugproductformcode", "drugproductformcodestd", "drugproductformdesc", self.xml.drug_product.form)
-        self.add_code("drugproductstrengthunitscode", "drugproductstrengthunitscodestd", "drugproductstrengthunitsdesc", self.xml.drug_product.strength_units)
-        # fmt: on
-
-    def map_xml_to_orm(self, _):
-        # fmt: off
-        self.add_item("prescriptionnumber", self.xml.prescription_number)
-        self.add_item("fromtime", self.xml.from_time)
-        self.add_item("totime", self.xml.to_time)
-        self.add_code("enteringorganizationcode", "enteringorganizationcodestd", "enteringorganizationdesc", self.xml.entering_organization)
-        self.add_code( "routecode", "routecodestd", "routedesc", self.xml.route)
-        self.add_drug_product()
-        self.add_item("frequency", self.xml.frequency)
-        self.add_item("commenttext", self.xml.comments)
-        self.add_item("dosequantity", self.xml.dose_quantity)
-        self.add_code("doseuomcode", "doseuomcodestd", "doseuomdesc",self.xml.dose_uo_m)
-        self.add_item("indication", self.xml.indication)
-        self.add_item("encounternumber", self.xml.encounter_number)
-        self.add_item("updatedon", self.xml.updated_on)
-        self.add_item("externalid", self.xml.external_id)
-        # fmt: on
+# class Document
+# class Survey

@@ -148,3 +148,28 @@ def test_family_doctor(patient_record:PatientRecord):
     assert family_doctor_orm.gpid == family_doctor_xml.gpid
     assert family_doctor_orm.gpname == family_doctor_xml.gpname
     #assert address or whatever else
+
+def test_family_history(patient_record:PatientRecord):
+    family_history_orm = False
+    for orm_object in patient_record.get_orm_list():
+        if orm_object.__tablename__ == "familyhistory":
+            family_history_orm = orm_object
+            break
+    
+    assert family_history_orm
+
+    family_history_xml = patient_record.xml.family_histories.family_history[0]
+    assert family_history_orm.familymembercode == family_history_xml.family_member.code
+    assert family_history_orm.familymembercodestd == family_history_xml.family_member.coding_standard
+    assert family_history_orm.familymemberdesc == family_history_xml.family_member.description
+    assert family_history_orm.diagnosiscodestd == family_history_xml.diagnosis.coding_standard.value
+    assert family_history_orm.diagnosiscode == family_history_xml.diagnosis.code
+    assert family_history_orm.diagnosisdesc == family_history_xml.diagnosis.description
+    assert family_history_orm.notetext == family_history_xml.note_text
+    assert family_history_orm.enteredatcode == family_history_xml.entered_at.code
+    assert family_history_orm.enteredatcodestd == family_history_xml.entered_at.coding_standard.value
+    assert family_history_orm.enteredatdesc == family_history_xml.entered_at.description
+    assert family_history_orm.fromtime == family_history_xml.from_time.to_datetime()
+    assert family_history_orm.totime == family_history_xml.to_time.to_datetime()
+    assert family_history_orm.updatedon == family_history_xml.updated_on.to_datetime()
+    assert family_history_orm.externalid == family_history_xml.external_id

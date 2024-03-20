@@ -51,9 +51,7 @@ class ResultItem(Node):
 
         # fmt: off
         self.add_item("resulttype", self.xml.result_type)
-        self.add_code(
-            "serviceidcode", "serviceidcodestd", "serviceiddesc", self.xml.service_id
-        )
+        self.add_code("serviceidcode", "serviceidcodestd", "serviceiddesc", self.xml.service_id)
         self.add_item("subid", self.xml.sub_id)
         self.add_item("resultvalue", self.xml.result_value)
         self.add_item("resultvalueunits", self.xml.result_value_units)
@@ -211,3 +209,42 @@ class Treatment(Node):
         self.add_item("update_date", self.xml.updated_on, optional=True)
         self.add_item("externalid", self.xml.external_id, optional=True)
         # fmt: on
+
+
+class Medication(Node):
+    def __init__(self, xml):
+        super().__init__(xml, sqla.Medication)
+
+    def sqla_mapped():
+        return "medications"
+
+    def add_drug_product(self):
+        # fmt: off
+        self.add_code("drugproductidcode", "drugproductidcodestd", "drugproductiddesc", self.xml.drug_product.id)
+        self.add_item("drugproductgeneric", self.xml.drug_product.generic)
+        self.add_item("drugproductlabelname", self.xml.drug_product.label_name)
+        self.add_code("drugproductformcode", "drugproductformcodestd", "drugproductformdesc", self.xml.drug_product.form)
+        self.add_code("drugproductstrengthunitscode", "drugproductstrengthunitscodestd", "drugproductstrengthunitsdesc", self.xml.drug_product.strength_units)
+        # fmt: on
+
+    def map_xml_to_orm(self, _):
+        # fmt: off
+        self.add_item("prescriptionnumber", self.xml.prescription_number)
+        self.add_item("fromtime", self.xml.from_time)
+        self.add_item("totime", self.xml.to_time)
+        self.add_code("enteringorganizationcode", "enteringorganizationcodestd", "enteringorganizationdesc", self.xml.entering_organization)
+        self.add_code( "routecode", "routecodestd", "routedesc", self.xml.route)
+        self.add_drug_product()
+        self.add_item("frequency", self.xml.frequency)
+        self.add_item("commenttext", self.xml.comments)
+        self.add_item("dosequantity", self.xml.dose_quantity)
+        self.add_code("doseuomcode", "doseuomcodestd", "doseuomdesc",self.xml.dose_uo_m)
+        self.add_item("indication", self.xml.indication)
+        self.add_item("encounternumber", self.xml.encounter_number)
+        self.add_item("updatedon", self.xml.updated_on)
+        self.add_item("externalid", self.xml.external_id)
+        # fmt: on
+
+
+# class TransplantList
+# class Encounter
