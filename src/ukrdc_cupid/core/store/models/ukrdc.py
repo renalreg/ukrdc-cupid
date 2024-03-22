@@ -9,6 +9,8 @@ from ukrdc_cupid.core.store.models.patient import (
     Diagnosis,
     RenalDiagnosis,
     CauseOfDeath,
+    Document,
+    Survey,
 )
 from ukrdc_cupid.core.store.models.longitudinal_records import (
     Observation,
@@ -110,10 +112,10 @@ class PatientRecord(Node):
         self.add_children(OptOut, "opt_outs.opt_out", session)
         self.add_children(ClinicalRelationship, "clinical_relationships.clinical_relationship", session)
 
-        # self.add_children(Document)
+        self.add_children(Document, "documents.document", session)
         # self.add_children(Encounter)
         # self.add_children(TransplantList)
-        # self.add_children(Survey)
+        self.add_children(Survey, "surveys.survey", session)
         # fmt: on
 
     def map_to_database(

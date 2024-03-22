@@ -82,8 +82,12 @@ class Node(ABC):
         xml_code: xsd_types.CodedField,
         optional: bool = True,
     ) -> None:
-        # add properties which are coded fields
-        # TODO: flag an error/workitem if it doesn't exist?
+        # add properties which are coded fields really I could have saved
+        # myself a lot of work if I had written a function like this for
+        # each of the types that get repeatedly reused in the schema. For
+        # example, common metadata appears in almost every table and is
+        # currently hard coded
+
         if (optional and xml_code) or (not optional):
             self.add_item(property_code, xml_code.code)
             self.add_item(property_description, xml_code.description)

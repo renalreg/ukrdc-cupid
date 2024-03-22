@@ -173,3 +173,37 @@ def test_family_history(patient_record:PatientRecord):
     assert family_history_orm.totime == family_history_xml.to_time.to_datetime()
     assert family_history_orm.updatedon == family_history_xml.updated_on.to_datetime()
     assert family_history_orm.externalid == family_history_xml.external_id
+
+def test_document(patient_record:PatientRecord):
+    document_orm = False
+    for orm_object in patient_record.get_orm_list():
+        if orm_object.__tablename__ == "document":
+            document_orm = orm_object
+            break
+    
+    assert document_orm
+
+    document_xml = patient_record.xml.documents.document[0]
+    assert document_orm.cliniciancode == document_xml.clinician.code
+    assert document_orm.cliniciancodestd == document_xml.clinician.coding_standard.value
+    assert document_orm.cliniciandesc == document_xml.clinician.description
+    assert document_orm.documentname == document_xml.document_name
+    assert document_orm.documenttime == document_xml.document_time.to_datetime()
+    assert document_orm.documenttypecode == document_xml.document_type.code
+    assert document_orm.documenttypecodestd == document_xml.document_type.coding_standard
+    assert document_orm.documenttypedesc == document_xml.document_type.description
+    assert document_orm.documenturl == document_xml.document_url
+    assert document_orm.enteredatcode == document_xml.entered_at.code    
+    assert document_orm.enteredatdesc == document_xml.entered_at.description
+    assert document_orm.enteredatcodestd == document_xml.entered_at.coding_standard.value
+    assert document_orm.enteredbycode == document_xml.entered_by.code    
+    assert document_orm.enteredbydesc == document_xml.entered_by.description
+    assert document_orm.externalid == document_xml.external_id
+    assert document_orm.filename == document_xml.file_name
+    assert document_orm.filetype == document_xml.file_type
+    assert document_orm.notetext == document_xml.note_text
+    assert document_orm.statuscode == document_xml.status.code
+    assert document_orm.statuscodestd == document_xml.status.coding_standard
+    assert document_orm.statusdesc == document_xml.status.description
+    assert document_orm.stream == document_xml.stream
+    assert document_orm.updatedon == document_xml.updated_on

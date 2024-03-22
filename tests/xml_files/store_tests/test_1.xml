@@ -86,4 +86,40 @@
             <ExternalId>ABC123</ExternalId>
         </FamilyHistory>
     </FamilyHistories>
+    <Documents>
+        <Document>
+            <DocumentTime>2012-12-21T00:00:00</DocumentTime>
+            <NoteText>This is a sample note text.</NoteText>
+            <DocumentType>
+                <CodingStandard>doc standart</CodingStandard>
+                <Code>123</Code>
+                <Description>Sample Document Type Description</Description>
+            </DocumentType>
+            <Clinician>
+                <CodingStandard>LOCAL</CodingStandard>
+                <Code>123</Code>
+                <Description>Dr 123</Description>
+            </Clinician>
+            <DocumentName>Sample Document</DocumentName>
+            <Status>
+                <CodingStandard>LOCAL</CodingStandard>
+                <Code>123</Code>
+                <Description>status 123</Description>
+            </Status>
+            <EnteredBy>
+                <CodingStandard>LOCAL</CodingStandard>
+                <Code>123</Code>
+                <Description>Nurse 123</Description>
+            </EnteredBy>
+            <EnteredAt>
+                <CodingStandard>RR1+</CodingStandard>
+                <Code>ABC123</Code>
+                <Description>Test Hospital</Description>
+            </EnteredAt>
+            <FileType>application/pdf</FileType>
+            <FileName>sample_document.pdf</FileName>
+            <Stream>VGhpcyBpcyBhIGJhc2U2NCBlbmNvZGVkIGRhdGEgaGVyZQ==</Stream>
+            <DocumentURL>http://example.com/sample_document.pdf</DocumentURL>
+        </Document>
+    </Documents>
 </ukrdc:PatientRecord>

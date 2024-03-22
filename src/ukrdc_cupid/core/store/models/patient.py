@@ -13,6 +13,11 @@ from ukrdc_cupid.core.store.models.structure import Node
 import ukrdc_xsdata.ukrdc as xsd_ukrdc  # type: ignore
 import ukrdc_xsdata.ukrdc.types as xsd_types  # type: ignore
 import ukrdc_xsdata.ukrdc.allergies as xsd_allergy  # type: ignore
+import ukrdc_xsdata.ukrdc.diagnoses as xsd_diagnosis  # type: ignore
+import ukrdc_xsdata.ukrdc.surveys as xsd_surveys  # type: ignore
+import ukrdc_xsdata.ukrdc.family_histories as xsd_family_histories
+
+# import ukrdc_xsdata.ukrdc
 
 
 def add_address(node: Node, address_xml: xsd_types.Address):
@@ -177,7 +182,7 @@ class SocialHistory(Node):
 
 
 class FamilyHistory(Node):
-    def __init__(self, xml):
+    def __init__(self, xml: xsd_family_histories):
         super().__init__(xml, sqla.FamilyHistory)
 
     def sqla_mapped() -> str:
@@ -225,7 +230,7 @@ class Allergy(Node):
 
 
 class Diagnosis(Node):
-    def __init__(self, xml):
+    def __init__(self, xml: xsd_diagnosis.Diagnosis):
         super().__init__(xml, sqla.Diagnosis)
 
     def sqla_mapped() -> str:
@@ -253,7 +258,7 @@ class Diagnosis(Node):
 
 
 class RenalDiagnosis(Node):
-    def __init__(self, xml):
+    def __init__(self, xml: xsd_diagnosis.RenalDiagnosis):
         super().__init__(xml, sqla.RenalDiagnosis)
 
     def sqla_mapped() -> str:
@@ -282,7 +287,7 @@ class RenalDiagnosis(Node):
 
 
 class CauseOfDeath(Node):
-    def __init__(self, xml):
+    def __init__(self, xml: xsd_diagnosis.CauseOfDeath):
         super().__init__(xml, sqla.CauseOfDeath)
 
     def sqla_mapped() -> str:
@@ -307,5 +312,76 @@ class CauseOfDeath(Node):
         # fmt: on
 
 
-# class Document
-# class Survey
+class Document(Node):
+    def __init__(self, xml: xsd_diagnosis.Diagnosis):
+        super().__init__(xml, sqla.Document)
+
+    def sqla_mapped() -> str:
+        return "documents"
+
+    def map_xml_to_orm(self, orm_object):
+        self.add_code(
+            "cliniciancode", "cliniciancodestd", "cliniciandesc", self.xml.clinician
+        )
+        self.add_item("documentname", self.xml.document_name)
+        self.add_item("documenttime", self.xml.document_time)
+        self.add_code(
+            "documenttypecode",
+            "documenttypecodestd",
+            "documenttypedesc",
+            self.xml.document_type,
+        )
+        self.add_item("documenturl", self.xml.document_url)
+        self.add_code(
+            "enteredatcode", "enteredatcodestd", "enteredatdesc", self.xml.entered_at
+        )
+        self.add_code(
+            "enteredbycode", "enteredbycodestd", "enteredbydesc", self.xml.entered_by
+        )
+        self.add_item("externalid", self.xml.external_id, optional=True)
+        self.add_item("filename", self.xml.file_name)
+        self.add_item("filetype", self.xml.file_type)
+        self.add_item("notetext", self.xml.note_text)
+        self.add_code("statuscode", "statuscodestd", "statusdesc", self.xml.status)
+        # not sure exactly what's going on here. I think the purpose of this
+        # field is to store the document as binary. The xsdata models seem to
+        # decode it automatically. Probably it then gets encoded again
+        if self.xml.stream:
+            self.orm_object.stream = self.xml.stream
+            print(":)")
+
+        # self.add_item("stream", int(self.xml.stream))
+        self.add_item("updatedon", self.xml.updated_on, optional=True)
+
+
+class Survey(Node):
+    def __init__(self, xml: xsd_surveys.Survey):
+        super().__init__(xml, sqla.Survey)
+
+    def sqla_mapped() -> str:
+        return "surveys"
+
+    def map_xml_to_orm(self, _):
+        pass
+
+
+class Score(Node):
+    def __init__(self, xml: xsd_surveys.Score):
+        super().__init__(xml, sqla.Score)
+
+    def sqla_mapped() -> str:
+        return "scores"
+
+    def map_xml_to_orm(self, _):
+        pass
+
+
+class Question(Node):
+    def __init__(self, xml: xsd_surveys.Question):
+        super().__init__(xml, sqla.Question)
+
+    def sqla_mapped() -> str:
+        return "questions"
+
+    def map_xml_to_orm(self, _):
+        pass
