@@ -148,3 +148,62 @@ def test_family_doctor(patient_record:PatientRecord):
     assert family_doctor_orm.gpid == family_doctor_xml.gpid
     assert family_doctor_orm.gpname == family_doctor_xml.gpname
     #assert address or whatever else
+
+def test_family_history(patient_record:PatientRecord):
+    family_history_orm = False
+    for orm_object in patient_record.get_orm_list():
+        if orm_object.__tablename__ == "familyhistory":
+            family_history_orm = orm_object
+            break
+    
+    assert family_history_orm
+
+    family_history_xml = patient_record.xml.family_histories.family_history[0]
+    assert family_history_orm.familymembercode == family_history_xml.family_member.code
+    assert family_history_orm.familymembercodestd == family_history_xml.family_member.coding_standard
+    assert family_history_orm.familymemberdesc == family_history_xml.family_member.description
+    assert family_history_orm.diagnosiscodestd == family_history_xml.diagnosis.coding_standard.value
+    assert family_history_orm.diagnosiscode == family_history_xml.diagnosis.code
+    assert family_history_orm.diagnosisdesc == family_history_xml.diagnosis.description
+    assert family_history_orm.notetext == family_history_xml.note_text
+    assert family_history_orm.enteredatcode == family_history_xml.entered_at.code
+    assert family_history_orm.enteredatcodestd == family_history_xml.entered_at.coding_standard.value
+    assert family_history_orm.enteredatdesc == family_history_xml.entered_at.description
+    assert family_history_orm.fromtime == family_history_xml.from_time.to_datetime()
+    assert family_history_orm.totime == family_history_xml.to_time.to_datetime()
+    assert family_history_orm.updatedon == family_history_xml.updated_on.to_datetime()
+    assert family_history_orm.externalid == family_history_xml.external_id
+
+def test_document(patient_record:PatientRecord):
+    document_orm = False
+    for orm_object in patient_record.get_orm_list():
+        if orm_object.__tablename__ == "document":
+            document_orm = orm_object
+            break
+    
+    assert document_orm
+
+    document_xml = patient_record.xml.documents.document[0]
+    assert document_orm.cliniciancode == document_xml.clinician.code
+    assert document_orm.cliniciancodestd == document_xml.clinician.coding_standard.value
+    assert document_orm.cliniciandesc == document_xml.clinician.description
+    assert document_orm.documentname == document_xml.document_name
+    assert document_orm.documenttime == document_xml.document_time.to_datetime()
+    assert document_orm.documenttypecode == document_xml.document_type.code
+    assert document_orm.documenttypecodestd == document_xml.document_type.coding_standard
+    assert document_orm.documenttypedesc == document_xml.document_type.description
+    assert document_orm.documenturl == document_xml.document_url
+    assert document_orm.enteredatcode == document_xml.entered_at.code    
+    assert document_orm.enteredatdesc == document_xml.entered_at.description
+    assert document_orm.enteredatcodestd == document_xml.entered_at.coding_standard.value
+    assert document_orm.enteredbycode == document_xml.entered_by.code    
+    assert document_orm.enteredbydesc == document_xml.entered_by.description
+    assert document_orm.externalid == document_xml.external_id
+    assert document_orm.filename == document_xml.file_name
+    assert document_orm.filetype == document_xml.file_type
+    assert document_orm.notetext == document_xml.note_text
+    assert document_orm.statuscode == document_xml.status.code
+    assert document_orm.statuscodestd == document_xml.status.coding_standard
+    assert document_orm.statusdesc == document_xml.status.description
+    assert document_orm.stream == document_xml.stream
+    assert document_orm.updatedon == document_xml.updated_on
