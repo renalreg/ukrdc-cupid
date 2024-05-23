@@ -1,6 +1,7 @@
 import time
 
 from sqlalchemy.orm import Session
+from sqlalchemy import text
 from ukrdc_cupid.core.store.models.ukrdc import PatientRecord
 from sqlalchemy.exc import OperationalError
 from ukrdc_sqla.ukrdc import Base
@@ -21,7 +22,7 @@ def advisory_lock(func):
             try:
                 # Try to acquire an advisory lock for the specified pid
                 ukrdc_session.execute(
-                    f"SELECT pg_advisory_lock({int(pid)}::int)"
+                    text(f"SELECT pg_advisory_lock({int(pid)}::int)")
                 )  # type:ignore
 
             except OperationalError as e:
@@ -38,7 +39,7 @@ def advisory_lock(func):
 
                 # Release the advisory lock regardless of success or failure
                 ukrdc_session.execute(
-                    f"SELECT pg_advisory_unlock({int(pid)}::int)"
+                    text(f"SELECT pg_advisory_unlock({int(pid)}::int)")
                 )  # type:ignore
                 return result
 

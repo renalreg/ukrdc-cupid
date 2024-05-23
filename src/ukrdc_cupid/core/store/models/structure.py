@@ -6,6 +6,7 @@ from decimal import Decimal
 import ukrdc_cupid.core.store.keygen as key_gen
 import ukrdc_sqla.ukrdc as sqla
 from sqlalchemy.orm import Session
+from sqlalchemy import select
 from datetime import datetime
 
 import ukrdc_xsdata as xsd_all  # type:ignore
@@ -289,4 +290,53 @@ class Node(ABC):
     @abstractmethod
     def map_xml_to_orm(self, session: Session) -> None:
         # In this function all the idiosyncracies of the xml and the database are hard coded
+        pass
+
+
+class UKRRRefTableBase:
+    def __init__(self, renalreg_session: Session, ukrdc_session: Session):
+        self.ukrr_session = renalreg_session
+        self.ukrdc_session = ukrdc_session
+        self.orm_object: sqla.Base
+
+    def sync_table_from_renalreg(self):
+        """To start with we just do a full sync but in the future we can add in
+        functionality so that only some codes get synced for e.g if new codes
+        have been added which aren't in the ukrdc.
+        """
+
+        # query all renalreg records
+        ukrr_codes_to_sync = (
+            self.ukrr_session.execute(select(self.orm_object)).scalars().all()
+        )
+
+        # iterate through records
+        for ukrr_code in ukrr_codes_to_sync:
+            key_attrs = {}
+            for attr in self.key_properties():
+                key_attrs[attr] = getattr(ukrr_code, attr)
+
+            # look up records using primary key properties
+            ukrdc_code = self.ukrdc_session.get(self.orm_object, key_attrs)
+
+            if ukrdc_code:
+                # if it exists we compare attributes and modify if necessary
+                attrs = [attr for attr in dir(ukrdc_code) if not attr.startswith("_")]
+                for attr in attrs:
+                    ukrr_value = getattr(ukrr_code, attr)
+                    if getattr(ukrdc_code, attr) != ukrr_value:
+                        setattr(ukrdc_code, attr, ukrr_value)
+            else:
+                # if not we add it to ukrdc
+                self.ukrr_session.expunge(ukrr_code)
+                self.ukrdc_session.add(ukrr_code)
+
+        self.ukrdc_session.commit()
+
+    @classmethod
+    @abstractmethod
+    def key_properties():
+        """Everything required to uniquely define a record in one of the
+        reference tables.
+        """
         pass
