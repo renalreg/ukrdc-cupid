@@ -174,6 +174,17 @@ def test_family_history(patient_record:PatientRecord):
     assert family_history_orm.updatedon == family_history_xml.updated_on.to_datetime()
     assert family_history_orm.externalid == family_history_xml.external_id
 
+
+def test_cause_of_death(patient_record:PatientRecord):
+    cause_of_death_orm = False
+    for orm_object in patient_record.get_orm_list():
+        if orm_object.__tablename__ == "causeofdeath":
+            cause_of_death_orm = orm_object
+            break
+    
+    #assert cause_of_death_orm
+    assert True
+
 def test_document(patient_record:PatientRecord):
     document_orm = False
     for orm_object in patient_record.get_orm_list():

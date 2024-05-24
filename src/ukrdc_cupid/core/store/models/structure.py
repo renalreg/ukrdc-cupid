@@ -3,6 +3,7 @@ from abc import ABC, abstractmethod
 from typing import Optional, Union, List, Type
 from decimal import Decimal
 
+import csv
 import ukrdc_cupid.core.store.keygen as key_gen
 import ukrdc_sqla.ukrdc as sqla
 from sqlalchemy.orm import Session
@@ -299,10 +300,36 @@ class UKRRRefTableBase:
         self.ukrdc_session = ukrdc_session
         self.orm_object: sqla.Base
 
+    def backup_to_file(self, filepath: str):
+        # query codes
+        ukrr_codes_to_sync = (
+            self.ukrr_session.execute(select(self.orm_object)).scalars().all()
+        )
+
+        # write out codes to file
+        with open(filepath, mode="w", newline="") as file:
+            writer = csv.writer(file)
+
+            # Write header row
+            header = [column.name for column in self.orm_object.__table__.columns]
+            writer.writerow(header)
+
+            # Write data rows
+            for code in ukrr_codes_to_sync:
+                row = [
+                    getattr(code, column.name)
+                    for column in self.orm_object.__table__.columns
+                ]
+                writer.writerow(row)
+
     def sync_table_from_renalreg(self):
         """To start with we just do a full sync but in the future we can add in
         functionality so that only some codes get synced for e.g if new codes
         have been added which aren't in the ukrdc.
+
+        This should have been simply a case of detaching and merging but there
+        are issues with copying from one dialect to another so instead we
+        manually copy to a blank orm object.
         """
 
         # query all renalreg records
@@ -312,24 +339,19 @@ class UKRRRefTableBase:
 
         # iterate through records
         for ukrr_code in ukrr_codes_to_sync:
-            key_attrs = {}
-            for attr in self.key_properties():
-                key_attrs[attr] = getattr(ukrr_code, attr)
+            # we have to  manually copy attributes because they are different
+            # dialects of sql
+            # Create a dictionary to store the values
+            values = {}
+            for column in self.orm_object.__table__.columns:
+                value = getattr(ukrr_code, column.name)
+                # sqla doesn't like bit/bool
+                if isinstance(value, bool):
+                    value = "1" if value else "0"
 
-            # look up records using primary key properties
-            ukrdc_code = self.ukrdc_session.get(self.orm_object, key_attrs)
+                values[column.name] = value
 
-            if ukrdc_code:
-                # if it exists we compare attributes and modify if necessary
-                attrs = [attr for attr in dir(ukrdc_code) if not attr.startswith("_")]
-                for attr in attrs:
-                    ukrr_value = getattr(ukrr_code, attr)
-                    if getattr(ukrdc_code, attr) != ukrr_value:
-                        setattr(ukrdc_code, attr, ukrr_value)
-            else:
-                # if not we add it to ukrdc
-                self.ukrr_session.expunge(ukrr_code)
-                self.ukrdc_session.add(ukrr_code)
+            self.ukrdc_session.merge(self.orm_object(**values))
 
         self.ukrdc_session.commit()
 

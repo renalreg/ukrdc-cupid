@@ -59,8 +59,8 @@ class DatabaseConnection:
 
         if not self.url:
             self.url = self.generate_database_url()
-        # self.engine = create_engine(url=self.url, echo=True)
         self.engine = create_engine(url=self.url)
+        # self.engine = create_engine(url=self.url)
 
     def get_property(self, property_name: str, url_property: str) -> str:
         if self.url:

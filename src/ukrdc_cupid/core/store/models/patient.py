@@ -299,11 +299,7 @@ class CauseOfDeath(Node):
         self.add_code("diagnosiscode", "diagnosiscodestd", "diagnosisdesc", self.xml.diagnosis)
 
         self.add_item("comments", self.xml.comments, optional=True)
-        if self.xml.verification_status:
-            print(
-                "Cause of Death verification status not currently supported by the UKRDC database"
-            )
-
+        self.add_item()
         self.add_item("enteredon", self.xml.entered_on, optional=True)
 
         # common metadata
