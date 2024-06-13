@@ -6,7 +6,6 @@ limitations of jtrace.
 """
 from sqlalchemy.orm import Session
 from sqlalchemy import Sequence
-import ukrdc_sqla.ukrdc as sqla
 import ukrdc_xsdata.ukrdc.lab_orders as xsd_lab_orders  # type:ignore
 import ukrdc_xsdata.ukrdc.dialysis_sessions as xsd_dialysis_sessions  # type:ignore
 
@@ -47,9 +46,7 @@ def generate_key_laborder(laborder_xml: xsd_lab_orders, pid: str) -> str:
     return f"{pid}{KEY_SEPERATOR}{laborder_xml.placer_id}"
 
 
-def generate_key_resultitem(
-    resultitem: sqla.ResultItem, order_id: str, seq_no: int
-) -> str:
+def generate_key_resultitem(xml, order_id: int, seq_no: int) -> str:
     """generates result item key. This is somewhat more complicated than some.
     https://github.com/renalreg/Data-Repository/blob/44d0b9af3eb73705de800fd52fe5a6b847219b31/src/main/java/org/ukrdc/repository/RepositoryManager.java#LL693C5-L693C5
 
@@ -58,12 +55,12 @@ def generate_key_resultitem(
         order_id (str): _description_
         seq_no (int): _description_
     """
-    if resultitem.prepost == "PRE":
-        return (
-            f"{order_id}{KEY_SEPERATOR}{resultitem.service_id}{KEY_SEPERATOR}{seq_no}"
-        )
+    service_id = xml.service_id.code
+    pre_post = xml.pre_post.value
+    if pre_post == "PRE":
+        return f"{order_id}{KEY_SEPERATOR}{service_id}{KEY_SEPERATOR}{seq_no}"
     else:
-        return f"{order_id}{KEY_SEPERATOR}{resultitem.prepost}{KEY_SEPERATOR}{resultitem.service_id}{KEY_SEPERATOR}{seq_no}"
+        return f"{order_id}{KEY_SEPERATOR}{pre_post}{KEY_SEPERATOR}{service_id}{KEY_SEPERATOR}{seq_no}"
 
 
 def generate_key_dialysis_session(

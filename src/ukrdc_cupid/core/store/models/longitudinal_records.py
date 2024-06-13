@@ -47,7 +47,25 @@ class ResultItem(Node):
     def sqla_mapped() -> str:
         return "result_items"
 
-    def map_xml_to_orm(self, _):
+    def generate_id(self, seq_no: str, order_id: str) -> str:
+        # define id generation method for consistency
+        return key_gen.generate_key_resultitem(self.xml, order_id, seq_no)
+
+    def map_to_database(self, session: Session, seq_no: int, order_id: str) -> str:
+        # look up key in database and make new orm if it doesn't exist
+        id = self.generate_id(seq_no, order_id)
+        self.orm_object = session.get(self.orm_model, id)
+
+        if self.orm_object is None:
+            self.orm_object = self.orm_model(id=id)  # type:ignore
+            self.is_new_record = True
+
+        else:
+            self.is_new_record = False
+
+        return id
+
+    def map_xml_to_orm(self):
 
         # fmt: off
         self.add_item("resulttype", self.xml.result_type)
@@ -69,6 +87,8 @@ class ResultItem(Node):
 class LabOrder(Node):
     def __init__(self, xml: xsd_lab_orders.LabOrder):
         super().__init__(xml, sqla.LabOrder)
+        # we will need this for generating resultitem keys
+        self.parent_data: dict = None
 
     def sqla_mapped() -> str:
         return "lab_orders"
@@ -76,8 +96,34 @@ class LabOrder(Node):
     def generate_id(self, _) -> str:
         return key_gen.generate_key_laborder(self.xml, self.pid)
 
-    def generate_parent_data(self, seq_no: int):
-        return {"idx": seq_no, "order_id": self.orm_object.id}
+    def add_children(self, session: Session) -> None:
+
+        # unpack the xml_items:
+        if self.xml.result_items:
+            result_items = self.xml.result_items.result_item
+
+        result_item_ids = []
+        for seq_no, result_item in enumerate(result_items):
+            # initialize result item
+            order_id = self.orm_object.id
+            result_obj = ResultItem(xml=result_item)
+
+            # map to database
+            id = result_obj.map_to_database(session, seq_no, order_id)
+            result_item_ids.append(id)
+
+            # Map the rest of the fields
+            result_obj.map_xml_to_orm()
+            # result_obj.add_item("orderid",order_id, optional=False)
+            result_obj.orm_object.order_id = order_id
+            print(result_obj.orm_object.order_id)
+            # result_obj.orm_object.orderid = order_id
+            result_obj.updated_status()
+
+            # append to parent
+            self.mapped_classes.append(result_obj)
+
+        self.add_deleted(ResultItem.sqla_mapped(), result_item_ids)
 
     def map_xml_to_orm(self, session: Session) -> None:
         # fmt: off
@@ -103,7 +149,7 @@ class LabOrder(Node):
         self.add_code("enteredatcode","enteredatdesc","enteredatcodestd",self.xml.entered_at,optional=True)
         self.add_code("enteringorganizationcode","enteringorganizationcodestd","enteringorganizationdesc",self.xml.entering_organization,optional=True)
         
-        self.add_children(ResultItem, "result_items.result_item", session)
+        self.add_children(session)
         # fmt: on
 
 
