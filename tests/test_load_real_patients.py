@@ -19,8 +19,8 @@ from sqlalchemy.orm import Session
 from sqlalchemy_utils import database_exists
 from conftest import ukrdc_sessionmaker
 
-XML_DIRECTORY = ".xml_to_load/converted/*.xml"
-PERSISTENT_URL = "postgresql://postgres:postgres@localhost:5432/test_ukrdc_persistent"
+XML_DIRECTORY = ".xml_to_load/*.xml"
+PERSISTENT_URL = "postgresql://postgres:postgres@localhost:5432/test_ukrdc_new"
 
 @pytest.fixture(scope="function")
 def ukrdc_test_session_persistent():
