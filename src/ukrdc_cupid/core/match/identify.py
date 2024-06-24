@@ -9,7 +9,11 @@ import ukrdc_sqla.ukrdc as orm
 import ukrdc_xsdata.ukrdc as xsd_ukrdc  # type: ignore
 from sqlalchemy.orm import Session
 from sqlalchemy import select, and_, tuple_
-from ukrdc_cupid.core.audit.validate_matches import validate_demog, validate_demog_ukrdc
+from ukrdc_cupid.core.audit.validate_matches import (
+    validate_demog,
+    validate_demog_ukrdc,
+    validate_NI_mismatch,
+)
 from ukrdc_cupid.core.investigate.create_investigation import Investigation
 
 from typing import List, Any
@@ -105,6 +109,9 @@ def read_patient_metadata(xml: xsd_ukrdc.PatientRecord) -> dict:
     patient_info = {
         "sending_extract": xml.sending_extract.value,
         "sending_facility": xml.sending_facility.value,
+        "channel": xml.sending_facility.channel_name,
+        "sending_time": xml.sending_facility.time,
+        "schema_version": xml.sending_facility.schema_version,
         "birth_time": xml.patient.birth_time.to_datetime(),
         # "gender" : xml.patient.gender,
         # "postcodes" : [address.postcode for address in xml.patient.addresses.address],
@@ -129,6 +136,88 @@ def read_patient_metadata(xml: xsd_ukrdc.PatientRecord) -> dict:
     return patient_info
 
 
+def identify_patient_feed(ukrdc_session: Session, patient_info: dict) -> Any:
+    """See documentation for overview of how this is working:
+    https://renalregistry.atlassian.net/wiki/x/BQAfkw
+
+    The patient info is matched (or not) with the MRN. It then goes through
+    as series of steps to confirm or otherwise the match.
+
+    Args:
+        ukrdc_session (Session): _description_
+        patient_info (dict): _description_
+
+    Returns:
+        Any: _description_
+    """
+
+    # match patients on mrn and NI
+    matched_patients_mrn = match_mrn(ukrdc_session, patient_info)
+    matched_patients_ni = match_ni(ukrdc_session, patient_info)
+    matched_mrn_no = len(matched_patients_mrn)
+    matched_ni_no = len(matched_patients_ni)
+
+    # new patient?
+    if matched_mrn_no == 0:
+        if matched_ni_no == 0:
+            return None, None, None
+        else:
+            return None, None, Investigation(ukrdc_session, matched_patients_ni, 4)
+
+    # set the pid based on the matched mrn
+    elif matched_mrn_no == 1:
+        pid, ukrdcid = matched_patients_mrn[0]
+
+    # return investigation if multiple matches have been found
+    else:
+        return None, None, Investigation(ukrdc_session, matched_patients_mrn, 3)
+
+    # detect if anonymized record and change goalposts slightly
+    # we could also consider blanking the ukrdc id here if its the first
+    # time the patient has been seen in anonymized form this would mean
+    # a new ukrdc id would get minted unlinking it from other patients
+    # alternatively this could easily be done by a seperate process maybe
+    # the one that issue the UKRR_UID in the first place.
+    is_anon = patient_info["MRN"][1] == "UKRR_UID"
+    is_valid = validate_demog(
+        ukrdc_session, patient_info["birth_time"], pid, is_anon=is_anon
+    )
+
+    if not is_valid:
+        return None, None, Investigation(ukrdc_session, matched_patients_mrn, 1)
+
+    # anonymized have no further checks carried out
+    if is_anon:
+        return pid, ukrdcid, None
+
+    # records with no NI matches cannot be validated
+    if matched_ni_no == 0:
+        return None, None, Investigation(ukrdc_session, matched_patients_mrn, 2)
+
+    # check ni and mrn matches tell the same story
+    is_consistent = matched_patients_mrn == matched_patients_ni
+    if is_consistent:
+        return pid, ukrdcid, None
+
+    else:
+        mismatch_failed = validate_NI_mismatch(pid)
+        if mismatch_failed == 0:
+            patients = matched_patients_mrn + [
+                patient
+                for patient in matched_patients_ni
+                if patient not in matched_patients_mrn
+            ]
+            return (
+                None,
+                None,
+                Investigation(ukrdc_session, patients, 4),
+            )
+        else:
+            print("Placeholder for logic where the mismatch is allowed")
+            return pid, ukrdcid, None
+
+
+'''
 def identify_patient_feed(ukrdc_session: Session, patient_info: dict) -> Any:
     """Identify patient based on patient numbers. It uses a combination of
     three different bits of information. The NI, the MRN and the demographics
@@ -163,7 +252,7 @@ def identify_patient_feed(ukrdc_session: Session, patient_info: dict) -> Any:
     # check MRN look up returns a single patient
     if len(matched_patients_mrn) > 1:
         investigation = Investigation(ukrdc_session, matched_patients_mrn, 3)
-
+        investigation.create_issue()
         # information to store about issue
 
         return None, None, investigation
@@ -181,7 +270,8 @@ def identify_patient_feed(ukrdc_session: Session, patient_info: dict) -> Any:
         else:
             investigation = Investigation(
                 ukrdc_session, matched_patients_mrn, 1
-            ).create_issue()
+            )
+            investigation.create_issue()
             return None, None, investigation
 
     # check NI and MRN give the same story
@@ -189,7 +279,8 @@ def identify_patient_feed(ukrdc_session: Session, patient_info: dict) -> Any:
     if matched_patients_mrn != matched_patients_ni and len(matched_patients_ni) != 0:
         investigation = Investigation(
             ukrdc_session, matched_patients_mrn + matched_patients_ni, 4
-        ).create_issue()
+        )
+        investigation.create_issue()
         return None, None, investigation
 
     # check dob
@@ -200,8 +291,10 @@ def identify_patient_feed(ukrdc_session: Session, patient_info: dict) -> Any:
     else:
         investigation = Investigation(
             ukrdc_session, matched_patients_mrn, 1
-        ).create_issue()
+        )
+        investigation.create_issue()
         return None, None, investigation
+'''
 
 
 def match_ukrdc(session: Session, patient_ids: List[List[str]]) -> Any:
@@ -258,12 +351,14 @@ def identify_across_ukrdc(ukrdc_session: Session, patient_info: dict) -> Any:
                 ukrdc_session,
                 matched_ids,
                 69,
-            ).create_issue()
+            )
+            investigation.create_issue()
             return None, investigation
     else:
         investigation = Investigation(
             ukrdc_session,
             matched_ids,
             69,
-        ).create_issue()
+        )
+        investigation.create_issue()
         return None, investigation

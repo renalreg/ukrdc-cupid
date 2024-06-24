@@ -6,7 +6,7 @@ ENV PYTHONUNBUFFERED=1 \
 
 # `build-essential` required to build some wheels on newer Python versions, `openssh-client` required to clone some dependencies
 RUN apt-get update && \
-    apt-get install -y --no-install-recommends build-essential git openssh-client libpq-dev && \
+    apt-get install -y --no-install-recommends build-essential git && \
     rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
@@ -19,3 +19,5 @@ COPY . ./
 
 # Install production dependencies with poetry
 RUN poetry install --only main --no-interaction
+
+# Build 

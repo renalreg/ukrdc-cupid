@@ -26,9 +26,9 @@ TEST_UKRDCID = "test_ukrdc:543"
 
 
 @pytest.fixture(scope="function")
-def patient_record(ukrdc_test_session:Session):
+def patient_record(ukrdc_test_session: Session):
     xml_test_1 = load_xml_from_path(
-        os.path.join("tests","xml_files","store_tests","test_1.xml")
+        os.path.join("tests", "xml_files", "store_tests", "test_1.xml")
     )
     patient_record = PatientRecord(xml_test_1)
     patient_record.map_to_database(TEST_PID, TEST_UKRDCID, ukrdc_test_session)
@@ -36,7 +36,7 @@ def patient_record(ukrdc_test_session:Session):
     return patient_record
 
 
-def test_patient_record(patient_record:PatientRecord):
+def test_patient_record(patient_record: PatientRecord):
 
     patient_record_orm = False
     for orm_object in patient_record.get_orm_list():
@@ -48,12 +48,14 @@ def test_patient_record(patient_record:PatientRecord):
     assert patient_record_orm.pid == TEST_PID
     assert patient_record_orm.ukrdcid == TEST_UKRDCID
     assert patient_record_orm.localpatientid == "AAA111B"
-    
-    assert patient_record_orm.sendingfacility == patient_record.xml.sending_facility.value
+
+    assert (
+        patient_record_orm.sendingfacility == patient_record.xml.sending_facility.value
+    )
     assert patient_record_orm.sendingextract == patient_record.xml.sending_extract.value
 
 
-def test_patient(patient_record:PatientRecord):
+def test_patient(patient_record: PatientRecord):
     patient_orm = False
     for orm_object in patient_record.get_orm_list():
         if orm_object.__tablename__ == "patient":
@@ -65,15 +67,19 @@ def test_patient(patient_record:PatientRecord):
     assert patient_orm.pid == TEST_PID
 
     patient_xml = patient_record.xml.patient
-    # check attributes of orm objects 
+    # check attributes of orm objects
     assert patient_orm.birthtime == patient_xml.birth_time.to_datetime()
     assert patient_orm.countryofbirth == patient_xml.country_of_birth
-    assert patient_orm.death == patient_xml.death
-    assert patient_orm.deathtime == patient_xml.death_time.to_datetime()
+    if not patient_xml.death:
+        assert not patient_orm.death
+        assert not patient_orm.deathtime
+    else:
+        assert patient_orm.death 
+        assert patient_xml.death_time.to_datetime()
     assert patient_orm.gender == patient_xml.gender.value
 
 
-def test_name(patient_record:PatientRecord):
+def test_name(patient_record: PatientRecord):
     name_orm = False
     for orm_object in patient_record.get_orm_list():
         if orm_object.__tablename__ == "name":
@@ -90,7 +96,7 @@ def test_name(patient_record:PatientRecord):
     assert name_orm.suffix == name_xml.suffix
 
 
-def test_contact_detail(patient_record:PatientRecord):
+def test_contact_detail(patient_record: PatientRecord):
     contact_detail_orm = False
     for orm_object in patient_record.get_orm_list():
         if orm_object.__tablename__ == "contactdetail":
@@ -109,7 +115,7 @@ def test_contact_detail(patient_record:PatientRecord):
     assert contact_detail_orm.contactuse == contact_detail_xml.use.value
 
 
-def test_address(patient_record:PatientRecord):
+def test_address(patient_record: PatientRecord):
     address_orm = False
     for orm_object in patient_record.get_orm_list():
         if orm_object.__tablename__ == "address":
@@ -132,13 +138,13 @@ def test_address(patient_record:PatientRecord):
     assert address_orm.countrydesc == address_xml.country.description
 
 
-def test_family_doctor(patient_record:PatientRecord):
+def test_family_doctor(patient_record: PatientRecord):
     family_doctor_orm = False
     for orm_object in patient_record.get_orm_list():
         if orm_object.__tablename__ == "familydoctor":
             family_doctor_orm = orm_object
             break
-    
+
     assert family_doctor_orm
 
     family_doctor_xml = patient_record.xml.patient.family_doctor
@@ -147,27 +153,40 @@ def test_family_doctor(patient_record:PatientRecord):
     assert family_doctor_orm.gppracticeid == family_doctor_xml.gppractice_id
     assert family_doctor_orm.gpid == family_doctor_xml.gpid
     assert family_doctor_orm.gpname == family_doctor_xml.gpname
-    #assert address or whatever else
+    # assert address or whatever else
 
-def test_family_history(patient_record:PatientRecord):
+
+def test_family_history(patient_record: PatientRecord):
     family_history_orm = False
     for orm_object in patient_record.get_orm_list():
         if orm_object.__tablename__ == "familyhistory":
             family_history_orm = orm_object
             break
-    
+
     assert family_history_orm
 
     family_history_xml = patient_record.xml.family_histories.family_history[0]
     assert family_history_orm.familymembercode == family_history_xml.family_member.code
-    assert family_history_orm.familymembercodestd == family_history_xml.family_member.coding_standard
-    assert family_history_orm.familymemberdesc == family_history_xml.family_member.description
-    assert family_history_orm.diagnosiscodestd == family_history_xml.diagnosis.coding_standard.value
+    assert (
+        family_history_orm.familymembercodestd
+        == family_history_xml.family_member.coding_standard
+    )
+    assert (
+        family_history_orm.familymemberdesc
+        == family_history_xml.family_member.description
+    )
+    assert (
+        family_history_orm.diagnosiscodestd
+        == family_history_xml.diagnosis.coding_standard.value
+    )
     assert family_history_orm.diagnosiscode == family_history_xml.diagnosis.code
     assert family_history_orm.diagnosisdesc == family_history_xml.diagnosis.description
     assert family_history_orm.notetext == family_history_xml.note_text
     assert family_history_orm.enteredatcode == family_history_xml.entered_at.code
-    assert family_history_orm.enteredatcodestd == family_history_xml.entered_at.coding_standard.value
+    assert (
+        family_history_orm.enteredatcodestd
+        == family_history_xml.entered_at.coding_standard.value
+    )
     assert family_history_orm.enteredatdesc == family_history_xml.entered_at.description
     assert family_history_orm.fromtime == family_history_xml.from_time.to_datetime()
     assert family_history_orm.totime == family_history_xml.to_time.to_datetime()
@@ -175,23 +194,24 @@ def test_family_history(patient_record:PatientRecord):
     assert family_history_orm.externalid == family_history_xml.external_id
 
 
-def test_cause_of_death(patient_record:PatientRecord):
+def test_cause_of_death(patient_record: PatientRecord):
     cause_of_death_orm = False
     for orm_object in patient_record.get_orm_list():
         if orm_object.__tablename__ == "causeofdeath":
             cause_of_death_orm = orm_object
             break
-    
-    #assert cause_of_death_orm
+
+    # assert cause_of_death_orm
     assert True
 
-def test_document(patient_record:PatientRecord):
+
+def test_document(patient_record: PatientRecord):
     document_orm = False
     for orm_object in patient_record.get_orm_list():
         if orm_object.__tablename__ == "document":
             document_orm = orm_object
             break
-    
+
     assert document_orm
 
     document_xml = patient_record.xml.documents.document[0]
@@ -201,13 +221,17 @@ def test_document(patient_record:PatientRecord):
     assert document_orm.documentname == document_xml.document_name
     assert document_orm.documenttime == document_xml.document_time.to_datetime()
     assert document_orm.documenttypecode == document_xml.document_type.code
-    assert document_orm.documenttypecodestd == document_xml.document_type.coding_standard
+    assert (
+        document_orm.documenttypecodestd == document_xml.document_type.coding_standard
+    )
     assert document_orm.documenttypedesc == document_xml.document_type.description
     assert document_orm.documenturl == document_xml.document_url
-    assert document_orm.enteredatcode == document_xml.entered_at.code    
+    assert document_orm.enteredatcode == document_xml.entered_at.code
     assert document_orm.enteredatdesc == document_xml.entered_at.description
-    assert document_orm.enteredatcodestd == document_xml.entered_at.coding_standard.value
-    assert document_orm.enteredbycode == document_xml.entered_by.code    
+    assert (
+        document_orm.enteredatcodestd == document_xml.entered_at.coding_standard.value
+    )
+    assert document_orm.enteredbycode == document_xml.entered_by.code
     assert document_orm.enteredbydesc == document_xml.entered_by.description
     assert document_orm.externalid == document_xml.external_id
     assert document_orm.filename == document_xml.file_name

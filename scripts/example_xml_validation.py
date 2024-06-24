@@ -1,10 +1,13 @@
 from pathlib import Path
 import csv
-import os 
+import os
 from ukrdc_cupid.core.parse.xml_validate import validate_rda_xml_string
 
-def report_errors(file:str, schema_version:str):
-    print(f"\nRunning validation for file {file} against schema version {schema_version}")
+
+def report_errors(file: str, schema_version: str):
+    print(
+        f"\nRunning validation for file {file} against schema version {schema_version}"
+    )
     errors = validate_rda_xml_string(Path(file).read_text(), schema_version)
     if errors:
         print("-----------------------")
@@ -14,12 +17,13 @@ def report_errors(file:str, schema_version:str):
         for line, error in errors.items():
             print(f"{line:14s}| {error}")
         return errors
-    else: 
+    else:
         print("No errors found")
         return
 
-#input_path = r"C:\Users\philip.main\Source\ins_files"
-#input_path = r"C:\Users\philip.main\Source\CCL_xml_v5\2023-07-26\corrected"
+
+# input_path = r"C:\Users\philip.main\Source\ins_files"
+# input_path = r"C:\Users\philip.main\Source\CCL_xml_v5\2023-07-26\corrected"
 input_path = r"scripts\xml_examples"
 
 xml_files = [item for item in Path(input_path).rglob("*.xml")]
@@ -38,7 +42,12 @@ for file in xml_files:
     errors = report_errors(file, schema_version)
     if errors:
         # Append errors to the list
-        all_errors.extend([(os.path.basename(file), schema_version, line, error) for line, error in errors.items()])
+        all_errors.extend(
+            [
+                (os.path.basename(file), schema_version, line, error)
+                for line, error in errors.items()
+            ]
+        )
 
 # Write errors to a CSV file
 if all_errors:

@@ -1,7 +1,12 @@
+import json
+
 from ukrdc_cupid.core.investigate.models import PatientID, Issue
+from xsdata.formats.dataclass.serializers import XmlSerializer
 from datetime import datetime
 from typing import List, Tuple
 from sqlalchemy.orm import Session
+
+serializer = XmlSerializer()
 
 
 def get_patients(
@@ -83,7 +88,9 @@ class Investigation:
 
         return new_issue
 
-    def append_file(self, xml: str, filename: str) -> None:
+    def append_extras(
+        self, xml: str = None, filename: str = None, metadata: dict = None
+    ) -> None:
         """Add some high level bits to the issue if file has been diverted
 
         Args:
@@ -92,8 +99,21 @@ class Investigation:
             other side of MIRTH)
         """
         # append xml and filename to issue
-        self.issue.xml = xml
-        self.issue.filename = filename  # type:ignore
+        if xml is not None:
+            error_xml = serializer.render(xml)
+            self.issue.xml = error_xml
+
+        if filename is not None:
+            self.issue.filename = filename  # type:ignore
+
+        if metadata is not None:
+            # change datetimes to strings
+            metadata_str = {
+                k: v.isoformat() if isinstance(v, datetime) else v
+                for k, v in metadata.items()
+            }
+            self.issue.attributes = json.dumps(metadata_str, indent=4)
+
         self.session.commit()
 
         return
@@ -109,5 +129,4 @@ class Investigation:
         for patient in patients:
             if patient not in self.issue.issue_to_patients:
                 self.issue.issue_to_patients.append(patient)
-
         return

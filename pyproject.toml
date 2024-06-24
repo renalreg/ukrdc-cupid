@@ -10,7 +10,7 @@ version = "0.2.0"
 
 [tool.poetry.dependencies]
 python = "^3.8"
-ukrdc-sqla = {git ="ssh://git@github.com/renalreg/ukrdc-sqla.git", branch = "v5"}
+ukrdc-sqla = {git ="http://git@github.com/renalreg/ukrdc-sqla.git", branch = "v5"}
 lxml = "^4.9.2"
 gitpython = "^3.1.41"
 pydantic = "^2.1.1"

@@ -1,0 +1,83 @@
+<ukrdc:PatientRecord xmlns:ukrdc="http://www.rixg.org.uk/"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+    <SendingFacility channelName="UKRDCSampleExtract" time="2022-07-21T09:00:00"
+        schemaVersion="4.0.0">RFCAT</SendingFacility>
+    <SendingExtract>UKRDC</SendingExtract>
+    <Patient>
+        <PatientNumbers>
+            <PatientNumber>
+                <Number>2718281818</Number>
+                <Organization>UKRR_UID</Organization>
+                <NumberType>MRN</NumberType>
+            </PatientNumber>
+        </PatientNumbers>
+        <Names>
+            <Name use="L">
+                <Family>CONSENT</Family>
+                <Given>REFUSED</Given>
+            </Name>
+        </Names>
+        <BirthTime>1969-01-01T00:00:00</BirthTime>
+        <Gender>1</Gender>
+    </Patient>
+    <FamilyHistories>
+        <FamilyHistory>
+            <FamilyMember>
+                <CodingStandard>LOCAL</CodingStandard>
+                <Code>FM123</Code>
+                <Description>Family Member Description</Description>
+            </FamilyMember>
+            <Diagnosis>
+                <CodingStandard>SNOMED</CodingStandard>
+                <Code>12345678</Code>
+                <Description>Diagnosis Description</Description>
+            </Diagnosis>
+            <NoteText>Some note</NoteText>
+            <EnteredAt>
+                <CodingStandard>ODS</CodingStandard>
+                <Code>ENTERED123</Code>
+                <Description>Entered At Description</Description>
+            </EnteredAt>
+            <FromTime>2012-12-21T00:00:00</FromTime>
+            <ToTime>2012-12-21T00:00:00</ToTime>
+            <UpdatedOn>2012-12-21T00:00:00</UpdatedOn>
+            <ExternalId>ABC123</ExternalId>
+        </FamilyHistory>
+    </FamilyHistories>
+    <Documents>
+        <Document>
+            <DocumentTime>2012-12-21T00:00:00</DocumentTime>
+            <NoteText>This is a sample note text.</NoteText>
+            <DocumentType>
+                <CodingStandard>doc standart</CodingStandard>
+                <Code>123</Code>
+                <Description>Sample Document Type Description</Description>
+            </DocumentType>
+            <Clinician>
+                <CodingStandard>LOCAL</CodingStandard>
+                <Code>123</Code>
+                <Description>Dr 123</Description>
+            </Clinician>
+            <DocumentName>Sample Document</DocumentName>
+            <Status>
+                <CodingStandard>LOCAL</CodingStandard>
+                <Code>123</Code>
+                <Description>status 123</Description>
+            </Status>
+            <EnteredBy>
+                <CodingStandard>LOCAL</CodingStandard>
+                <Code>123</Code>
+                <Description>Nurse 123</Description>
+            </EnteredBy>
+            <EnteredAt>
+                <CodingStandard>RR1+</CodingStandard>
+                <Code>ABC123</Code>
+                <Description>Test Hospital</Description>
+            </EnteredAt>
+            <FileType>application/pdf</FileType>
+            <FileName>sample_document.pdf</FileName>
+            <Stream>VGhpcyBpcyBhIGJhc2U2NCBlbmNvZGVkIGRhdGEgaGVyZQ==</Stream>
+            <DocumentURL>http://example.com/sample_document.pdf</DocumentURL>
+        </Document>
+    </Documents>
+</ukrdc:PatientRecord>

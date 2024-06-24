@@ -23,7 +23,6 @@ services:
       - db
     volumes:
       - .:/app
-      - ~/.ssh:/root/.ssh:ro  # Mount the SSH keys directory
 
 volumes:
   postgres_data:

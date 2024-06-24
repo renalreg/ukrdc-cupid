@@ -20,22 +20,19 @@ xml_directory = ".xml_to_load"
 xml_files = glob.glob(os.path.join(xml_directory, "*.xml"))
 
 with ukrdc_sessionmaker() as ukrdc_session:
-    #with investigate_session() as investigate:
-        for xml_file in xml_files:
-            # load file and validate it 
-            xml_object = load_xml_from_path(xml_file)
-            schema_version = xml_object.sending_facility.schema_version
+    # with investigate_session() as investigate:
+    for xml_file in xml_files:
+        # load file and validate it
+        xml_object = load_xml_from_path(xml_file)
+        schema_version = xml_object.sending_facility.schema_version
 
-            #validate_rda_xml_string(xml_object)
+        # validate_rda_xml_string(xml_object)
 
-            investigation = process_file(
-                xml_object, 
-                ukrdc_session=ukrdc_session, 
-            )
+        investigation = process_file(
+            xml_object,
+            ukrdc_session=ukrdc_session,
+        )
 
-            if investigation:
-                # we add the file to the investigation it has been created
-                investigation.append_file(
-                    xml = str(xml_object),
-                    filename = xml_file
-                )
+        if investigation:
+            # we add the file to the investigation it has been created
+            investigation.append_file(xml=str(xml_object), filename=xml_file)
