@@ -100,39 +100,42 @@ def test_wrong_nhs_number(ukrdc_test_session_persistent: Session):
     # not the NI it should trigger an error
 
     files = glob.glob(XML_DIRECTORY)
-    for file in files:
-        xml_object = load_xml_from_path(file)
+    if len(files) > 0: # turn off test if running in github actions
+        for file in files:
+            xml_object = load_xml_from_path(file)
+            investigation = process_file(
+                xml_object,
+                ukrdc_session=ukrdc_test_session_persistent,
+            )
+            assert not investigation
+
+
+        patient_numbers = ukrdc_test_session_persistent.scalars(
+            select(orm_objects.PatientNumber).limit(10)
+        )
+
+        
+        xml_altered = copy.deepcopy(xml_object)
+
+        for number in xml_altered.patient.patient_numbers.patient_number:
+            if number.organization.value == "NHS":
+                for db_number in patient_numbers.all():
+                    if db_number.organization == "NHS":
+                        if db_number.patientid != number.number:
+                            # we set the nhs number to match a different record
+                            number.number = db_number.patientid
+                            break
+                break
+
+
+
+        # now we run the files back through to flag an error
         investigation = process_file(
-            xml_object,
+            xml_altered,
             ukrdc_session=ukrdc_test_session_persistent,
         )
-        assert not investigation
 
-    patient_numbers = ukrdc_test_session_persistent.scalars(
-        select(orm_objects.PatientNumber).limit(10)
-    )
-
-    xml_altered = copy.deepcopy(xml_object)
-
-    for number in xml_altered.patient.patient_numbers.patient_number:
-        if number.organization.value == "NHS":
-            for db_number in patient_numbers.all():
-                if db_number.organization == "NHS":
-                    if db_number.patientid != number.number:
-                        # we set the nhs number to match a different record
-                        number.number = db_number.patientid
-                        break
-            break
-
-
-
-    # now we run the files back through to flag an error
-    investigation = process_file(
-        xml_altered,
-        ukrdc_session=ukrdc_test_session_persistent,
-    )
-
-    assert investigation
-    assert investigation.issue.issue_id == 4
-    assert investigation.issue.xml == serializer.render(xml_altered)
-    assert len(investigation.patients) > 1
+        assert investigation
+        assert investigation.issue.issue_id == 4
+        assert investigation.issue.xml == serializer.render(xml_altered)
+        assert len(investigation.patients) > 1
