@@ -60,6 +60,7 @@ class DatabaseConnection:
         if not self.url:
             self.url = self.generate_database_url()
         self.engine = create_engine(url=self.url)
+        # self.engine = create_engine(url=self.url)
 
     def get_property(self, property_name: str, url_property: str) -> str:
         if self.url:
@@ -99,7 +100,9 @@ class DatabaseConnection:
             # generate schema and tables for investigations
             schema_name = "investigations"
             with self.engine.connect() as connection:
-                connection.execute(f"CREATE SCHEMA IF NOT EXISTS {schema_name}")
+                trans = connection.begin()
+                connection.execute(text(f"CREATE SCHEMA IF NOT EXISTS {schema_name}"))
+                trans.commit()
 
             InvestiBase.metadata.drop_all(bind=self.engine)
             InvestiBase.metadata.create_all(bind=self.engine)
@@ -109,9 +112,8 @@ class DatabaseConnection:
 
 def create_id_generation_sequences(session: Session):
     # run sequences for generating PID and UKRDCID if they don't exist
-    sequencies = [
-        seq[0] for seq in session.execute("SELECT sequencename FROM pg_sequences;")
-    ]
+    db_sequencies = session.execute(text("SELECT sequencename FROM pg_sequences;"))
+    sequencies = [seq[0] for seq in db_sequencies]
 
     for key, sql in ID_SEQUENCES.items():
         if key not in sequencies:

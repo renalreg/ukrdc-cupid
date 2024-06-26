@@ -2,8 +2,7 @@
 these models in the ukrdc they should really live in the ukrdc-sqla repo. 
 """
 
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import relationship
+from sqlalchemy.orm import relationship, declarative_base
 from sqlalchemy import (
     MetaData,
     Column,

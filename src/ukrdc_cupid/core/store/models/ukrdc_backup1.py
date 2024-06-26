@@ -1,7 +1,8 @@
 # type: ignore
 
 """
-Models to create sqla objects from an xml file 
+MODELS FROM THE FIRST ITERATION OF THE CODE. I think they have been subsumed
+however I am leaving them here for now. 
 """
 
 from __future__ import annotations  # allows typehint of node class

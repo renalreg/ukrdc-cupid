@@ -2,6 +2,9 @@
 used to process xml files but directly populate tables in the ukrdc from
 various sources.
 """
+
+from ukrdc_cupid.core.store.models.structure import UKRRRefTableBase
+import ukrdc_sqla.ukrdc as sqla
 from sqlalchemy.orm import Session
 import ukrdc_sqla.ukrdc as ukrdc_sqla
 from io import BytesIO, TextIOWrapper
@@ -64,4 +67,42 @@ class GPInfoType:
         return gp_infos
 
 
-# do the same thing for the tables ported from the renalreg db
+"""
+These classes allow tables in the ukrr to to be synced with the ukrdc 
+"""
+
+
+class ModalityCodes(UKRRRefTableBase):
+    def __init__(self, renalreg_session: Session, ukrdc_session: Session):
+        super().__init__(renalreg_session, ukrdc_session)
+        self.orm_object = sqla.ModalityCodes
+
+    def key_properties(self):
+        return ["registry_code"]
+
+
+class RRDataDefinition(UKRRRefTableBase):
+    def __init__(self, renalreg_session: Session, ukrdc_session: Session):
+        super().__init__(renalreg_session, ukrdc_session)
+        self.orm_object = sqla.RRDataDefinition
+
+    def key_properties(self):
+        return ["upload_key"]
+
+
+class Locations(UKRRRefTableBase):
+    def __init__(self, renalreg_session: Session, ukrdc_session: Session):
+        super().__init__(renalreg_session, ukrdc_session)
+        self.orm_object = sqla.Locations
+
+    def key_properties(self):
+        return ["centre_code"]
+
+
+class RRCodes(UKRRRefTableBase):
+    def __init__(self, renalreg_session: Session, ukrdc_session: Session):
+        super().__init__(renalreg_session, ukrdc_session)
+        self.orm_object = sqla.RRCodes
+
+    def key_properties(self):
+        return ["id", "rr_code"]

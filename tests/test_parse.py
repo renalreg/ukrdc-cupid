@@ -2,9 +2,10 @@ import glob
 from ukrdc_cupid.core.parse.xml_validate import validate_rda_xml_string
 from ukrdc_cupid.core.parse.xml_validate import SUPPORTED_VERSIONS
 
+
 def test_transplant_validation():
     # As the source of big headaches elsewhere putting some tests here
-    v4_00_transplant_xml =  """<ukrdc:PatientRecord xmlns:ukrdc="http://www.rixg.org.uk/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+    v4_00_transplant_xml = """<ukrdc:PatientRecord xmlns:ukrdc="http://www.rixg.org.uk/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
     <SendingFacility channelName="UKRDCSampleExtract" schemaVersion="4.0.0" time="2022-07-21T09:00:00">ABC123</SendingFacility>
     <SendingExtract>UKRDC</SendingExtract>
         <Patient>
@@ -61,16 +62,17 @@ def test_transplant_validation():
         </Procedures>
     </ukrdc:PatientRecord>"""
 
-    errors = validate_rda_xml_string(v4_00_transplant_xml,schema_version="4.0.0")
+    errors = validate_rda_xml_string(v4_00_transplant_xml, schema_version="4.0.0")
     assert not errors
+
 
 def test_check_tests():
     """We need to ensure that cupid is always supporting the most recent
-    version of the xsd schema. 
-    """ 
+    version of the xsd schema.
+    """
 
     # Grab all XML files in the tests directory and subdirectories
-    #xml_files = glob.glob("tests/**/*.xml", recursive=True)
+    # xml_files = glob.glob("tests/**/*.xml", recursive=True)
     xml_files = glob.glob("tests/xml_files/store_tests/*.xml")
 
     # Assuming you have a list of XML files, replace 'xml_files' with the actual list
@@ -83,7 +85,7 @@ def test_check_tests():
     clean = True
     for xml_file, xml_string in zip(xml_files, xml_strings):
         errors = validate_rda_xml_string(xml_string, schema_version=most_recent_version)
-        
+
         # print errors if there are any
         if errors:
             for line, error in errors.items():

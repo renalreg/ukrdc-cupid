@@ -4,7 +4,9 @@ import ukrdc_sqla.ukrdc as orm
 from sqlalchemy import select
 
 
-def validate_demog(session: Session, dob: datetime, pid: str) -> bool:
+def validate_demog(
+    session: Session, dob: datetime, pid: str, is_anon: bool = False
+) -> bool:
     """Function to validate a date of birth against a patient record.
 
     Args:
@@ -25,14 +27,16 @@ def validate_demog(session: Session, dob: datetime, pid: str) -> bool:
     length = len(domain_dob)
 
     if length != 1:
-        # note to self or other future keyboard tappers, this needs to be
-        # thought about more carefully. There may be instances in the future
-        # where a patient can have no dob. Also the the whole datetimes as date
-        #  should be treated with care.
-        raise Exception("something has gone very wrong in the bigger picture")
+        # To be expanded when properly thought through
+        raise Exception("validate_demog is broken")
     else:
         domain_dob = domain_dob[0][0]
-        return domain_dob.date() == dob.date()  # type:ignore
+        if is_anon:
+            # anonomised patients only get validated on year this allows a
+            # a record to be overridden
+            return domain_dob.date().year == domain_dob.date().year
+        else:
+            return domain_dob.date() == dob.date()  # type:ignore
 
 
 def validate_demog_ukrdc(session: Session, dob: datetime, ukrdcid: str) -> bool:
@@ -57,3 +61,24 @@ def validate_demog_ukrdc(session: Session, dob: datetime, ukrdcid: str) -> bool:
     dob_ukrdc = session.execute(dob_query).fetchall()
 
     return dob in dob_ukrdc
+
+
+def validate_NI_mismatch(pid: str):
+    """This function is a placeholder the idea is that there might be specific
+    circumstances where we allow a NI to be overwritten. For example if you
+    were to overwrite a chi number with a nhs number or possibly even correct
+    an NHS number.
+    """
+    # some sql to look up the patient numbers against the pid
+    # some logic to deduce if the change is one we expect
+    # we then assign a classification
+    NI_mismatch_type = 1
+
+    # or maybe anther based on some other criterion
+    # e.g organisation = NHS_corrected
+    NI_mismatch_type = 2
+
+    # otherwise we default to a validation failure
+    NI_mismatch_type = 0
+
+    return NI_mismatch_type

@@ -6,61 +6,19 @@
     <Patient>
         <PatientNumbers>
             <PatientNumber>
-                <Number>AAA111B</Number>
-                <Organization>LOCALHOSP</Organization>
+                <Number>2718281818</Number>
+                <Organization>UKRR_UID</Organization>
                 <NumberType>MRN</NumberType>
-            </PatientNumber>
-            <PatientNumber>
-                <Number>1111111111</Number>
-                <Organization>NHS</Organization>
-                <NumberType>NI</NumberType>
             </PatientNumber>
         </PatientNumbers>
         <Names>
             <Name use="L">
-                <Prefix>Dr</Prefix>
-                <Family>Smith</Family>
-                <Given>Bob</Given>
-                <OtherGivenNames>Horatio Augustus</OtherGivenNames>
-                <Suffix>Snr</Suffix>
+                <Family>CONSENT</Family>
+                <Given>REFUSED</Given>
             </Name>
         </Names>
-        <BirthTime>1969-06-09T00:00:00</BirthTime>
-        <DeathTime>1984-06-09T00:00:00</DeathTime>
+        <BirthTime>1969-01-01T00:00:00</BirthTime>
         <Gender>1</Gender>
-        <Addresses>
-            <Address use="H">
-                <FromTime>1969-07-09</FromTime>
-                <ToTime>1969-07-10</ToTime>
-                <Street>59th street</Street>
-                <Town>New York</Town>
-                <County>Cheshire</County>
-                <Postcode>XX78 7DD</Postcode>
-                <Country>
-                    <CodingStandard>ISO3166-1</CodingStandard>
-                    <Code>USE</Code>
-                    <Description>United States of Eurasia</Description>
-                </Country>
-            </Address>
-        </Addresses>
-        <ContactDetails>
-            <ContactDetail use="PRN">
-                <Value>0117 11111111</Value>
-                <Comments>Primary contact number</Comments>
-            </ContactDetail>
-        </ContactDetails>
-        <CountryOfBirth>MOO</CountryOfBirth>
-        <FamilyDoctor>
-            <GPName>Dr Dre</GPName>
-            <GPPracticeId>A12345</GPPracticeId>
-            <GPId>G1234567</GPId>
-            <ContactDetail use="PRN">
-                <Value>pidgeon</Value>
-                <Comments>watch out for hawks</Comments>
-            </ContactDetail>
-            <Email>dr.dre@example.com</Email>
-        </FamilyDoctor>
-        <Death>true</Death>
     </Patient>
     <FamilyHistories>
         <FamilyHistory>

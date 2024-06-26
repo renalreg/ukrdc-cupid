@@ -13,6 +13,11 @@ from ukrdc_cupid.core.store.models.structure import Node
 import ukrdc_xsdata.ukrdc as xsd_ukrdc  # type: ignore
 import ukrdc_xsdata.ukrdc.types as xsd_types  # type: ignore
 import ukrdc_xsdata.ukrdc.allergies as xsd_allergy  # type: ignore
+import ukrdc_xsdata.ukrdc.diagnoses as xsd_diagnosis  # type: ignore
+import ukrdc_xsdata.ukrdc.surveys as xsd_surveys  # type: ignore
+import ukrdc_xsdata.ukrdc.family_histories as xsd_family_histories
+
+# import ukrdc_xsdata.ukrdc
 
 
 def add_address(node: Node, address_xml: xsd_types.Address):
@@ -177,11 +182,23 @@ class SocialHistory(Node):
 
 
 class FamilyHistory(Node):
-    def __init__(self, xml):
+    def __init__(self, xml: xsd_family_histories):
         super().__init__(xml, sqla.FamilyHistory)
 
     def sqla_mapped() -> str:
         return "family_histories"
+
+    def map_xml_to_orm(self, _):
+        # fmt: off
+        self.add_code("familymembercode", "familymembercodestd", "familymemberdesc", self.xml.family_member, optional=True)
+        self.add_code("diagnosiscode", "diagnosiscodestd", "diagnosisdesc", self.xml.diagnosis, optional=True)
+        self.add_item("notetext", self.xml.note_text, optional=True)
+        self.add_code("enteredatcode", "enteredatcodestd", "enteredatdesc", self.xml.entered_at, optional=True)
+        self.add_item("fromtime", self.xml.from_time, optional=True)
+        self.add_item("totime", self.xml.to_time, optional=True)
+        self.add_item("updatedon", self.xml.updated_on, optional=True)
+        self.add_item("externalid", self.xml.external_id, optional=True)        
+        # fmt: on
 
 
 class Allergy(Node):
@@ -206,13 +223,14 @@ class Allergy(Node):
 
         # common metadata
         self.add_item("updatedon", self.xml.updated_on, optional=True)
+
         # there is an update_date, actioncode here not sure what it does
         self.add_item("externalid", self.xml.external_id, optional=True)
         # fmt: on
 
 
 class Diagnosis(Node):
-    def __init__(self, xml):
+    def __init__(self, xml: xsd_diagnosis.Diagnosis):
         super().__init__(xml, sqla.Diagnosis)
 
     def sqla_mapped() -> str:
@@ -240,7 +258,7 @@ class Diagnosis(Node):
 
 
 class RenalDiagnosis(Node):
-    def __init__(self, xml):
+    def __init__(self, xml: xsd_diagnosis.RenalDiagnosis):
         super().__init__(xml, sqla.RenalDiagnosis)
 
     def sqla_mapped() -> str:
@@ -269,7 +287,7 @@ class RenalDiagnosis(Node):
 
 
 class CauseOfDeath(Node):
-    def __init__(self, xml):
+    def __init__(self, xml: xsd_diagnosis.CauseOfDeath):
         super().__init__(xml, sqla.CauseOfDeath)
 
     def sqla_mapped() -> str:
@@ -281,11 +299,7 @@ class CauseOfDeath(Node):
         self.add_code("diagnosiscode", "diagnosiscodestd", "diagnosisdesc", self.xml.diagnosis)
 
         self.add_item("comments", self.xml.comments, optional=True)
-        if self.xml.verification_status:
-            print(
-                "Cause of Death verification status not currently supported by the UKRDC database"
-            )
-
+        self.add_item()
         self.add_item("enteredon", self.xml.entered_on, optional=True)
 
         # common metadata
@@ -294,36 +308,76 @@ class CauseOfDeath(Node):
         # fmt: on
 
 
-class Medication(Node):
-    def __init__(self, xml):
-        super().__init__(xml, sqla.Medication)
+class Document(Node):
+    def __init__(self, xml: xsd_diagnosis.Diagnosis):
+        super().__init__(xml, sqla.Document)
 
-    def sqla_mapped():
-        return "medications"
+    def sqla_mapped() -> str:
+        return "documents"
 
-    def add_drug_product(self):
-        # fmt: off
-        self.add_code("drugproductidcode", "drugproductidcodestd", "drugproductiddesc", self.xml.drug_product.id)
-        self.add_item("drugproductgeneric", self.xml.drug_product.generic)
-        self.add_item("drugproductlabelname", self.xml.drug_product.label_name)
-        self.add_code("drugproductformcode", "drugproductformcodestd", "drugproductformdesc", self.xml.drug_product.form)
-        self.add_code("drugproductstrengthunitscode", "drugproductstrengthunitscodestd", "drugproductstrengthunitsdesc", self.xml.drug_product.strength_units)
-        # fmt: on
+    def map_xml_to_orm(self, orm_object):
+        self.add_code(
+            "cliniciancode", "cliniciancodestd", "cliniciandesc", self.xml.clinician
+        )
+        self.add_item("documentname", self.xml.document_name)
+        self.add_item("documenttime", self.xml.document_time)
+        self.add_code(
+            "documenttypecode",
+            "documenttypecodestd",
+            "documenttypedesc",
+            self.xml.document_type,
+        )
+        self.add_item("documenturl", self.xml.document_url)
+        self.add_code(
+            "enteredatcode", "enteredatcodestd", "enteredatdesc", self.xml.entered_at
+        )
+        self.add_code(
+            "enteredbycode", "enteredbycodestd", "enteredbydesc", self.xml.entered_by
+        )
+        self.add_item("externalid", self.xml.external_id, optional=True)
+        self.add_item("filename", self.xml.file_name)
+        self.add_item("filetype", self.xml.file_type)
+        self.add_item("notetext", self.xml.note_text)
+        self.add_code("statuscode", "statuscodestd", "statusdesc", self.xml.status)
+        # not sure exactly what's going on here. I think the purpose of this
+        # field is to store the document as binary. The xsdata models seem to
+        # decode it automatically. Probably it then gets encoded again
+        if self.xml.stream:
+            self.orm_object.stream = self.xml.stream
+            print(":)")
+
+        # self.add_item("stream", int(self.xml.stream))
+        self.add_item("updatedon", self.xml.updated_on, optional=True)
+
+
+class Survey(Node):
+    def __init__(self, xml: xsd_surveys.Survey):
+        super().__init__(xml, sqla.Survey)
+
+    def sqla_mapped() -> str:
+        return "surveys"
 
     def map_xml_to_orm(self, _):
-        # fmt: off
-        self.add_item("prescriptionnumber", self.xml.prescription_number)
-        self.add_item("fromtime", self.xml.from_time)
-        self.add_item("totime", self.xml.to_time)
-        self.add_code("enteringorganizationcode", "enteringorganizationcodestd", "enteringorganizationdesc", self.xml.entering_organization)
-        self.add_code( "routecode", "routecodestd", "routedesc", self.xml.route)
-        self.add_drug_product()
-        self.add_item("frequency", self.xml.frequency)
-        self.add_item("commenttext", self.xml.comments)
-        self.add_item("dosequantity", self.xml.dose_quantity)
-        self.add_code("doseuomcode", "doseuomcodestd", "doseuomdesc",self.xml.dose_uo_m)
-        self.add_item("indication", self.xml.indication)
-        self.add_item("encounternumber", self.xml.encounter_number)
-        self.add_item("updatedon", self.xml.updated_on)
-        self.add_item("externalid", self.xml.external_id)
-        # fmt: on
+        pass
+
+
+class Score(Node):
+    def __init__(self, xml: xsd_surveys.Score):
+        super().__init__(xml, sqla.Score)
+
+    def sqla_mapped() -> str:
+        return "scores"
+
+    def map_xml_to_orm(self, _):
+        pass
+
+
+class Question(Node):
+    def __init__(self, xml: xsd_surveys.Question):
+        super().__init__(xml, sqla.Question)
+
+    def sqla_mapped() -> str:
+        return "questions"
+
+    def map_xml_to_orm(self, _):
+        pass

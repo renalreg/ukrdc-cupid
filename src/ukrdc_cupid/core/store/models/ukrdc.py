@@ -6,10 +6,11 @@ from ukrdc_cupid.core.store.models.patient import (
     SocialHistory,
     FamilyHistory,
     Allergy,
-    Medication,
     Diagnosis,
     RenalDiagnosis,
     CauseOfDeath,
+    Document,
+    Survey,
 )
 from ukrdc_cupid.core.store.models.longitudinal_records import (
     Observation,
@@ -19,6 +20,7 @@ from ukrdc_cupid.core.store.models.longitudinal_records import (
     DialysisSession,
     Treatment,
     VascularAccess,
+    Medication,
 )
 from ukrdc_cupid.core.store.models.relationships import (
     ClinicalRelationship,
@@ -88,36 +90,33 @@ class PatientRecord(Node):
             if number.number_type.value == "MRN":
                 self.orm_object.localpatientid = number.number  # type :ignore
 
+        # fmt: off
         self.add_children(Patient, "patient", session)
         self.add_children(SocialHistory, "social_histories.social_history", session)
-        self.add_children(FamilyHistory, "social_histories.social_history", session)
+        self.add_children(FamilyHistory, "family_histories.family_history", session)
         self.add_children(Allergy, "allergies.allergy", session)
         self.add_children(Medication, "medications.medication", session)
 
         self.add_children(Diagnosis, "diagnoses.diagnosis", session)
         self.add_children(RenalDiagnosis, "diagnoses.renal_diagnosis", session)
         self.add_children(CauseOfDeath, "diagnoses.cause_of_death", session)
-
         self.add_children(Observation, "observations.observation", session)
         self.add_children(LabOrder, "lab_orders.lab_order", session)
         self.add_children(Procedure, "procedures.procedure", session)
 
-        self.add_children(
-            DialysisSession, "procedures.dialysis_sessions.dialysis_session", session
-        )
+        self.add_children(DialysisSession, "procedures.dialysis_sessions.dialysis_session", session)
         self.add_children(VascularAccess, "procedures.vascular_access", session)
         self.add_children(Transplant, "transplants.transplant", session)
         self.add_children(Treatment, "encounters.treatment", session)
-
-        self.add_children(
-            ProgramMembership, "program_memberships.program_membership", session
-        )
+        self.add_children(ProgramMembership, "program_memberships.program_membership", session)
         self.add_children(OptOut, "opt_outs.opt_out", session)
-        self.add_children(
-            ClinicalRelationship,
-            "clinical_relationships.clinical_relationship",
-            session,
-        )
+        self.add_children(ClinicalRelationship, "clinical_relationships.clinical_relationship", session)
+
+        self.add_children(Document, "documents.document", session)
+        # self.add_children(Encounter)
+        # self.add_children(TransplantList)
+        self.add_children(Survey, "surveys.survey", session)
+        # fmt: on
 
     def map_to_database(
         self, pid: str, ukrdcid: str, session: Session, is_new=True

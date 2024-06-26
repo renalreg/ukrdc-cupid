@@ -3,9 +3,11 @@ from abc import ABC, abstractmethod
 from typing import Optional, Union, List, Type
 from decimal import Decimal
 
+import csv
 import ukrdc_cupid.core.store.keygen as key_gen
 import ukrdc_sqla.ukrdc as sqla
 from sqlalchemy.orm import Session
+from sqlalchemy import select
 from datetime import datetime
 
 import ukrdc_xsdata as xsd_all  # type:ignore
@@ -82,8 +84,12 @@ class Node(ABC):
         xml_code: xsd_types.CodedField,
         optional: bool = True,
     ) -> None:
-        # add properties which are coded fields
-        # TODO: flag an error/workitem if it doesn't exist?
+        # add properties which are coded fields really I could have saved
+        # myself a lot of work if I had written a function like this for
+        # each of the types that get repeatedly reused in the schema. For
+        # example, common metadata appears in almost every table and is
+        # currently hard coded
+
         if (optional and xml_code) or (not optional):
             self.add_item(property_code, xml_code.code)
             self.add_item(property_description, xml_code.description)
@@ -146,6 +152,7 @@ class Node(ABC):
         objects to be added and deleted explicitly rather than just being
         appended although maybe this gives more control to fine tune the
         process. In principle we shouldn't need the recursive functions at all.
+        refer to laborder for a simplified version of most of these functions.
 
         Args:
             child_node (Type[Node]): _description_
@@ -158,8 +165,9 @@ class Node(ABC):
         xml_items = self.xml
         for attr in xml_attr.split("."):
             if isinstance(xml_items, list):
-                # this is nessary because of the weirdness of xsdata
-                xml_items = xml_items[0]
+                # this is necessary because of the weirdness of xsdata
+                if xml_items:
+                    xml_items = xml_items[0]
 
             if xml_items:
                 xml_items = getattr(xml_items, attr, None)
@@ -175,6 +183,9 @@ class Node(ABC):
                 # there is a possibility here to sort the items before enumerating them
                 node_object = child_node(xml=xml_item)  # type:ignore
 
+                # Generate parent data which is required by child
+                parent_data = self.generate_parent_data(seq_no)
+
                 # map to existing object or create new
                 id = node_object.map_to_database(session, self.pid, seq_no)
                 mapped_ids.append(id)
@@ -182,7 +193,6 @@ class Node(ABC):
                 # add parent info
                 # add any foreign keys, enumerations or data which doesn't come
                 # from the xml.
-                parent_data = self.generate_parent_data(seq_no)
                 for attr, value in parent_data.items():
                     if hasattr(node_object.orm_object, attr):
                         setattr(node_object.orm_object, attr, value)
@@ -285,4 +295,74 @@ class Node(ABC):
     @abstractmethod
     def map_xml_to_orm(self, session: Session) -> None:
         # In this function all the idiosyncracies of the xml and the database are hard coded
+        pass
+
+
+class UKRRRefTableBase:
+    def __init__(self, renalreg_session: Session, ukrdc_session: Session):
+        self.ukrr_session = renalreg_session
+        self.ukrdc_session = ukrdc_session
+        self.orm_object: sqla.Base
+
+    def backup_to_file(self, filepath: str):
+        # query codes
+        ukrr_codes_to_sync = (
+            self.ukrr_session.execute(select(self.orm_object)).scalars().all()
+        )
+
+        # write out codes to file
+        with open(filepath, mode="w", newline="") as file:
+            writer = csv.writer(file)
+
+            # Write header row
+            header = [column.name for column in self.orm_object.__table__.columns]
+            writer.writerow(header)
+
+            # Write data rows
+            for code in ukrr_codes_to_sync:
+                row = [
+                    getattr(code, column.name)
+                    for column in self.orm_object.__table__.columns
+                ]
+                writer.writerow(row)
+
+    def sync_table_from_renalreg(self):
+        """To start with we just do a full sync but in the future we can add in
+        functionality so that only some codes get synced for e.g if new codes
+        have been added which aren't in the ukrdc.
+
+        This should have been simply a case of detaching and merging but there
+        are issues with copying from one dialect to another so instead we
+        manually copy to a blank orm object.
+        """
+
+        # query all renalreg records
+        ukrr_codes_to_sync = (
+            self.ukrr_session.execute(select(self.orm_object)).scalars().all()
+        )
+
+        # iterate through records
+        for ukrr_code in ukrr_codes_to_sync:
+            # we have to  manually copy attributes because they are different
+            # dialects of sql
+            # Create a dictionary to store the values
+            values = {}
+            for column in self.orm_object.__table__.columns:
+                value = getattr(ukrr_code, column.name)
+                # sqla doesn't like bit/bool
+                if isinstance(value, bool):
+                    value = "1" if value else "0"
+
+                values[column.name] = value
+
+            self.ukrdc_session.merge(self.orm_object(**values))
+
+        self.ukrdc_session.commit()
+
+    @classmethod
+    @abstractmethod
+    def key_properties():
+        """Everything required to uniquely define a record in one of the
+        reference tables.
+        """
         pass
