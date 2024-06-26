@@ -5,24 +5,39 @@ services:
     image: postgres:latest
     container_name: ukrdc_postgres
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: test_ukrdc_persistent
+      POSTGRES_USER: ${UKRDC_USER}
+      POSTGRES_PASSWORD: ${UKRDC_PASSWORD}
+      POSTGRES_DB: ${UKRDC_DB}
     ports:
-      - "5432:5432"
+      - "${UKRDC_PORT}:${UKRDC_PORT}"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${UKRDC_USER}"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    networks:
+      - cupid_network
+    restart: unless-stopped
   
   app:
     build: .
-    container_name: ukrdc_app
+    container_name: cupid_app
     environment:
-      PERSISTENT_URL: postgresql://postgres:postgres@db:5432/test_ukrdc_persistent
+      PERSISTENT_URL: postgresql://${UKRDC_USER}:${UKRDC_PASSWORD}@db:{UKRDC_PORT}/${POSTGRES_DB}
       DB_HOST: db
     depends_on:
-      - db
+      db:
+        condition: service_healthy
     volumes:
       - .:/app
+    networks:
+      - cupid_network
+    restart: unless-stopped
 
 volumes:
   postgres_data:
+
+networks:
+  cupid_network:
