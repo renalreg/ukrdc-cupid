@@ -18,6 +18,10 @@ RUN python -m pip install -U pip wheel && pip install poetry
 COPY . ./
 
 # Install production dependencies with poetry
-RUN poetry install --only main --no-interaction
+RUN poetry install 
 
-# Build 
+# build database
+RUN python scripts/test_deploy/initialize_db.py
+
+# run tests
+CMD ["poetry", "run", "tox"]
