@@ -220,9 +220,9 @@ class Node(ABC):
         # This highlights a problem with the idx method creating keys. What if an item in the middle of the
         # order gets deleted then everything below gets bumped up one.
 
-        mapped_orms = getattr(self.orm_object, sqla_mapped)
+        mapped_orms = [orm for orm in getattr(self.orm_object, sqla_mapped)]
 
-        self.deleted_orm = [
+        self.deleted_orm = self.deleted_orm + [
             record for record in mapped_orms if record.id not in mapped_ids
         ]
 

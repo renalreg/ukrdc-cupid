@@ -16,7 +16,7 @@ import copy
 from ukrdc_cupid.core.parse.utils import load_xml_from_path
 from ukrdc_cupid.core.general import process_file
 from ukrdc_cupid.core.utils import DatabaseConnection
-from ukrdc_cupid.core.match.identify import read_patient_metadata
+#from ukrdc_cupid.core.match.identify import read_patient_metadata
 
 from sqlalchemy.orm import Session
 from sqlalchemy_utils import database_exists

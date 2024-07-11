@@ -11,6 +11,11 @@
                 <NumberType>MRN</NumberType>
             </PatientNumber>
             <PatientNumber>
+                <Number>2718281818</Number>
+                <Organization>UKRR_UID</Organization>
+                <NumberType>NI</NumberType>
+            </PatientNumber>
+            <PatientNumber>
                 <Number>1111111111</Number>
                 <Organization>NHS</Organization>
                 <NumberType>NI</NumberType>

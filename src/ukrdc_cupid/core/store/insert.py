@@ -49,7 +49,7 @@ def advisory_lock(func):
     return wrapper
 
 
-@advisory_lock
+# @advisory_lock
 def insert_incoming_data(
     ukrdc_session: Session,
     pid: str,
