@@ -46,10 +46,6 @@ def renalreg_session():
     with session_maker() as session:
         yield session
 
-'''
-@pytest.mark.skipif(
-    not should_run_locally(), reason="Test requires live renalreg database connection"
-)
 def test_load_modality_codes(
     renalreg_session: Session, ukrdc_test_session_persistent: Session
 ):
@@ -88,4 +84,3 @@ def test_load_modality_codes(
     rr_codes = Locations(renalreg_session, ukrdc_test_session_persistent)
     rr_codes.sync_table_from_renalreg()
     """
-'''
