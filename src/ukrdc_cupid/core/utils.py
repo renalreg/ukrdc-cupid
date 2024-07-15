@@ -15,7 +15,7 @@ from ukrdc_cupid.core.investigate.utils import update_issue_types
 from ukrdc_cupid.core.store.models.lookup_tables import GPInfoType
 
 # Load environment varibles from wither they are found
-ENV = {**os.environ, **dotenv_values()}
+ENV = {**os.environ, **dotenv_values(".env"), **dotenv_values(".env.test")}
 
 # There is probably a better home for these than this.
 ID_SEQUENCES = {
@@ -59,6 +59,7 @@ class DatabaseConnection:
 
         if not self.url:
             self.url = self.generate_database_url()
+
         self.engine = create_engine(url=self.url)
         # self.engine = create_engine(url=self.url)
 
@@ -87,28 +88,6 @@ class DatabaseConnection:
 
         return db_sessionmaker
 
-    def generate_schema(self):
-        """Creates db if it doesn't exist and generates the schema for it."""
-        if not database_exists(self.url):
-            create_database(self.url)
-
-        if self.prefix == "UKRDC":
-            # generate main ukrdc tables
-            UKRDC3Base.metadata.drop_all(bind=self.engine)
-            UKRDC3Base.metadata.create_all(bind=self.engine)
-
-            # generate schema and tables for investigations
-            schema_name = "investigations"
-            with self.engine.connect() as connection:
-                trans = connection.begin()
-                connection.execute(text(f"CREATE SCHEMA IF NOT EXISTS {schema_name}"))
-                trans.commit()
-
-            InvestiBase.metadata.drop_all(bind=self.engine)
-            InvestiBase.metadata.create_all(bind=self.engine)
-        else:
-            raise Exception("Sorry bro only implemented for ukrdc")
-
 
 def create_id_generation_sequences(session: Session):
     # run sequences for generating PID and UKRDCID if they don't exist
@@ -134,3 +113,38 @@ def populate_ukrdc_tables(session: Session, gp_info: bool = False):
 
     # populate issue types table
     update_issue_types(session)
+
+
+class UKRDCConnection(DatabaseConnection):
+    def __init__(self, url=None):
+        super().__init__("UKRDC", url)
+
+    def generate_schema(self):
+        """Creates db if it doesn't exist and generates the schema for it."""
+        if not database_exists(self.url):
+            create_database(self.url)
+
+        if self.prefix == "UKRDC":
+            # generate main ukrdc tables
+            UKRDC3Base.metadata.drop_all(bind=self.engine)
+            UKRDC3Base.metadata.create_all(bind=self.engine)
+
+            # generate schema and tables for investigations
+            schema_name = "investigations"
+            with self.engine.connect() as connection:
+                trans = connection.begin()
+                connection.execute(text(f"CREATE SCHEMA IF NOT EXISTS {schema_name}"))
+                trans.commit()
+
+            InvestiBase.metadata.drop_all(bind=self.engine)
+            InvestiBase.metadata.create_all(bind=self.engine)
+        else:
+            raise Exception("Sorry bro only implemented for ukrdc")
+
+
+class UKRRConnection(DatabaseConnection):
+    def __init__(
+        self,
+    ):
+        ukrr_url = ENV["UKRR_URL"]
+        super().__init__(url=ukrr_url)

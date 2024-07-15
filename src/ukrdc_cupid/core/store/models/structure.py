@@ -347,17 +347,40 @@ class UKRRRefTableBase:
             # dialects of sql
             # Create a dictionary to store the values
             values = {}
+            if not ukrr_code:
+                # not sure why this is a thing
+                print(":)")
+                continue
+
+            # only insert values with non null keys
+            keys = self.key_properties()
+            do_not_insert = False
+            for key in keys:
+                value = getattr(ukrr_code, key)
+                if not value:
+                    do_not_insert = True
+
+            if do_not_insert:
+                continue
+
             for column in self.orm_object.__table__.columns:
-                value = getattr(ukrr_code, column.name)
+
+                name_lower = column.name.lower()
+                column_name = self.column_aliases().get(name_lower, name_lower)
+
+                value = getattr(ukrr_code, column_name)
                 # sqla doesn't like bit/bool
                 if isinstance(value, bool):
                     value = "1" if value else "0"
 
-                values[column.name] = value
+                values[column_name] = value
 
             self.ukrdc_session.merge(self.orm_object(**values))
 
         self.ukrdc_session.commit()
+
+    def column_aliases(self):
+        return {}
 
     @classmethod
     @abstractmethod

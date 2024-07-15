@@ -36,9 +36,9 @@ PERSISTENT_URL = "postgresql://postgres:postgres@localhost:5432/test_ukrdc_new"
 @pytest.fixture(scope="function")
 def ukrdc_test_session_persistent():
     if not database_exists(PERSISTENT_URL):
-        sessionmaker = ukrdc_sessionmaker(url=PERSISTENT_URL, gp_info=True)
-    else:
         sessionmaker = DatabaseConnection(url=PERSISTENT_URL).create_sessionmaker()
+    else:
+        sessionmaker = ukrdc_sessionmaker(url=PERSISTENT_URL, gp_info=True)
 
     with sessionmaker() as session:
         yield session
