@@ -17,7 +17,7 @@ load_dotenv(os.path.join(DIR, ".env.test"))
 # Get the database URL from environment variables
 db_url = os.getenv("DB_URL")
 
-# Create the engine and session at somepoint we can pop the output of pg_dump
+# Create the engine and session at some point we can pop the output of pg_dump
 # into the sql folder and skip these steps
 engine = create_engine(db_url)
 UKRDC3Base.metadata.create_all(engine)

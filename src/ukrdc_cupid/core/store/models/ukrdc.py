@@ -21,6 +21,8 @@ from ukrdc_cupid.core.store.models.longitudinal_records import (
     Treatment,
     VascularAccess,
     Medication,
+    TransplantList,
+    Encounter,
 )
 from ukrdc_cupid.core.store.models.relationships import (
     ClinicalRelationship,
@@ -106,15 +108,15 @@ class PatientRecord(Node):
 
         self.add_children(DialysisSession, "procedures.dialysis_sessions.dialysis_session", session)
         self.add_children(VascularAccess, "procedures.vascular_access", session)
-        self.add_children(Transplant, "transplants.transplant", session)
+        self.add_children(Transplant, "procedures.transplant", session)
         self.add_children(Treatment, "encounters.treatment", session)
         self.add_children(ProgramMembership, "program_memberships.program_membership", session)
         self.add_children(OptOut, "opt_outs.opt_out", session)
         self.add_children(ClinicalRelationship, "clinical_relationships.clinical_relationship", session)
 
         self.add_children(Document, "documents.document", session)
-        # self.add_children(Encounter)
-        # self.add_children(TransplantList)
+        self.add_children(Encounter, "encounters.encounter", session)
+        self.add_children(TransplantList,"encounters.transplant_list", session)
         self.add_children(Survey, "surveys.survey", session)
         # fmt: on
 

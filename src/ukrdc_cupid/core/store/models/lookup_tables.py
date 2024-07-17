@@ -89,6 +89,9 @@ class RRDataDefinition(UKRRRefTableBase):
     def key_properties(self):
         return ["upload_key"]
 
+    def column_aliases(self):
+        return {"ckd5_mand": "ckd5_mand_numeric"}
+
 
 class Locations(UKRRRefTableBase):
     def __init__(self, renalreg_session: Session, ukrdc_session: Session):

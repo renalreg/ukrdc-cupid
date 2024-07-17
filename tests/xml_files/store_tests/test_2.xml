@@ -176,8 +176,72 @@
                 <TimeDialysed>210</TimeDialysed>
             </DialysisSession>
         </DialysisSessions>
+        <Transplant>
+            <ProcedureType>
+                <CodingStandard>SNOMED</CodingStandard>
+                <Code>70536003</Code>
+                <Description>Transplant of kidney</Description>
+            </ProcedureType>
+            <ProcedureTime>2006-05-04T18:13:51.0</ProcedureTime>
+            <EnteredAt>
+                <CodingStandard>ODS</CodingStandard>
+                <Code>RXF01</Code>
+                <Description>Main Hospital</Description>
+            </EnteredAt>
+            <DonorType>DBD</DonorType>
+            <DateRegistered>2006-06-04</DateRegistered>
+            <FailureDate>2006-06-04</FailureDate>
+            <ColdIschaemicTime>10</ColdIschaemicTime>
+            <HLAMismatchA>1</HLAMismatchA>
+            <HLAMismatchB>2</HLAMismatchB>
+            <HLAMismatchC>3</HLAMismatchC>
+        </Transplant>
+        <VascularAccess>
+            <ProcedureType>
+                <CodingStandard>SNOMED</CodingStandard>
+                <Code>123456</Code>
+                <Description>Example Procedure Description</Description>
+            </ProcedureType>
+            <ProcedureTime>2024-07-15T12:34:56.0Z</ProcedureTime>
+            <EnteredAt>
+                <CodingStandard>ODS</CodingStandard>
+                <Code>RXF01</Code>
+                <Description>Main Hospital</Description>
+            </EnteredAt>
+            <Attributes>
+                <ACC19>2024-07-01T12:00:00.0Z</ACC19>
+                <ACC20>2024-07-10T12:00:00.0Z</ACC20>
+                <ACC21>2024-07-20T12:00:00.0Z</ACC21>
+                <ACC22>Infection</ACC22>
+                <ACC30>1</ACC30>
+                <ACC40>Complication</ACC40>
+            </Attributes>
+        </VascularAccess>
     </Procedures>
     <Encounters>
+        <Encounter>
+            <EncounterNumber>123456789</EncounterNumber>
+            <EncounterType>E</EncounterType>
+            <FromTime>2023-06-07T10:00:00</FromTime>
+            <ToTime>2023-06-07T11:00:00</ToTime>
+            <AdmittingClinician>
+                <CodingStandard>LOCAL</CodingStandard>
+                <Code>123</Code>
+                <Description>Dr. John Doe</Description>
+            </AdmittingClinician>
+            <HealthCareFacility>
+                <CodingStandard>ODS</CodingStandard>
+                <Code>RXF01</Code>
+                <Description>Renal Unit 1</Description>
+            </HealthCareFacility>
+            <AdmitReason>
+                <CodingStandard>LOCAL</CodingStandard>
+                <Code>456</Code>
+                <Description>Reason for admission</Description>
+            </AdmitReason>
+            <UpdatedOn>2023-06-07T12:00:00</UpdatedOn>
+            <ExternalId>ABC123</ExternalId>
+        </Encounter>
         <Treatment>
             <EncounterNumber>9090909</EncounterNumber>
             <FromTime>2006-05-04</FromTime>
@@ -239,5 +303,49 @@
                 <QBL05>HOME</QBL05>
             </Attributes>
         </Treatment>
+        <TransplantList>
+            <EncounterNumber>EN123456</EncounterNumber>
+            <EncounterType>E</EncounterType>
+            <FromTime>2024-07-12T08:00:00</FromTime>
+            <ToTime>2024-07-19T17:00:00</ToTime>
+            <AdmittingClinician>
+                <CodingStandard>LOCAL</CodingStandard>
+                <Code>CLIN123</Code>
+                <Description>Dr. John Smith</Description>
+            </AdmittingClinician>
+            <HealthCareFacility>
+                <CodingStandard>ODS</CodingStandard>
+                <Code>RXF01</Code>
+                <Description>Transplant Unit A</Description>
+            </HealthCareFacility>
+            <AdmitReason>
+                <CodingStandard>LOCAL</CodingStandard>
+                <Code>ORGAN01</Code>
+                <Description>Kidney Transplant</Description>
+            </AdmitReason>
+            <AdmissionSource>
+                <CodingStandard>ODS</CodingStandard>
+                <Code>RHF01</Code>
+                <Description>Referral Hospital B</Description>
+            </AdmissionSource>
+            <DischargeReason>
+                <CodingStandard>LOCAL</CodingStandard>
+                <Code>DSC01</Code>
+                <Description>Successful Transplant</Description>
+            </DischargeReason>
+            <DischargeLocation>
+                <CodingStandard>ODS</CodingStandard>
+                <Code>RXF01</Code>
+                <Description>Parent Renal Unit</Description>
+            </DischargeLocation>
+            <EnteredAt>
+                <CodingStandard>ODS</CodingStandard>
+                <Code>RXF01</Code>
+                <Description>Main Hospital</Description>
+            </EnteredAt>
+            <VisitDescription>Validation done by Dr. Jane Doe on 2024-07-12</VisitDescription>
+            <UpdatedOn>2024-07-12T09:00:00</UpdatedOn>
+            <ExternalId>EXT123456789</ExternalId>
+        </TransplantList>
     </Encounters>
 </ukrdc:PatientRecord>

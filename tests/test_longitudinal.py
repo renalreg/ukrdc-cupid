@@ -133,39 +133,20 @@ def test_lab_orders(patient_record: PatientRecord):
     assert lab_order_orm.orderitemcodestd == lab_order_xml.order_item.coding_standard
     assert lab_order_orm.orderitemdesc == lab_order_xml.order_item.description
     assert lab_order_orm.orderedbycode == lab_order_xml.ordered_by.code
-    assert (
-        lab_order_orm.orderedbycodestd == lab_order_xml.ordered_by.coding_standard.value
-    )
+    assert lab_order_orm.orderedbycodestd == lab_order_xml.ordered_by.coding_standard.value
     assert lab_order_orm.orderedbydesc == lab_order_xml.ordered_by.description
     assert lab_order_orm.placer_id == lab_order_xml.placer_id
     assert lab_order_orm.placerid == lab_order_xml.placer_id
     assert lab_order_orm.receivinglocationcode == lab_order_xml.receiving_location.code
-    assert (
-        lab_order_orm.receivinglocationcodestd
-        == lab_order_xml.receiving_location.coding_standard.value
-    )
-    assert (
-        lab_order_orm.receivinglocationdesc
-        == lab_order_xml.receiving_location.description
-    )
+    assert lab_order_orm.receivinglocationcodestd == lab_order_xml.receiving_location.coding_standard.value
+    assert lab_order_orm.receivinglocationdesc == lab_order_xml.receiving_location.description
+    
 
-    assert (
-        lab_order_orm.specimen_collected_time
-        == lab_order_xml.specimen_collected_time.to_datetime()
-    )
-    assert (
-        lab_order_orm.specimen_received_time
-        == lab_order_xml.specimen_received_time.to_datetime()
-    )
+    assert lab_order_orm.specimen_collected_time == lab_order_xml.specimen_collected_time.to_datetime()
+    assert lab_order_orm.specimen_received_time == lab_order_xml.specimen_received_time.to_datetime()
     assert lab_order_orm.specimen_source == lab_order_xml.specimen_source
-    assert (
-        lab_order_orm.specimencollectedtime
-        == lab_order_xml.specimen_collected_time.to_datetime()
-    )
-    assert (
-        lab_order_orm.specimenreceivedtime
-        == lab_order_xml.specimen_received_time.to_datetime()
-    )
+    assert lab_order_orm.specimencollectedtime == lab_order_xml.specimen_collected_time.to_datetime()
+    assert lab_order_orm.specimenreceivedtime == lab_order_xml.specimen_received_time.to_datetime()
     assert lab_order_orm.specimensource == lab_order_xml.specimen_source
     assert lab_order_orm.status == lab_order_xml.status
     assert lab_order_orm.updatedon == lab_order_xml.updated_on.to_datetime()
@@ -255,11 +236,67 @@ def test_procedure(patient_record: PatientRecord):
 
 
 def test_vascular_access(patient_record: PatientRecord):
-    assert True
+    vascular_access_orms = []
+    for orm_object in patient_record.get_orm_list():
+        if orm_object.__tablename__ == "vascularaccess":
+            vascular_access_orms.append(orm_object)
+
+    assert vascular_access_orms
+    xml = patient_record.xml.procedures.vascular_access
+    for vascular_orm, vascular_xml in zip(vascular_access_orms, xml):
+        assert vascular_orm.proceduretypecode == vascular_xml.procedure_type.code
+        assert vascular_orm.proceduretypecodestd == vascular_xml.procedure_type.coding_standard.value
+        assert vascular_orm.proceduretypedesc == vascular_xml.procedure_type.description
+        assert vascular_orm.proceduretime == vascular_xml.procedure_time.to_datetime()
+        assert vascular_orm.enteredatcode == vascular_xml.entered_at.code
+        assert vascular_orm.enteredatcodestd == vascular_xml.entered_at.coding_standard.value
+        assert vascular_orm.enteredatdesc == vascular_xml.entered_at.description
+        assert vascular_orm.acc19 == vascular_xml.attributes.acc19.to_datetime()
+        assert vascular_orm.acc20 == vascular_xml.attributes.acc20.to_datetime()
+        assert vascular_orm.acc21 == vascular_xml.attributes.acc21.to_datetime()
+        assert vascular_orm.acc22 == vascular_xml.attributes.acc22
+        assert vascular_orm.acc30 == vascular_xml.attributes.acc30.value
+        assert vascular_orm.acc40 == vascular_xml.attributes.acc40
 
 
 def test_transplant(patient_record: PatientRecord):
-    assert True
+    transplant_orms = []
+    orm_objects = patient_record.get_orm_list()
+    for orm_object in orm_objects:
+        if orm_object.__tablename__ == "transplant":
+            transplant_orms.append(orm_object)
+    assert transplant_orms
+
+    xml = patient_record.xml.procedures.transplant
+
+    for transplant_orm, transplant_xml in zip(transplant_orms, xml):
+        # ProcedureType
+        assert transplant_orm.proceduretypecode == transplant_xml.procedure_type.code
+        assert transplant_orm.proceduretypecodestd == transplant_xml.procedure_type.coding_standard.value
+        assert transplant_orm.proceduretypedesc == transplant_xml.procedure_type.description
+
+        # ProcedureTime
+        assert transplant_orm.proceduretime == transplant_xml.procedure_time.to_datetime()
+
+        # EnteredAt
+        assert transplant_orm.enteredatcode == transplant_xml.entered_at.code
+        assert transplant_orm.enteredatcodestd == transplant_xml.entered_at.coding_standard.value
+        assert transplant_orm.enteredatdesc == transplant_xml.entered_at.description
+
+        # Optional fields
+        if transplant_xml.updated_on:
+            assert transplant_orm.updatedon == transplant_xml.updated_on.to_datetime()
+        if transplant_xml.external_id:
+            assert transplant_orm.externalid == transplant_xml.external_id
+
+        # Former attributes
+        assert transplant_orm.tra77 == transplant_xml.donor_type.value
+        #assert transplant_orm.tra72 == transplant_xml.date_registered.to_date()
+        assert transplant_orm.tra64 == transplant_xml.failure_date.to_datetime()
+        assert transplant_orm.tra91 == transplant_xml.cold_ischaemic_time
+        assert transplant_orm.tra83 == transplant_xml.hlamismatch_a
+        assert transplant_orm.tra84 == transplant_xml.hlamismatch_b
+        assert transplant_orm.tra85 == transplant_xml.hlamismatch_c
 
 
 def test_treatment(patient_record: PatientRecord):
@@ -276,91 +313,123 @@ def test_treatment(patient_record: PatientRecord):
     for orm_object, treatment_xml in zip(treatment_orms, xml):
         assert orm_object.encounternumber == treatment_xml.encounter_number
         if treatment_xml.admitting_clinician:
-            assert (
-                orm_object.admittingcliniciancode
-                == treatment_xml.admitting_clinician.code
-            )
+            assert orm_object.admittingcliniciancode == treatment_xml.admitting_clinician.code
             if treatment_xml.admitting_clinician.coding_standard:
-                assert (
-                    orm_object.admittingcliniciancodestd
-                    == treatment_xml.admitting_clinician.coding_standard.value
-                )
-            assert (
-                orm_object.admittingcliniciandesc
-                == treatment_xml.admitting_clinician.description
-            )
+                assert orm_object.admittingcliniciancodestd == treatment_xml.admitting_clinician.coding_standard.value
+        
+            assert orm_object.admittingcliniciandesc == treatment_xml.admitting_clinician.description
+            
 
         if treatment_xml.admit_reason:
             assert orm_object.admitreasoncode == treatment_xml.admit_reason.code.value
             if treatment_xml.admit_reason.coding_standard:
-                assert (
-                    orm_object.admitreasoncodestd
-                    == treatment_xml.admit_reason.coding_standard.value
-                )
+                assert orm_object.admitreasoncodestd == treatment_xml.admit_reason.coding_standard.value
             assert orm_object.admitreasondesc == treatment_xml.admit_reason.description
 
         if treatment_xml.admission_source:
             assert orm_object.admissionsourcecode == treatment_xml.admission_source.code
             if treatment_xml.admission_source.coding_standard:
-                assert (
-                    orm_object.admissionsourcecodestd
-                    == treatment_xml.admission_source.coding_standard.value
-                )
+                assert orm_object.admissionsourcecodestd == treatment_xml.admission_source.coding_standard.value
             # assert orm_object.admissionsourcedesc == treatment_xml.admission_source.code.description
 
         if treatment_xml.discharge_reason:
-            assert (
-                orm_object.dischargereasoncode
-                == treatment_xml.discharge_reason.code.value
-            )
+            assert orm_object.dischargereasoncode == treatment_xml.discharge_reason.code.value
             if treatment_xml.discharge_reason.coding_standard:
-                assert (
-                    orm_object.dischargereasoncodestd
-                    == treatment_xml.discharge_reason.coding_standard.value
-                )
-            assert (
-                orm_object.dischargereasondesc
-                == treatment_xml.discharge_reason.description
-            )
+                assert orm_object.dischargereasoncodestd == treatment_xml.discharge_reason.coding_standard.value
+            assert orm_object.dischargereasondesc == treatment_xml.discharge_reason.description
 
         if treatment_xml.discharge_location:
-            assert (
-                orm_object.dischargelocationcode
-                == treatment_xml.discharge_location.code
-            )
+            assert orm_object.dischargelocationcode == treatment_xml.discharge_location.code
             if treatment_xml.discharge_location.coding_standard:
-                assert (
-                    orm_object.dischargelocationcodestd
-                    == treatment_xml.discharge_location.coding_standard.value
-                )
-            assert (
-                orm_object.dischargelocationdesc
-                == treatment_xml.discharge_location.description
-            )
+                assert orm_object.dischargelocationcodestd == treatment_xml.discharge_location.coding_standard.value
+            assert orm_object.dischargelocationdesc == treatment_xml.discharge_location.description
 
         if treatment_xml.health_care_facility:
-            assert (
-                orm_object.healthcarefacilitycode
-                == treatment_xml.health_care_facility.code
-            )
+            assert orm_object.healthcarefacilitycode == treatment_xml.health_care_facility.code
+    
             if treatment_xml.health_care_facility.coding_standard:
-                assert (
-                    orm_object.healthcarefacilitycodestd
-                    == treatment_xml.health_care_facility.coding_standard.value
-                )
-            assert (
-                orm_object.healthcarefacilitydesc
-                == treatment_xml.health_care_facility.description
-            )
+                assert orm_object.healthcarefacilitycodestd == treatment_xml.health_care_facility.coding_standard.value
+            assert orm_object.healthcarefacilitydesc == treatment_xml.health_care_facility.description
 
         if treatment_xml.entered_at:
             assert orm_object.enteredatcode == treatment_xml.entered_at.code
             if treatment_xml.entered_at.coding_standard:
-                assert (
-                    orm_object.enteredatcodestd
-                    == treatment_xml.entered_at.coding_standard.value
-                )
+                assert orm_object.enteredatcodestd == treatment_xml.entered_at.coding_standard.value
             assert orm_object.enteredatdesc == treatment_xml.entered_at.description
 
         assert orm_object.visitdescription == treatment_xml.visit_description
         # assert orm_object.qbl05 == treatment_xml.qbl05
+
+def test_transplant_list(patient_record: PatientRecord):
+    transplant_list_orms = []
+    for orm_object in patient_record.get_orm_list():
+        if orm_object.__tablename__ == "transplantlist":
+            transplant_list_orms.append(orm_object)
+
+    assert transplant_list_orms
+    transplant_xml_list = patient_record.xml.encounters.transplant_list
+
+    for orm_object, transplant_xml in zip(transplant_list_orms, transplant_xml_list):
+        assert orm_object.encounternumber == transplant_xml.encounter_number
+        assert orm_object.encountertype == transplant_xml.encounter_type.value
+        assert orm_object.fromtime == transplant_xml.from_time.to_datetime()
+        assert orm_object.totime == transplant_xml.to_time.to_datetime()
+
+        if transplant_xml.admitting_clinician:
+            assert (orm_object.admittingcliniciancode== transplant_xml.admitting_clinician.code)
+            if transplant_xml.admitting_clinician.coding_standard:
+                assert (orm_object.admittingcliniciancodestd == transplant_xml.admitting_clinician.coding_standard.value)
+            assert (orm_object.admittingcliniciandesc == transplant_xml.admitting_clinician.description)
+
+        if transplant_xml.admit_reason:
+            assert orm_object.admitreasoncode == transplant_xml.admit_reason.code
+            if transplant_xml.admit_reason.coding_standard:
+                assert (orm_object.admitreasoncodestd == transplant_xml.admit_reason.coding_standard)
+            assert orm_object.admitreasondesc == transplant_xml.admit_reason.description
+
+        if transplant_xml.admission_source:
+            assert orm_object.admissionsourcecode == transplant_xml.admission_source.code
+            if transplant_xml.admission_source.coding_standard:
+                assert (orm_object.admissionsourcecodestd == transplant_xml.admission_source.coding_standard.value)
+            assert orm_object.admissionsourcedesc == transplant_xml.admission_source.description
+
+        if transplant_xml.discharge_reason:
+            assert (orm_object.dischargereasoncode== transplant_xml.discharge_reason.code)
+            if transplant_xml.discharge_reason.coding_standard:
+                assert (orm_object.dischargereasoncodestd == transplant_xml.discharge_reason.coding_standard)
+            assert (orm_object.dischargereasondesc == transplant_xml.discharge_reason.description)
+
+        if transplant_xml.discharge_location:
+            assert (orm_object.dischargelocationcode == transplant_xml.discharge_location.code)
+            if transplant_xml.discharge_location.coding_standard:
+                assert (orm_object.dischargelocationcodestd== transplant_xml.discharge_location.coding_standard.value)
+            assert (orm_object.dischargelocationdesc == transplant_xml.discharge_location.description)
+
+        if transplant_xml.health_care_facility:
+            assert orm_object.healthcarefacilitycode == transplant_xml.health_care_facility.code
+            if transplant_xml.health_care_facility.coding_standard:
+                assert orm_object.healthcarefacilitycodestd == transplant_xml.health_care_facility.coding_standard.value
+            assert orm_object.healthcarefacilitydesc == transplant_xml.health_care_facility.description
+
+        if transplant_xml.entered_at:
+            assert orm_object.enteredatcode == transplant_xml.entered_at.code
+            if transplant_xml.entered_at.coding_standard:
+                assert orm_object.enteredatcodestd == transplant_xml.entered_at.coding_standard.value
+            assert orm_object.enteredatdesc == transplant_xml.entered_at.description
+
+        assert orm_object.visitdescription == transplant_xml.visit_description
+
+        if transplant_xml.updated_on:
+            assert orm_object.updatedon == transplant_xml.updated_on.to_datetime()
+        if transplant_xml.external_id:
+            assert orm_object.externalid == transplant_xml.external_id
+
+def test_encounter(patient_record: PatientRecord):
+    encounter_orms = []
+    for orm_object in patient_record.get_orm_list():
+        if orm_object.__tablename__ == "encounter":
+            encounter_orms.append(orm_object)
+    
+    assert encounter_orms
+
+    assert True

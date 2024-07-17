@@ -1,5 +1,5 @@
 from ukrdc_cupid.core.utils import (
-    DatabaseConnection,
+    UKRDCConnection,
     create_id_generation_sequences,
     populate_ukrdc_tables,
 )
@@ -22,7 +22,7 @@ def ukrdc_sessionmaker(url: str, gp_info: bool = False):
     Yields:
         _type_: _description_
     """
-    connector = DatabaseConnection(env_prefix="UKRDC", url=url)
+    connector = UKRDCConnection(url=url)
     connector.generate_schema()
     sessionmaker = connector.create_sessionmaker()
     with sessionmaker() as session:

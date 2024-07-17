@@ -10,6 +10,11 @@
                 <Organization>UKRR_UID</Organization>
                 <NumberType>MRN</NumberType>
             </PatientNumber>
+            <PatientNumber>
+                <Number>2718281818</Number>
+                <Organization>UKRR_UID</Organization>
+                <NumberType>NI</NumberType>
+            </PatientNumber>
         </PatientNumbers>
         <Names>
             <Name use="L">

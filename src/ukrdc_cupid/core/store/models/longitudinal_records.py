@@ -14,6 +14,7 @@ import ukrdc_xsdata.ukrdc.dialysis_sessions as xsd_dialysis_sessions  # type: ig
 import ukrdc_xsdata.ukrdc.procedures as xsd_procedures
 import ukrdc_xsdata.ukrdc.vascular_accesses as xsd_vascular_accesses
 import ukrdc_xsdata.ukrdc.encounters as xsd_encounters  # type: ignore
+import ukrdc_xsdata.ukrdc.transplants as xsd_transplants  # type: ignore
 
 
 class Observation(Node):
@@ -207,15 +208,31 @@ class VascularAccess(Node):
     def sqla_mapped() -> str:
         return "vascular_accesses"
 
-    def map_xml_to_orm(self, _) -> None:
-        # fmt: off
+    # fmt: off
+    def add_acc(self):
+        if self.xml.attributes:
+            self.add_item("acc19", self.xml.attributes.acc19)
+            self.add_item("acc20", self.xml.attributes.acc20)
+            self.add_item("acc21", self.xml.attributes.acc21)
+            self.add_item("acc22", self.xml.attributes.acc22)
+            self.add_item("acc30", self.xml.attributes.acc30)
+            self.add_item("acc40", self.xml.attributes.acc40)
 
+    def map_xml_to_orm(self, _) -> None:
+        # Map values from XML to ORM object
+        self.add_code("proceduretypecode", "proceduretypecodestd", "proceduretypedesc",self.xml.procedure_type,optional=False,)
+        self.add_item("proceduretime", self.xml.procedure_time, optional=False)
+        #self.add_code("enteredbycode", "enteredbycodestd", "enteredbydesc", self.xml.entered_by, optional=True,)
+        self.add_code("enteredatcode", "enteredatcodestd", "enteredatdesc", self.xml.entered_at, optional=True,)
+        self.add_item("updatedon", self.xml.updated_on, optional=True)
+        self.add_item("externalid", self.xml.external_id, optional=True)
+        self.add_acc()
         # fmt: on
         pass
 
 
 class Transplant(Node):
-    def __init__(self, xml):
+    def __init__(self, xml: xsd_transplants.TransplantProcedure):
         super().__init__(xml, sqla.Transplant)
 
     def sqla_mapped() -> str:
@@ -223,8 +240,23 @@ class Transplant(Node):
 
     def map_xml_to_orm(self, _) -> None:
         # fmt: off
+        self.add_code("proceduretypecode", "proceduretypecodestd", "proceduretypedesc", self.xml.procedure_type, optional=False)
+        self.add_item("proceduretime", self.xml.procedure_time, optional=False)
+        self.add_code("enteredatcode", "enteredatcodestd", "enteredatdesc", self.xml.entered_at)
+
+        self.add_item("updatedon", self.xml.updated_on, optional=True)
+        self.add_item("externalid", self.xml.external_id, optional=True)
+
+        # former attributes
+        self.add_item("tra77", self.xml.donor_type)
+        # this may need adding to the sqla models
+        #self.add_item("tra72", self.xml.date_registered)
+        self.add_item("tra64", self.xml.failure_date)
+        self.add_item("tra91", self.xml.cold_ischaemic_time)
+        self.add_item("tra83", self.xml.hlamismatch_a)
+        self.add_item("tra84", self.xml.hlamismatch_b)
+        self.add_item("tra85", self.xml.hlamismatch_c)
         # fmt: on
-        pass
 
 
 class Treatment(Node):
@@ -293,5 +325,95 @@ class Medication(Node):
         # fmt: on
 
 
-# class TransplantList
-# class Encounter
+class TransplantList(Node):
+    def __init__(self, xml: xsd_encounters.TransplantList):
+        super().__init__(xml, sqla.TransplantList)
+
+    def sqla_mapped():
+        return "transplantlists"
+
+    def map_xml_to_orm(self, _):
+        # fmt: off
+        self.add_item("encounternumber", self.xml.encounter_number, optional=False)
+        self.add_item("encountertype", self.xml.encounter_type, optional=True)
+        self.add_item("fromtime", self.xml.from_time, optional=False)
+        self.add_item("totime", self.xml.to_time, optional=True)
+        self.add_code("admittingcliniciancode", "admittingcliniciancodestd", "admittingcliniciandesc", self.xml.admitting_clinician, optional=True)
+        self.add_code("healthcarefacilitycode", "healthcarefacilitycodestd", "healthcarefacilitydesc", self.xml.health_care_facility, optional=True,)
+        self.add_code("admitreasoncode", "admitreasoncodestd", "admitreasondesc", self.xml.admit_reason, optional=True,)
+        self.add_code("admissionsourcecode", "admissionsourcecodestd", "admissionsourcedesc", self.xml.admission_source, optional=True)
+        self.add_code("dischargereasoncode", "dischargereasoncodestd", "dischargereasondesc", self.xml.discharge_reason, optional=True,)
+        self.add_code("dischargelocationcode", "dischargelocationcodestd", "dischargelocationdesc", self.xml.discharge_location, optional=True,)
+        self.add_code("enteredatcode", "enteredatcodestd", "enteredatdesc", self.xml.entered_at, optional=True,)
+        self.add_item("visitdescription", self.xml.visit_description, optional=True)
+        self.add_item("updatedon", self.xml.updated_on, optional=True)
+        self.add_item("externalid", self.xml.external_id, optional=True)
+        # fmt: on
+
+
+class Encounter(Node):
+    def __init__(self, xml: xsd_encounters.Encounter):
+        super().__init__(xml, sqla.Encounter)
+
+    def sqla_mapped():
+        return "encounters"
+
+    def map_xml_to_orm(self, _):
+        self.add_item("encounternumber", self.xml.encounter_number, optional=True)
+        self.add_item("encountertype", self.xml.encounter_type, optional=False)
+        self.add_item("fromtime", self.xml.from_time, optional=False)
+        self.add_item("totime", self.xml.to_time, optional=True)
+        self.add_code(
+            "admittingcliniciancode",
+            "admittingcliniciancodestd",
+            "admittingcliniciandesc",
+            self.xml.admitting_clinician,
+            optional=True,
+        )
+        self.add_code(
+            "healthcarefacilitycode",
+            "healthcarefacilitycodestd",
+            "healthcarefacilitydesc",
+            self.xml.health_care_facility,
+            optional=True,
+        )
+        self.add_code(
+            "admitreasoncode",
+            "admitreasoncodestd",
+            "admitreasondesc",
+            self.xml.admit_reason,
+            optional=True,
+        )
+        self.add_code(
+            "admissionsourcecode",
+            "admissionsourcecodestd",
+            "admissionsourcedesc",
+            self.xml.admission_source,
+            optional=True,
+        )
+        self.add_code(
+            "dischargereasoncode",
+            "dischargereasoncodestd",
+            "dischargereasondesc",
+            self.xml.discharge_reason,
+            optional=True,
+        )
+        self.add_code(
+            "dischargelocationcode",
+            "dischargelocationcodestd",
+            "dischargelocationdesc",
+            self.xml.discharge_location,
+            optional=True,
+        )
+        self.add_code(
+            "enteredatcode",
+            "enteredatcodestd",
+            "enteredatdesc",
+            self.xml.entered_at,
+            optional=True,
+        )
+        self.add_item("visitdescription", self.xml.visit_description, optional=True)
+        self.add_item("updatedon", self.xml.updated_on, optional=True)
+        self.add_item("externalid", self.xml.external_id, optional=True)
+
+        return
