@@ -55,12 +55,24 @@ class DatabaseConnection:
         self.user = self.get_property("user", "username")
         self.password = self.get_property("password", "password")
         self.port = self.get_property("port", "port")
-        self.name = self.get_property("name", "path").strip("/")
+        self.name = self.get_property("name", "path")
+        self.engine = None
 
-        if not self.url:
+        if self.name is not None:
+            self.name.strip("/")
+
+        if (
+            self.url is None
+            and self.driver is not None
+            and self.user is not None
+            and self.password is not None
+            and self.port is not None
+            and self.name is not None
+        ):
             self.url = self.generate_database_url()
 
-        self.engine = create_engine(url=self.url)
+        if self.url is not None:
+            self.engine = create_engine(url=self.url)
         # self.engine = create_engine(url=self.url)
 
     def get_property(self, property_name: str, url_property: str) -> str:
@@ -146,5 +158,8 @@ class UKRRConnection(DatabaseConnection):
     def __init__(
         self,
     ):
-        ukrr_url = ENV["UKRR_URL"]
-        super().__init__(url=ukrr_url)
+        ukrr_url = ENV.get("UKRR_URL")
+        if ukrr_url is not None:
+            super().__init__(url=ukrr_url)
+        else:
+            raise Exception("UKRR URL not found")
