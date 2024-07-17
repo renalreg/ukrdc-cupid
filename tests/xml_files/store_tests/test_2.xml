@@ -219,6 +219,29 @@
         </VascularAccess>
     </Procedures>
     <Encounters>
+        <Encounter>
+            <EncounterNumber>123456789</EncounterNumber>
+            <EncounterType>E</EncounterType>
+            <FromTime>2023-06-07T10:00:00</FromTime>
+            <ToTime>2023-06-07T11:00:00</ToTime>
+            <AdmittingClinician>
+                <CodingStandard>LOCAL</CodingStandard>
+                <Code>123</Code>
+                <Description>Dr. John Doe</Description>
+            </AdmittingClinician>
+            <HealthCareFacility>
+                <CodingStandard>ODS</CodingStandard>
+                <Code>RXF01</Code>
+                <Description>Renal Unit 1</Description>
+            </HealthCareFacility>
+            <AdmitReason>
+                <CodingStandard>LOCAL</CodingStandard>
+                <Code>456</Code>
+                <Description>Reason for admission</Description>
+            </AdmitReason>
+            <UpdatedOn>2023-06-07T12:00:00</UpdatedOn>
+            <ExternalId>ABC123</ExternalId>
+        </Encounter>
         <Treatment>
             <EncounterNumber>9090909</EncounterNumber>
             <FromTime>2006-05-04</FromTime>

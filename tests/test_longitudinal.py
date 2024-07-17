@@ -425,5 +425,11 @@ def test_transplant_list(patient_record: PatientRecord):
             assert orm_object.externalid == transplant_xml.external_id
 
 def test_encounter(patient_record: PatientRecord):
+    encounter_orms = []
+    for orm_object in patient_record.get_orm_list():
+        if orm_object.__tablename__ == "encounter":
+            encounter_orms.append(orm_object)
+    
+    assert encounter_orms
 
     assert True

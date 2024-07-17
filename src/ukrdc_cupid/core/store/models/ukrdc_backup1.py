@@ -948,63 +948,13 @@ class Encounter(Node):
         self.add_item("encountertype", self.xml.encounter_type, optional=False)
         self.add_item("fromtime", self.xml.from_time, optional=False)
         self.add_item("totime", self.xml.to_time, optional=True)
-
-        self.add_code(
-            "admittingcliniciancode",
-            "admittingcliniciancodestd",
-            "admittingcliniciandesc",
-            self.xml.admitting_clinician,
-            optional=True,
-        )
-
-        self.add_code(
-            "healthcarefacilitycode",
-            "healthcarefacilitycodestd",
-            "healthcarefacilitydesc",
-            self.xml.health_care_facility,
-            optional=True,
-        )
-
-        self.add_code(
-            "admitreasoncode",
-            "admitreasoncodestd",
-            "admitreasondesc",
-            self.xml.admit_reason,
-            optional=True,
-        )
-
-        self.add_code(
-            "admissionsourcecode",
-            "admissionsourcecodestd",
-            "admissionsourcedesc",
-            self.xml.admission_source,
-            optional=True,
-        )
-
-        self.add_code(
-            "dischargereasoncode",
-            "dischargereasoncodestd",
-            "dischargereasondesc",
-            self.xml.discharge_reason,
-            optional=True,
-        )
-
-        self.add_code(
-            "dischargelocationcode",
-            "dischargelocationcodestd",
-            "dischargelocationdesc",
-            self.xml.discharge_location,
-            optional=True,
-        )
-
-        self.add_code(
-            "enteredatcode",
-            "enteredatcodestd",
-            "enteredatdesc",
-            self.xml.entered_at,
-            optional=True,
-        )
-
+        self.add_code("admittingcliniciancode", "admittingcliniciancodestd", "admittingcliniciandesc", self.xml.admitting_clinician, optional=True)
+        self.add_code("healthcarefacilitycode", "healthcarefacilitycodestd", "healthcarefacilitydesc", self.xml.health_care_facility, optional=True)
+        self.add_code("admitreasoncode", "admitreasoncodestd", "admitreasondesc", self.xml.admit_reason, optional=True)
+        self.add_code("admissionsourcecode", "admissionsourcecodestd", "admissionsourcedesc", self.xml.admission_source, optional=True)
+        self.add_code("dischargereasoncode", "dischargereasoncodestd", "dischargereasondesc", self.xml.discharge_reason, optional=True)
+        self.add_code("dischargelocationcode","dischargelocationcodestd","dischargelocationdesc", self.xml.discharge_location,optional=True)
+        self.add_code("enteredatcode", "enteredatcodestd", "enteredatdesc", self.xml.entered_at, optional=True)
         self.add_item("visitdescription", self.xml.visit_description, optional=True)
         self.add_item("updatedon", self.xml.updated_on, optional=True)
         self.add_item("externalid", self.xml.external_id, optional=True)

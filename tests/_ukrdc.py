@@ -1352,8 +1352,6 @@ def test_treatment():
     assert treatment.orm_object.qbl05 == qbl05
 
 
-test_treatment()
-
 
 def test_transplant_list():
 
