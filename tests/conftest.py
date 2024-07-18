@@ -1,16 +1,18 @@
+import uuid
+import pytest
+
 from ukrdc_cupid.core.utils import (
     UKRDCConnection,
     create_id_generation_sequences,
     populate_ukrdc_tables,
 )
+from ukrdc_cupid.api import app
 from sqlalchemy.orm import Session
 from sqlalchemy_utils import (
     database_exists,
     drop_database,
 )  # type:ignore
-
-import uuid
-import pytest
+from fastapi.testclient import TestClient
 
 
 def ukrdc_sessionmaker(url: str, gp_info: bool = False):
@@ -67,3 +69,9 @@ def ukrdc_test_session():
 @pytest.fixture(scope="function")
 def ukrdc_test_session_with_gp_info():
     yield from generate_ukrdc_test_session(gp_info=True)
+
+
+@pytest.fixture(scope="function")
+def client():
+    # Create a client to use for testing api
+    return TestClient(app)
