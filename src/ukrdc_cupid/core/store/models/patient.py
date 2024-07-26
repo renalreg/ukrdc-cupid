@@ -152,10 +152,12 @@ class Patient(Node):
         self.add_person_to_contact(self.xml.person_to_contact)
         self.add_code( "occupationcode", "occupationcodestd", "occupationdesc", self.xml.occupation)
         self.add_code("primarylanguagecode","primarylanguagecodestd","primarylanguagedesc", self.xml.primary_language)
-        self.add_item("death", bool(self.xml.death))  # should this be optional?
+        #self.add_item("death", bool(self.xml.death))  # should this be optional?
         self.add_item("updatedon", self.xml.updated_on)  # should this be automatically filled in by transform?
         self.add_item("bloodgroup", self.xml.blood_group)
         self.add_item("bloodrhesus", self.xml.blood_rhesus)
+        self.add_item("externalid", self.xml.external_id)
+        self.add_item("updated_on", self.xml.updated_on)
 
         # relationships these are all sequential
         self.add_children(PatientNumber, "patient_numbers.patient_number", session)

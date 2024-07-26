@@ -143,6 +143,9 @@ def identify_patient_feed(ukrdc_session: Session, patient_info: dict) -> Any:
     The patient info is matched (or not) with the MRN. It then goes through
     as series of steps to confirm or otherwise the match.
 
+    In reality the introduction of the UKRR_UID has made in the defacto key for
+    and matching.
+
     Args:
         ukrdc_session (Session): _description_
         patient_info (dict): _description_
@@ -162,7 +165,7 @@ def identify_patient_feed(ukrdc_session: Session, patient_info: dict) -> Any:
         if matched_ni_no == 0:
             return None, None, None
         else:
-            return None, None, Investigation(ukrdc_session, matched_patients_ni, 4)
+            return None, None, Investigation(ukrdc_session, matched_patients_ni, 2)
 
     # set the pid based on the matched mrn
     elif matched_mrn_no == 1:
@@ -339,10 +342,10 @@ def identify_across_ukrdc(ukrdc_session: Session, patient_info: dict) -> Any:
         return None, None
 
     elif len(matched_ukrdcids) == 1:
-        # verify demgraphics
-        _, ukrdcid = matched_ukrdcids[0]
+        # verify dem0graphics
+        ukrdcid = matched_ukrdcids[0]
         is_valid = validate_demog_ukrdc(
-            ukrdc_session, patient_info["date_of_birth"], ukrdcid
+            ukrdc_session, patient_info["birth_time"], ukrdcid
         )
         if is_valid:
             return ukrdcid, None
@@ -350,7 +353,7 @@ def identify_across_ukrdc(ukrdc_session: Session, patient_info: dict) -> Any:
             investigation = Investigation(
                 ukrdc_session,
                 matched_ids,
-                69,
+                5,
             )
             investigation.create_issue()
             return None, investigation
@@ -358,7 +361,7 @@ def identify_across_ukrdc(ukrdc_session: Session, patient_info: dict) -> Any:
         investigation = Investigation(
             ukrdc_session,
             matched_ids,
-            69,
+            6,
         )
         investigation.create_issue()
         return None, investigation

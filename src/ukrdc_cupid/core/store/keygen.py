@@ -19,7 +19,7 @@ def mint_new_pid(session: Session) -> str:
     Function to mint new pid. This sequence doesn't currently exist in the ukrdc, create by running script make_pid_generation_sequence.py
     """
 
-    new_pid = str(session.execute(Sequence("generate_new_pid")))  # type:ignore
+    new_pid = str(session.scalar(Sequence("generate_new_pid")))  # type:ignore
 
     return new_pid
 
@@ -31,7 +31,9 @@ def mint_new_ukrdcid(session: Session) -> str:
     Args:
         session (Session): _description_
     """
-    new_ukrdcid = str(session.execute(Sequence("generate_new_ukrdcid")))  # type:ignore
+
+    # new_ukrdcid = str(session.execute(Sequence("generate_new_ukrdcid")))  # type:ignore
+    new_ukrdcid = str(session.scalar(Sequence("generate_new_ukrdcid")))  # type:ignore
 
     return new_ukrdcid
 

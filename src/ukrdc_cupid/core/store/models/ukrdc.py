@@ -61,11 +61,13 @@ class PatientRecord(Node):
     def sqla_mapped() -> None:
         return None
 
-    def add_children(
-        self, child_node: type[Node], xml_attr: str, session: Session
-    ) -> None:
-
-        super().add_children(child_node, xml_attr, session)
+    def add_sending_facility(self):
+        """Parse sendingfacility"""
+        sending_facility = self.xml.sending_facility
+        self.orm_object.sendingfacility = sending_facility.value
+        self.orm_object.channelname = sending_facility.channel_name
+        self.orm_object.schemaversion = sending_facility.schema_version
+        # self.orm_object.
 
     def updated_status(self) -> None:
         super().updated_status()
@@ -83,9 +85,9 @@ class PatientRecord(Node):
 
     def map_xml_to_orm(self, session: Session) -> None:
 
-        # core patient record
-        self.add_item("sendingfacility", self.xml.sending_facility)
+        # metadata for patientfeed
         self.add_item("sendingextract", self.xml.sending_extract)
+        self.add_sending_facility()
 
         # get MRN from patient numbers model
         for number in self.xml.patient.patient_numbers.patient_number:

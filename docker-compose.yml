@@ -21,7 +21,7 @@ services:
       - cupid_network
     restart: unless-stopped
     env_file:
-      - .env
+      - .env.test
   
   app:
     build: .

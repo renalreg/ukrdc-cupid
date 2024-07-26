@@ -58,7 +58,7 @@ def validate_demog_ukrdc(session: Session, dob: datetime, ukrdcid: str) -> bool:
         .where(orm.PatientRecord.ukrdcid == ukrdcid)
         .group_by(orm.Patient.birth_time)
     )
-    dob_ukrdc = session.execute(dob_query).fetchall()
+    dob_ukrdc = [row[0] for row in session.execute(dob_query).fetchall()]
 
     return dob in dob_ukrdc
 
