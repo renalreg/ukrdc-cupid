@@ -7,6 +7,7 @@ from ukrdc_cupid.core.utils import (
     populate_ukrdc_tables,
 )
 from ukrdc_cupid.api import app
+from ukrdc_cupid.api.main import get_session
 
 from sqlalchemy_utils import (
     database_exists,
@@ -14,6 +15,7 @@ from sqlalchemy_utils import (
 )  # type:ignore
 
 from fastapi.testclient import TestClient
+from sqlalchemy.orm import Session
 
 
 def ukrdc_sessionmaker(url: str, gp_info: bool = False):
@@ -73,6 +75,8 @@ def ukrdc_test_session_with_gp_info():
 
 
 @pytest.fixture(scope="function")
-def client():
+def client(ukrdc_test_session:Session):
     # Create a client to use for testing api
+    app.dependency_overrides[get_session] = lambda: ukrdc_test_session
     return TestClient(app)
+    
