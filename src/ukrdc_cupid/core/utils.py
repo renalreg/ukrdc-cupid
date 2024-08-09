@@ -11,7 +11,7 @@ from sqlalchemy_utils import (
 from ukrdc_sqla.ukrdc import Base as UKRDC3Base
 
 from ukrdc_cupid.core.investigate.models import Base as InvestiBase
-from ukrdc_cupid.core.investigate.utils import update_issue_types
+from ukrdc_cupid.core.investigate.utils import update_picklists
 from ukrdc_cupid.core.store.models.lookup_tables import GPInfoType
 
 # Load environment varibles from wither they are found
@@ -124,34 +124,37 @@ def populate_ukrdc_tables(session: Session, gp_info: bool = False):
     # we should have something for tables imported from ukrr
 
     # populate issue types table
-    update_issue_types(session)
+    update_picklists(session)
 
 
 class UKRDCConnection(DatabaseConnection):
     def __init__(self, url=None):
         super().__init__("UKRDC", url)
 
-    def generate_schema(self):
+    def generate_schema(self, gp_info=False):
         """Creates db if it doesn't exist and generates the schema for it."""
         if not database_exists(self.url):
             create_database(self.url)
 
-        if self.prefix == "UKRDC":
-            # generate main ukrdc tables
-            UKRDC3Base.metadata.drop_all(bind=self.engine)
-            UKRDC3Base.metadata.create_all(bind=self.engine)
+        # generate main ukrdc tables
+        UKRDC3Base.metadata.drop_all(bind=self.engine)
+        UKRDC3Base.metadata.create_all(bind=self.engine)
 
-            # generate schema and tables for investigations
-            schema_name = "investigations"
-            with self.engine.connect() as connection:
-                trans = connection.begin()
-                connection.execute(text(f"CREATE SCHEMA IF NOT EXISTS {schema_name}"))
-                trans.commit()
+        # generate schema and tables for investigations
+        schema_name = "investigations"
+        with self.engine.connect() as connection:
+            trans = connection.begin()
+            connection.execute(text(f"CREATE SCHEMA IF NOT EXISTS {schema_name}"))
+            trans.commit()
 
-            InvestiBase.metadata.drop_all(bind=self.engine)
-            InvestiBase.metadata.create_all(bind=self.engine)
-        else:
-            raise Exception("Sorry bro only implemented for ukrdc")
+        InvestiBase.metadata.drop_all(bind=self.engine)
+        InvestiBase.metadata.create_all(bind=self.engine)
+
+        # generate db sequences
+        with self.create_sessionmaker()() as session:
+            create_id_generation_sequences(session)
+            populate_ukrdc_tables(session, gp_info=gp_info)
+            session.commit()
 
 
 class UKRRConnection(DatabaseConnection):

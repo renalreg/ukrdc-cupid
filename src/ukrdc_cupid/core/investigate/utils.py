@@ -1,28 +1,38 @@
 from sqlalchemy.orm import Session
-from ukrdc_cupid.core.investigate.models import IssueType
+from ukrdc_cupid.core.investigate.models import IssueType, Status, Base
+from ukrdc_cupid.core.investigate.picklists import ISSUE_PICKLIST, STATUS_PICKLIST
 
-# picklist of possible issues
-ISSUE_PICKLIST = [
-    [1, "Demographic validation failure for feed Match"],
-    [2, "Ambiguous feed match: pid identified via MRN but not NI"],
-    [3, "Ambiguous feed match: matched to multiple persistent PIDs"],
-    [4, "Ambiguous feed match: MRN matches disagree with NI matches"],
-    [5, "Demographic validation failure in cross feed matching"],
-    [6, "Ambiguous cross feed match: multiple ukrdcids identified"],
-]
+from typing import List, Type, Any
 
 
-def update_issue_types(session: Session, issues: list = ISSUE_PICKLIST) -> None:
+def update_picklist(
+    session: Session, orm_model: Type[Base], picklist: List[List[Any]]
+) -> None:
     """
-    Update issue lookup table.
-    Note: this needs to be checked to ensure its working/uptodate
+    Updates a generic picklist in the database.
+
+    Args:
+        session: session to connect to the ukrdc.
+        orm_model: orm model of table with picklists to update.
+        picklist: list containing ids and dictionary of attributes
     """
-    for issue_id, issue_type in issues:
-        issue = session.get(IssueType, issue_id)
-        if issue:
-            issue.issue_type = issue_type
+    for item_id, updates in picklist:
+        item_orm = session.get(orm_model, item_id)
+        if item_orm is not None:
+            for key, value in updates.items():
+                setattr(item_orm, key, value)
         else:
-            issue = IssueType(id=issue_id, issue_type=issue_type)
-            session.add(issue)
+            item_orm = orm_model(id=item_id, **updates)
+            session.add(item_orm)
 
     session.commit()
+
+
+def update_picklists(session):
+    """Updates the picklists used by the investigations schema
+
+    Args:
+        session (_type_): _description_
+    """
+    update_picklist(session, IssueType, ISSUE_PICKLIST)
+    update_picklist(session, Status, STATUS_PICKLIST)

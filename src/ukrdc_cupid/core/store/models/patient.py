@@ -156,6 +156,8 @@ class Patient(Node):
         self.add_item("updatedon", self.xml.updated_on)  # should this be automatically filled in by transform?
         self.add_item("bloodgroup", self.xml.blood_group)
         self.add_item("bloodrhesus", self.xml.blood_rhesus)
+        self.add_item("externalid", self.xml.external_id)
+        self.add_item("updated_on", self.xml.updated_on)
 
         # relationships these are all sequential
         self.add_children(PatientNumber, "patient_numbers.patient_number", session)
@@ -344,7 +346,6 @@ class Document(Node):
         # decode it automatically. Probably it then gets encoded again
         if self.xml.stream:
             self.orm_object.stream = self.xml.stream
-            print(":)")
 
         # self.add_item("stream", int(self.xml.stream))
         self.add_item("updatedon", self.xml.updated_on, optional=True)

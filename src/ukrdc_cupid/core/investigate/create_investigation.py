@@ -1,10 +1,12 @@
 import json
 
-from ukrdc_cupid.core.investigate.models import PatientID, Issue
-from xsdata.formats.dataclass.serializers import XmlSerializer
+from ukrdc_cupid.core.investigate.models import PatientID, Issue, XmlFile
 from datetime import datetime
-from typing import List, Tuple
+from typing import List, Tuple, Union
 from sqlalchemy.orm import Session
+from sqlalchemy import select, func
+from xsdata.formats.dataclass.serializers import XmlSerializer
+import ukrdc_xsdata.ukrdc as xsd_ukrdc  # type: ignore
 
 serializer = XmlSerializer()
 
@@ -61,14 +63,18 @@ class Investigation:
     """
 
     def __init__(
-        self, session: Session, patient_ids: List[Tuple[str, str]], issue_type_id: int
+        self,
+        session: Session,
+        patient_ids: List[Tuple[str, str]],
+        issue_type_id: int,
+        is_blocking: bool = True,
     ) -> None:
         self.issue_type_id = issue_type_id
         self.patients: List[PatientID] = get_patients(session, patient_ids)
         self.session = session
-        self.issue: Issue = self.create_issue()
+        self.issue: Issue = self.create_issue(is_blocking=is_blocking)
 
-    def create_issue(self) -> Issue:
+    def create_issue(self, is_blocking: bool = True) -> Issue:
         """Function creates a new issue and adds it to the DB then returns
         it.
 
@@ -79,7 +85,10 @@ class Investigation:
         # create issue and link to patients via PatientIDToIssue
         today = datetime.now()
         new_issue = Issue(
-            issue_id=self.issue_type_id, date_created=today, patients=self.patients
+            issue_id=self.issue_type_id,
+            date_created=today,
+            patients=self.patients,
+            is_blocking=is_blocking,
         )
 
         # Link the issue to patients
@@ -89,7 +98,10 @@ class Investigation:
         return new_issue
 
     def append_extras(
-        self, xml: str = None, filename: str = None, metadata: dict = None
+        self,
+        xml: Union[str, xsd_ukrdc.PatientRecord] = None,
+        filename: str = None,
+        metadata: dict = None,
     ) -> None:
         """Add some high level bits to the issue if file has been diverted
 
@@ -98,10 +110,23 @@ class Investigation:
             filename (str): Name of the xml file (this may be opaque on the
             other side of MIRTH)
         """
-        # append xml and filename to issue
+
+        # look up xml file and append the issue to it
+        # if it exists or create it if not
         if xml is not None:
-            error_xml = serializer.render(xml)
-            self.issue.xml = error_xml
+            if not isinstance(xml, str):
+                xml = serializer.render(xml)
+
+            xml_file_hash = func.md5(xml)
+            xml_file = self.session.execute(
+                select(XmlFile).filter_by(file_hash=xml_file_hash)
+            ).scalar_one_or_none()
+
+            if xml_file is None:
+                xml_file = XmlFile(file=xml, file_hash=xml_file_hash)
+
+            xml_file.issues.append(self.issue)
+            self.session.add(xml_file)
 
         if filename is not None:
             self.issue.filename = filename  # type:ignore
@@ -121,7 +146,8 @@ class Investigation:
     def append_patients(self, patients: list) -> None:
         """Sometimes the patient hasn't been created when the issue is
         raised and you may want to create it later. For example a new
-        patient with a ukrdcid validation error would have a new
+        patient with a ukrdcid validation error would have a new pid
+        minted
 
         Args:
             patients (List[PatientID]): _description_

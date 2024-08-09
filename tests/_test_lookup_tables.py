@@ -57,6 +57,7 @@ def test_load_modality_codes(
     """
     if renalreg_session is not None:
         # sync table in ukrdc from ukrr
+        ModalityCodes()
         modality_codes = ModalityCodes(renalreg_session, ukrdc_test_session_persistent)
         modality_codes.sync_table_from_renalreg()
 
