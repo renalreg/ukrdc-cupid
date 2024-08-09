@@ -7,11 +7,12 @@ from ukrdc_cupid.core.utils import (
     populate_ukrdc_tables,
 )
 from ukrdc_cupid.api import app
-from sqlalchemy.orm import Session
+
 from sqlalchemy_utils import (
     database_exists,
     drop_database,
 )  # type:ignore
+
 from fastapi.testclient import TestClient
 
 

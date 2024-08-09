@@ -2,7 +2,9 @@ import time
 
 from sqlalchemy.orm import Session
 from sqlalchemy import text
+
 from ukrdc_cupid.core.store.models.ukrdc import PatientRecord
+from ukrdc_cupid.core.investigate.create_investigation import Investigation
 from sqlalchemy.exc import OperationalError
 from ukrdc_sqla.ukrdc import Base
 
@@ -47,6 +49,28 @@ def advisory_lock(func):
         raise TimeoutError("Unable to acquire advisory lock within the specified time.")
 
     return wrapper
+
+
+def commit_changes(ukrdc_session: Session):
+    """This function can be expanded in the future but it is to handle errors
+    with things like foreign key violations.
+
+    Args:
+        ukrdc_session (Session): _description_
+    """
+    try:
+        # we may want to add other validation steps here
+        ukrdc_session.flush()
+        ukrdc_session.commit()
+
+    except Exception as e:
+        # We may wish to generate more metadata here
+        msg = e.args[0]
+        # code = e.code
+        errormsg = f"Error inserting data into database: {msg}"
+        ukrdc_session.rollback()
+
+        return errormsg
 
 
 # @advisory_lock
@@ -99,25 +123,24 @@ def insert_incoming_data(
     for record in records_for_deletion:
         ukrdc_session.delete(record)
 
-    print("================================================")
-    if is_new:
-        print(f"Creating Patient: pid = {pid}, ukrdcid = {ukrdcid}")
+    # insert changes into database if valid
+    error = commit_changes(ukrdc_session)
+
+    if error is None:
+        print("================================================")
+        if is_new:
+            print(f"Creating Patient: pid = {pid}, ukrdcid = {ukrdcid}")
+        else:
+            print(f"Updating Patient: pid = {pid}, ukrdcid = {ukrdcid}")
+
+        print(f"New records: {len(ukrdc_session.new)}")
+
+        print(f"Updated records: {len(ukrdc_session.dirty)}")
     else:
-        print(f"Updating Patient: pid = {pid}, ukrdcid = {ukrdcid}")
-
-    print(f"New records: {len(ukrdc_session.new)}")
-    print(f"Updated records: {len(ukrdc_session.dirty)}")
-
-    try:
-        ukrdc_session.flush()
-
-        # in principle we could do a bunch of validation here before we commit
-        ukrdc_session.commit()
-
-    except Exception as e:
-        print("we need some more sophisticated error handling here")
-        print(e)
-        ukrdc_session.rollback()
+        investigation = Investigation(
+            ukrdc_session, patient_ids=[(pid, ukrdcid)], issue_type_id=8
+        )
+        investigation.append_extras(xml=incoming_xml_file)
 
     if debug:
         return new, dirty, unchanged

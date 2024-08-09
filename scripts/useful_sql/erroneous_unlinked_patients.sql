@@ -62,3 +62,41 @@ with nhs_names as (
 )
 
 select distinct * from nhs_names order by nhs_no
+
+
+
+
+with combined_demog as (
+select 
+    A.pid, 
+    A.ukrdcid, 
+    A.sendingextract, 
+    A.sendingfacility,
+    B.given, 
+    B.family,
+    C.birthtime, 
+    C.deathtime,
+    C.gender
+from patientrecord A
+inner join name B on B.pid = A.pid
+inner join patient C on C.pid = A.pid
+)
+select 
+    A.ukrdcid, 
+    A.given as given_A,
+    B.given as given_B,
+    A.family as family_A,
+    B.family as family_B,
+    A.birthtime as birthtime_A, 
+    B.birthtime as birthtime_B,
+	A.sendingextract,
+	B.sendingextract, 
+	A.sendingfacility,
+	B.sendingfacility
+from combined_demog A 
+inner join combined_demog B
+on A.ukrdcid = B.ukrdcid 
+and A.pid <> B.pid -- Ensure not comparing the same record--
+where (UPPER(A.given) <> UPPER(B.given) or UPPER(A.family) <> UPPER(B.family))
+and (UPPER(A.given) <> UPPER(B.family) or UPPER(A.family) <> UPPER(B.given))
+and ABS(EXTRACT(EPOCH FROM A.birthtime - B.birthtime)) > 86400;

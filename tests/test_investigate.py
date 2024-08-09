@@ -66,6 +66,7 @@ def test_ambiguous_pid(ukrdc_test: Session):
     assert not pid
     assert not ukrdcid
     assert investigation.issue.issue_id in POSSIBLE_ISSUES
+    assert investigation.issue.is_blocking
 
     for patient in investigation.patients:
         assert patient.pid in [TEST_PID, duplicate_pid]
@@ -88,7 +89,7 @@ def test_demog_validation(ukrdc_test: Session):
     assert not ukrdcid
     assert investigation.issue.issue_id in POSSIBLE_ISSUES
     assert investigation.issue.issue_id == 1
-
+    assert investigation.issue.is_blocking
 
 def test_no_mrn_matching(ukrdc_test:Session):
     """
@@ -106,7 +107,7 @@ def test_no_mrn_matching(ukrdc_test:Session):
     assert not ukrdcid
     assert investigation.issue.issue_id in POSSIBLE_ISSUES
     assert investigation.issue.issue_id == 2
-
+    assert investigation.issue.is_blocking
 
 def test_multiple_matches(ukrdc_test:Session):
     """Test case when multiple persitent feeds match incoming
@@ -125,7 +126,7 @@ def test_multiple_matches(ukrdc_test:Session):
     assert investigation.issue.issue_id in POSSIBLE_ISSUES
     assert investigation.issue.issue_id == 3
     assert len(investigation.patients) > 1
-
+    assert investigation.issue.is_blocking
 
 
 def test_mrn_matching(ukrdc_test: Session):
@@ -154,6 +155,7 @@ def test_mrn_matching(ukrdc_test: Session):
     assert not ukrdcid
     assert investigation.issue.issue_id in POSSIBLE_ISSUES
     assert investigation.issue.issue_id == 4
+    assert investigation.issue.is_blocking
 
 def test_demog_invalid_ukrdcid(ukrdc_test:Session):
     """
@@ -172,7 +174,7 @@ def test_demog_invalid_ukrdcid(ukrdc_test:Session):
     assert not ukrdcid
     assert investigation.issue.issue_id in POSSIBLE_ISSUES
     assert investigation.issue.issue_id == 5
-
+    assert not investigation.issue.is_blocking
 
 def test_multiple_matches_ukrdcid(ukrdc_test:Session):
     """Test case where there are multiple matches to the same ukrdcid. 
@@ -192,3 +194,4 @@ def test_multiple_matches_ukrdcid(ukrdc_test:Session):
     assert not ukrdcid
     assert investigation.issue.issue_id in POSSIBLE_ISSUES
     assert investigation.issue.issue_id == 6
+    assert not investigation.issue.is_blocking

@@ -11,11 +11,23 @@ from ukrdc_cupid.core.match.identify import (
     identify_across_ukrdc,
 )
 from ukrdc_cupid.core.store.insert import insert_incoming_data
+from ukrdc_cupid.core.modify.id_update import ukrdcid_split_merge
 from ukrdc_cupid.core.investigate.create_investigation import get_patients
+
+from sqlalchemy.orm import Session
 
 app = FastAPI()
 
 CURRENT_SCHEMA = max(SUPPORTED_VERSIONS)
+
+
+def get_session() -> Session:
+    sessionmaker = UKRDCConnection().create_sessionmaker()
+    session = sessionmaker()
+    try:
+        yield session
+    finally:
+        session.close()
 
 
 async def _get_xml_body(request: Request) -> str:
@@ -70,23 +82,25 @@ async def validate_xml(schema_version: str, xml_body=Depends(_get_xml_body)):
 
 
 @app.post("/store/upload_patient/{mode}")
-async def load_xml(mode: str, xml_body: str = Depends(_get_xml_body)):
-    # only allow overwrite mode for now
-
+async def load_xml(
+    mode: str,
+    xml_body: str = Depends(_get_xml_body),
+    ukrdc_session: Session = Depends(get_session),
+):
+    # async def load_xml(mode: str, xml_body: str = Depends(_get_xml_body)):
     # Load XML and check it
     xml_object, xml_version = load_xml_from_str(xml_body)
     if xml_version < CURRENT_SCHEMA:
         raise HTTPException(
-            int=422,
+            status_code=422,
             detail=f"XML request on version {xml_version} but cupid requires version {CURRENT_SCHEMA}",
         )
 
-    sessionmaker = UKRDCConnection().create_sessionmaker()
-    with sessionmaker() as ukrdc_session:
+    with ukrdc_session as session:
         # identify patient
         patient_info = read_patient_metadata(xml_object)
         pid, ukrdcid, investigation = identify_patient_feed(
-            ukrdc_session=ukrdc_session,
+            ukrdc_session=session,
             patient_info=patient_info,
         )
 
@@ -94,25 +108,29 @@ async def load_xml(mode: str, xml_body: str = Depends(_get_xml_body)):
         # (we could introduce a force mode to make it try regardless)
         if investigation:
             investigation.create_issue()
-            investigation.append_extras(xml=xml_object, metadata=patient_info)
+            investigation.append_extras(xml=xml_body, metadata=patient_info)
 
-            raise HTTPException(int=422, content="Something something issue id...")
+            raise HTTPException(
+                status_code=422, content="Something something issue id..."
+            )
 
         # generate new patient ids if required
         if not pid:
-            pid = mint_new_pid(session=ukrdc_session)
+            pid = mint_new_pid(session=session)
             # Attempt to identify patient across the ukrdc
             ukrdcid, investigation = identify_across_ukrdc(
-                ukrdc_session=ukrdc_session,
+                ukrdc_session=session,
                 patient_info=patient_info,
             )
             is_new = True
         else:
+            # look up pid against investigations
+
             is_new = False
 
         # insert into the database
         insert_incoming_data(
-            ukrdc_session=ukrdc_session,
+            ukrdc_session=session,
             pid=pid,
             ukrdcid=ukrdcid,
             incoming_xml_file=xml_object,
@@ -128,3 +146,29 @@ async def load_xml(mode: str, xml_body: str = Depends(_get_xml_body)):
             # should this be an inbuilt method?
             patient = get_patients((pid, ukrdcid))  # type : ignore
             investigation.append_patients(patient)
+            msg = "Successfully uploaded file with investigation raised"
+        else:
+            msg = "File uploaded"
+
+    return Response(content=msg)
+
+
+@app.post("/split_merge/ukrdcid")
+async def split_merge_ukrdcid(
+    pid: str, ukrdcid: str = None, ukrdc_session: Session = Depends(get_session)
+):
+    # async def split_merge_ukrdcid(pid: str, ukrdcid: str = None):
+    """API route to change the UKRDC ID of a patient feed. Provide ukrdcid to merge
+    with existing, otherwise a new ukrdcid will be minted separating the record
+    from others with the same id.
+    """
+
+    with ukrdc_session as session:
+        try:
+            ukrdcid_split_merge(session=session, pid=pid, ukrdcid=ukrdcid)
+        except Exception as e:
+            raise HTTPException(
+                status_code=500, detail=f"Split/Merge failed with error: {str(e)}"
+            )
+
+    return {"message": "UKRDC ID split/merge operation completed successfully"}

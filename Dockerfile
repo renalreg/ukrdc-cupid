@@ -1,30 +1,28 @@
-# Stage 1: Base
-FROM python:3.10-slim-buster as base
+# Use an official Python runtime as a parent image
+FROM python:3.10-slim
 
-ENV PYTHONUNBUFFERED=1 \
-    POETRY_VIRTUALENVS_IN_PROJECT=true \
-    POETRY_NO_INTERACTION=1
-
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends build-essential git libpq-dev postgresql-client && \
-    rm -rf /var/lib/apt/lists/*
-
+# Set the working directory in the container
 WORKDIR /app
 
-RUN python -m pip install -U pip wheel && pip install poetry
+# Copy the current directory contents into the container at /app
+COPY . /app
 
-COPY . ./
+# Install system dependencies and PostgreSQL client, development files, gcc, and git
+RUN apt-get update && apt-get install -y \
+    postgresql-client \
+    postgresql-server-dev-all \
+    build-essential \
+    git \
+    && apt-get clean
 
-# Stage 2: Test
-FROM base as test
+# Install Poetry
+RUN pip install poetry
 
-RUN poetry install
+# Install Python dependencies
+RUN poetry config virtualenvs.create false && poetry install --no-interaction --no-ansi
 
-CMD ["poetry", "run", "python", "scripts/test_deploy/initialize_db.py && poetry run tox"]
+# Make port 8000 available to the world outside this container
+EXPOSE 8000
 
-# Stage 3: Production
-FROM base as prod
-
-RUN poetry install --no-dev
-
-CMD ["poetry", "run", "uvicorn", "main:app", "--host", "0.0.0.0", "--port", "80"]
+# Run the application
+CMD ["bash", "-c", "poetry run python scripts/test_deploy/initialise_db.py"]

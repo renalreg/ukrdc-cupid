@@ -1,38 +1,53 @@
-""" Script to drive the bits of functionality which will end up in the new 
-JTrace replacement. The aim here is not to handle any of the merging. Simply 
-to load an xml file into a sqla object with all the correct keys.     
+"""Simple script to throw files at the cupid api
+
+Returns:
+    _type_: _description_
 """
+
 
 import glob
 import os
+import shutil
+import requests
+from pathlib import Path
 
-from ukrdc_cupid.core.utils import DatabaseConnection
-from ukrdc_cupid.core.parse.utils import load_xml_from_path
-from ukrdc_cupid.core.general import process_file
-from ukrdc_cupid.core.parse.xml_validate import validate_rda_xml_string
+# Configuration
+SOURCE_FOLDER = Path(".xml_to_load")
+DESTINATION_FOLDER = Path(".xml_to_load","loaded")
+SERVER_URL = 'http://localhost:8000/store/upload_patient/overwrite'
 
-ukrdc_sessionmaker = DatabaseConnection(env_prefix="UKRDC").create_sessionmaker()
+def post_xml(file_path: str):
+    """Post XML file to the server."""
+    with open(file_path, 'r') as file:
+        content = file.read()  # Read the content of the XML file
+        
+    response = requests.post(
+        SERVER_URL,
+        data=content,
+        headers={"Content-Type": "application/xml"}
+    )
+    return response
 
-# Specify the directory where your XML files are located
-xml_directory = ".xml_to_load"
+def move_file(file_path, destination_folder):
+    """Move file to a different folder."""
+    shutil.move(file_path, destination_folder)
 
-# grab files to load from directory
-xml_files = glob.glob(os.path.join(xml_directory, "*.xml"))
 
-with ukrdc_sessionmaker() as ukrdc_session:
-    # with investigate_session() as investigate:
-    for xml_file in xml_files:
-        # load file and validate it
-        xml_object = load_xml_from_path(xml_file)
-        schema_version = xml_object.sending_facility.schema_version
+# Use glob to find all XML files in the source folder
+xml_files = glob.glob(os.path.join(SOURCE_FOLDER, '*.xml'))
 
-        # validate_rda_xml_string(xml_object)
+print(f"Loading files in directory {SOURCE_FOLDER} via the cupid api, they will be moved to directory {DESTINATION_FOLDER}")
 
-        investigation = process_file(
-            xml_object,
-            ukrdc_session=ukrdc_session,
-        )
 
-        if investigation:
-            # we add the file to the investigation it has been created
-            investigation.append_file(xml=str(xml_object), filename=xml_file)
+for file_path in xml_files:
+    filename = os.path.basename(file_path)
+    print(f'Processing {file_path}')
+        
+    # Post XML file to the server
+    response = post_xml(file_path)
+    print(response.content)
+    print(f'Status Code: {response.status_code}')
+    
+    # Move file to the destination folder
+    move_file(file_path, os.path.join(DESTINATION_FOLDER, filename))
+    print(f'File moved to {os.path.join(DESTINATION_FOLDER, filename)}')

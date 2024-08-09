@@ -152,7 +152,7 @@ class Patient(Node):
         self.add_person_to_contact(self.xml.person_to_contact)
         self.add_code( "occupationcode", "occupationcodestd", "occupationdesc", self.xml.occupation)
         self.add_code("primarylanguagecode","primarylanguagecodestd","primarylanguagedesc", self.xml.primary_language)
-        #self.add_item("death", bool(self.xml.death))  # should this be optional?
+        self.add_item("death", bool(self.xml.death))  # should this be optional?
         self.add_item("updatedon", self.xml.updated_on)  # should this be automatically filled in by transform?
         self.add_item("bloodgroup", self.xml.blood_group)
         self.add_item("bloodrhesus", self.xml.blood_rhesus)
@@ -346,7 +346,6 @@ class Document(Node):
         # decode it automatically. Probably it then gets encoded again
         if self.xml.stream:
             self.orm_object.stream = self.xml.stream
-            print(":)")
 
         # self.add_item("stream", int(self.xml.stream))
         self.add_item("updatedon", self.xml.updated_on, optional=True)

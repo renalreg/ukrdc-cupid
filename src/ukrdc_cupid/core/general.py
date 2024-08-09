@@ -11,7 +11,7 @@ from ukrdc_cupid.core.investigate.create_investigation import get_patients
 from ukrdc_xsdata.ukrdc import PatientRecord
 
 
-def process_file(
+def process_file_from_path(
     xml_object: PatientRecord, ukrdc_session: Session, file_path: str = None
 ) -> None:
     """The code for the api will look very similar to this I think.
@@ -35,7 +35,7 @@ def process_file(
     # Investigations cause file to be diverted so we return without going
     # further with the insertion process
     if investigation:
-        investigation.create_issue()
+        # investigation.create_issue()
         investigation.append_extras(
             xml=xml_object, filename=file_path, metadata=patient_info
         )
@@ -71,7 +71,7 @@ def process_file(
     if investigation:
         # if there is an investigation raised we will have minted a new ukrdcid
         # this needs to be attached to the issue so it can be resolved
-        investigation.create_issue()
+        # investigation.create_issue()
         patient = get_patients((pid, ukrdcid))  # type : ignore
         investigation.append_patients(patient)
         return investigation
