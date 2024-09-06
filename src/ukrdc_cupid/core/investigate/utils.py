@@ -4,6 +4,8 @@ from ukrdc_cupid.core.investigate.picklists import ISSUE_PICKLIST, STATUS_PICKLI
 
 from typing import List, Type, Any
 
+from sqlalchemy import select
+
 
 def update_picklist(
     session: Session, orm_model: Type[Base], picklist: List[List[Any]]
@@ -17,6 +19,7 @@ def update_picklist(
         picklist: list containing ids and dictionary of attributes
     """
     for item_id, updates in picklist:
+        session.execute(select(orm_model).where(orm_model.id == item_id))
         item_orm = session.get(orm_model, item_id)
         if item_orm is not None:
             for key, value in updates.items():

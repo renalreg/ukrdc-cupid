@@ -14,7 +14,7 @@ from pathlib import Path
 # Configuration
 SOURCE_FOLDER = Path(".xml_to_load")
 DESTINATION_FOLDER = Path(".xml_to_load","loaded")
-SERVER_URL = 'http://localhost:8000/store/upload_patient/overwrite'
+SERVER_URL = 'http://localhost:8000/store/upload_patient_file/full'
 
 def post_xml(file_path: str):
     """Post XML file to the server."""
@@ -48,6 +48,7 @@ for file_path in xml_files:
     print(response.content)
     print(f'Status Code: {response.status_code}')
     
+    if response.status_code == 200:
     # Move file to the destination folder
-    move_file(file_path, os.path.join(DESTINATION_FOLDER, filename))
-    print(f'File moved to {os.path.join(DESTINATION_FOLDER, filename)}')
+        move_file(file_path, os.path.join(DESTINATION_FOLDER, filename))
+        print(f'File moved to {os.path.join(DESTINATION_FOLDER, filename)}')

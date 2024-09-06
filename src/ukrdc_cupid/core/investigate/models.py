@@ -28,10 +28,11 @@ GLOBAL_LAZY = "dynamic"
 # this table allows a issue_id to allow multiple patientids to be appended to any particular issue
 # similarly it makes it easy to look up which issues are already accosiated with a particular id.
 
-patient_issue_links = Table(
+LinkPatientToIssue = Table(
     "patientidtoissue",
-    Base.metadata,  # type:ignore
-    Column("patient_id_id", Integer, ForeignKey("patientid.id")),
+    metadata,
+    Column("id", Integer, primary_key=True, autoincrement=True),
+    Column("patient_id", Integer, ForeignKey("patientid.id")),
     Column("issue_id", Integer, ForeignKey("issue.id")),
     Column("rank", Integer, nullable=True),
 )
@@ -49,9 +50,6 @@ class Issue(Base):  # type:ignore
     xml_file_id = Column(Integer, ForeignKey("xmlfile.id"))
     is_resolved = Column(Boolean, nullable=False, server_default=text("false"))
     is_blocking = Column(Boolean, nullable=False, server_default=text("true"))
-    is_reprocessed = Column(
-        Boolean, server_default=text("false")
-    )  # should be null if file hasn't been diverted
 
     # Mirroring Jira board statuses (e.g. Open, Closed, Waiting for Unit, Pending Discussion etc)
     status_id = Column(Integer, nullable=True, server_default=text("0"))
@@ -65,8 +63,9 @@ class Issue(Base):  # type:ignore
     attributes = Column(JSON, nullable=True)
 
     patients = relationship(  # type:ignore
-        "PatientID", secondary=patient_issue_links, back_populates="issues"
+        "PatientID", secondary=LinkPatientToIssue, back_populates="issues"
     )
+    xml_file = relationship("XmlFile", back_populates="issues")
 
 
 class PatientID(Base):  # type:ignore
@@ -78,7 +77,7 @@ class PatientID(Base):  # type:ignore
 
     issues = relationship(  # type:ignore
         Issue,
-        secondary=patient_issue_links,
+        secondary=LinkPatientToIssue,
         back_populates="patients",
         overlaps="patients",
     )
@@ -104,5 +103,8 @@ class XmlFile(Base):
     id = Column(Integer, primary_key=True, autoincrement=True)
     file_hash = Column(String(64), nullable=False, unique=True)
     file = Column(Text, nullable=False)
+    is_reprocessed = Column(
+        Boolean, server_default=text("false")
+    )  # has the file been merged
 
-    issues = relationship(Issue)
+    issues = relationship(Issue, back_populates="xml_file")

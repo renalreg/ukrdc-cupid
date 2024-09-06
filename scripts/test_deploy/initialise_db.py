@@ -16,11 +16,12 @@ user = ENV['UKRDC_USER']
 password = ENV['UKRDC_PASSWORD']
 port = ENV['UKRDC_PORT']
 name = ENV['UKRDC_NAME']
-
+host = ENV['UKRDC_HOST']
 
 # generate ukrdc database
 db_url =  f"{driver}://{user}:{password}@db:{port}/{name}"
 #db_url =  f"{driver}://{user}:{password}@localhost:{port}/{name}"
+print(db_url)
 connector = UKRDCConnection(url=db_url)
 connector.generate_schema(gp_info=True)
 

@@ -14,7 +14,7 @@ from ukrdc_cupid.core.audit.validate_matches import (
     validate_demog_ukrdc,
     validate_NI_mismatch,
 )
-from ukrdc_cupid.core.investigate.models import Issue, PatientID, patient_issue_links
+from ukrdc_cupid.core.investigate.models import Issue, PatientID, LinkPatientToIssue
 from ukrdc_cupid.core.investigate.create_investigation import Investigation
 
 from typing import List, Any
@@ -180,7 +180,7 @@ def match_pid(ukrdc_session: Session, patient_info: dict) -> Any:
     # we could also consider blanking the ukrdc id here if its the first
     # time the patient has been seen in anonymized form this would mean
     # a new ukrdc id would get minted unlinking it from other patients
-    # alternatively this could easily be done by a seperate process maybe
+    # alternatively this could easily be done by a separate process maybe
     # the one that issue the UKRR_UID in the first place.
     is_anon = patient_info["MRN"][1] == "UKRR_UID"
     is_valid = validate_demog(
@@ -243,10 +243,8 @@ def identify_patient_feed(ukrdc_session: Session, patient_info: dict) -> Any:
     if pid is not None:
         query = (
             select(PatientID)
-            .join(
-                patient_issue_links, PatientID.id == patient_issue_links.c.patient_id_id
-            )
-            .join(Issue, Issue.id == patient_issue_links.c.issue_id)
+            .join(LinkPatientToIssue, PatientID.id == LinkPatientToIssue.c.patient_id)
+            .join(Issue, Issue.id == LinkPatientToIssue.c.issue_id)
             .where(
                 and_(
                     PatientID.pid == pid,

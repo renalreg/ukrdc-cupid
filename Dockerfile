@@ -1,5 +1,5 @@
 # Use an official Python runtime as a parent image
-FROM python:3.10-slim
+FROM python:3.11-slim-buster
 
 # Set the working directory in the container
 WORKDIR /app
@@ -13,16 +13,16 @@ RUN apt-get update && apt-get install -y \
     postgresql-server-dev-all \
     build-essential \
     git \
-    && apt-get clean
+    && rm -rf /var/lib/apt/lists/*
 
 # Install Poetry
 RUN pip install poetry
 
 # Install Python dependencies
-RUN poetry config virtualenvs.create false && poetry install --no-interaction --no-ansi
+RUN poetry config virtualenvs.create false && poetry install --only main  --no-root --no-interaction --no-ansi
+
 
 # Make port 8000 available to the world outside this container
 EXPOSE 8000
 
-# Run the application
 CMD ["bash", "-c", "poetry run python scripts/test_deploy/initialise_db.py"]
