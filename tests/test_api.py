@@ -59,7 +59,7 @@ def test_validation_errors(client):
             paper panama
         </Documents>
         <LabOrders>
-            Whoof Whoof my captain
+            Whoof Whoof
         </LabOrders>
         <MyAlienElement>
             <Extra>
@@ -152,3 +152,23 @@ def test_force_upload_file(client, ukrdc_test_session):
     
     assert pat_num != nhs_num
     assert pat_num == "1111111111"
+
+def test_delete_patient(client, ukrdc_test_session):
+    pid = "test_delete"
+    creation_date = dt.datetime.today()
+    ukrdc_test_session.add(
+        PatientRecord(
+            sendingfacility = 'RFDOG',
+            sendingextract = 'TESTY',
+            repositorycreationdate=creation_date,
+            repositoryupdatedate=creation_date,
+            localpatientid = "4",
+            pid = pid,
+            ukrdcid = "test_id"
+        )
+    )
+    ukrdc_test_session.commit()
+
+    response = client.post(f"/modify/delete_patient/{pid}")
+
+    assert response.status_code == 200

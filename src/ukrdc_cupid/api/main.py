@@ -6,6 +6,7 @@ from ukrdc_cupid.core.store.insert import process_file
 # from ukrdc_cupid.core.store.exceptions import
 from ukrdc_cupid.core.modify.edit_feed import ukrdcid_split_merge, force_quarantined
 from sqlalchemy.orm import Session
+from ukrdc_sqla.ukrdc import PatientRecord
 from ukrdc_cupid.core.store.exceptions import (
     SchemaVersionError,
     InsertionBlockedError,
@@ -149,3 +150,25 @@ async def force_upload_file(
         raise HTTPException(status_code=500, detail=msg)
 
     return Response(content=f"Successfully force merged {issue_id}")
+
+
+@app.post("/modify/delete_patient/{domain_pid}")
+async def delete_patient(domain_pid:str, ukrdc_session: Session = Depends(get_session)):
+    """Simply removes patient feed
+
+    Args:
+        domain_pid (str): pid of feed to remove
+    """
+
+    patient_record = ukrdc_session.get(PatientRecord, domain_pid)
+    pid = patient_record.pid
+    ukrdcid = patient_record.ukrdcid
+    localhosp = patient_record.localpatientid
+    ukrdc_session.delete(patient_record)
+    ukrdc_session.commit()
+
+    msg = f"Deleted patient with identifiers: pid = {pid}, ukrdcid = {ukrdcid}, localpatientid = {localhosp}"
+
+    return Response(
+        content= msg
+    )

@@ -1,28 +1,35 @@
-# Use an official Python runtime as a parent image
-FROM python:3.11-slim-buster
+FROM python:3.11-bookworm
 
-# Set the working directory in the container
+ENV PYTHONUNBUFFERED=1 \
+    #POETRY_VIRTUALENVS_IN_PROJECT=true \
+    POETRY_VIRTUALENVS_CREATE=false \
+    POETRY_NO_INTERACTION=1
+
+# `build-essential` required to build some wheels on newer Python versions, `openssh-client` required to clone some dependencies
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends build-essential git && \
+    rm -rf /var/lib/apt/lists/*
+
+# install psycopg2 dependencies
+RUN apt-get update && \
+    apt-get install -y postgresql-server-dev-all gcc python3-dev musl-dev && \
+    rm -rf /var/lib/apt/lists/*    
+
 WORKDIR /app
 
-# Copy the current directory contents into the container at /app
-COPY . /app
+# Install "bootstrap" dependencies (wheel and poetry)
+RUN python -m pip install -U pip wheel && pip install poetry
 
-# Install system dependencies and PostgreSQL client, development files, gcc, and git
-RUN apt-get update && apt-get install -y \
-    postgresql-client \
-    postgresql-server-dev-all \
-    build-essential \
-    git \
-    && rm -rf /var/lib/apt/lists/*
+# Copy source files
+COPY . ./
 
-# Install Poetry
-RUN pip install poetry
+# Rebuild Lock
+RUN poetry lock
 
-# Install Python dependencies
-RUN poetry config virtualenvs.create false && poetry install --only main  --no-root --no-interaction --no-ansi
+# Install production dependencies with poetry
+RUN poetry install --only main --no-interaction
 
+#RUN source /app/.venv/bin/activate
 
-# Make port 8000 available to the world outside this container
-EXPOSE 8000
-
-CMD ["bash", "-c", "poetry run python scripts/test_deploy/initialise_db.py"]
+CMD ["poetry", "run", "python", "scripts/test_deploy/initialise_db.py"]
+#CMD ["poetry", "run", "uvicorn", "ukrdc_xml_converter.api:app", "--host", "0.0.0.0", "--port", "8000"]
