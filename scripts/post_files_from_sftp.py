@@ -7,12 +7,13 @@ from fabric import Connection
 from dotenv import dotenv_values
 import gnupg
 import os
+from pathlib import Path
 import requests
 
-ENV = dotenv_values(".env.test")
+ENV = dotenv_values(".env.scripts")
 sftp_path = "/data/rdastaging/archive"
-local_folder = ".xml_copied"
-GNUPG_HOME = '~/.gnupg'
+local_folder = Path(".xml_errors")
+#GNUPG_HOME = '~/.gnupg'
 
 #gpg = gnupg.GPG()
 
@@ -28,8 +29,8 @@ with Connection(
     # List files from SFTP server
     sftp_files = c.run(f'find {sftp_path} -name "*.xml.gpg"', hide=True).stdout.split()
     
-    for sftp_file in sftp_files:
-        local_file_path = os.path.join(local_folder, os.path.basename(sftp_file))
+    for sftp_file in sftp_files:#sftp_files[:1000]:
+        #local_file_path = os.path.join(local_folder, os.path.basename(sftp_file))
         #c.get(sftp_file, local_file_path)
 
         # Decrypt the file on the remote server 
@@ -46,8 +47,26 @@ with Connection(
             continue
         else:
             post_url = ENV["CUPID_URL"]
-            post_url = post_url + "/store/upload_patient_file/overwrite"
+            validation_url = post_url + "/parse/xml_validate/4.2.0"
+            upload_url = post_url + "/store/upload_patient_file/overwrite"
             headers = {
                 "Content-Type": "application/xml"
             }
             
+            # validate against schema
+            response = requests.post(validation_url, headers=headers, data=decrypted_data)
+
+            if response.status_code != 200:
+                print(response.content)
+                continue
+
+            # Try to upload xml file 
+            response = requests.post(upload_url, headers=headers, data=decrypted_data)
+            
+            # Check the response status
+            print(response.content)
+            if response.status_code !=200: 
+                file_name = f"{sftp_file.split('/')[-1].split('.')[0]}.xml" 
+                file_path = local_folder / file_name
+                with open(file_path, "w") as f:
+                    f.write(decrypted_data)

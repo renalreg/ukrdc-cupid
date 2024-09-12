@@ -153,7 +153,9 @@ async def force_upload_file(
 
 
 @app.post("/modify/delete_patient/{domain_pid}")
-async def delete_patient(domain_pid:str, ukrdc_session: Session = Depends(get_session)):
+async def delete_patient(
+    domain_pid: str, ukrdc_session: Session = Depends(get_session)
+):
     """Simply removes patient feed
 
     Args:
@@ -169,6 +171,4 @@ async def delete_patient(domain_pid:str, ukrdc_session: Session = Depends(get_se
 
     msg = f"Deleted patient with identifiers: pid = {pid}, ukrdcid = {ukrdcid}, localpatientid = {localhosp}"
 
-    return Response(
-        content= msg
-    )
+    return Response(content=msg)

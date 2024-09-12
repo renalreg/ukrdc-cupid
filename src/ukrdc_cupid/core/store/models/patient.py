@@ -301,7 +301,7 @@ class CauseOfDeath(Node):
         self.add_code("diagnosiscode", "diagnosiscodestd", "diagnosisdesc", self.xml.diagnosis)
 
         self.add_item("comments", self.xml.comments, optional=True)
-        self.add_item()
+        #self.add_item()
         self.add_item("enteredon", self.xml.entered_on, optional=True)
 
         # common metadata

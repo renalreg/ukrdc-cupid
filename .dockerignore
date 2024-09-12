@@ -6,3 +6,5 @@
 .mypy_cache
 .ruff_cache
 .tox 
+.env.test
+.env

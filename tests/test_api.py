@@ -172,3 +172,58 @@ def test_delete_patient(client, ukrdc_test_session):
     response = client.post(f"/modify/delete_patient/{pid}")
 
     assert response.status_code == 200
+
+def test_non_ascii(client, ukrdc_test_session):
+    my_lab_non_ascii = """
+    <Medications>
+        <Medication>
+        <PrescriptionNumber>xxxxx</PrescriptionNumber>
+        <FromTime>2020-07-03T00:00:00</FromTime>
+        <ToTime>2020-07-08T17:28:13</ToTime>
+        <Route>
+            <CodingStandard>RR22</CodingStandard>
+            <Code>9</Code>
+            <Description>IV</Description>
+        </Route>
+        <DrugProduct>
+            <Generic>ARANESP PREFILLED</Generic>
+            <LabelName />
+            <StrengthUnits>
+            <CodingStandard>CF_RR23</CodingStandard>
+            <Code>μg</Code>
+            <Description>micrograms</Description>
+            </StrengthUnits>
+        </DrugProduct>
+        <Frequency>q Friday</Frequency>
+        <Comments />
+        <DoseQuantity>30.0</DoseQuantity>
+        <DoseUoM>
+            <CodingStandard>CF_RR23</CodingStandard>
+            <Code>μg</Code>
+            <Description>micrograms</Description>
+        </DoseUoM>
+        </Medication>
+    </Medications>
+    """
+
+    xml = xml_template(SCHEMA_VERSION, my_lab_non_ascii)
+    response = client.post(
+        "/store/upload_patient_file/overwrite", content=xml, headers={"Content-Type": "application/xml"}
+    )
+
+    assert response.status_code == 200
+
+def test_empty_lab(client, ukrdc_test_session):
+    xml = xml_template(SCHEMA_VERSION, "<LabOrders/>")
+    response = client.post(
+        "/store/upload_patient_file/overwrite", 
+        content=xml, 
+        headers={"Content-Type": "application/xml"}
+    )
+
+    assert response.status_code == 200
+
+def test_no_start_stop():
+    """This should check that the default 
+    """
+    assert True

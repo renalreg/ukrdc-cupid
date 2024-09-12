@@ -161,6 +161,9 @@ class Node(ABC):
             sequential (bool, optional): _description_. Defaults to False.
         """
 
+        # Blank xml
+        # is_empty = len(xml_items)
+
         # Step into the xml_file and extract the xml containing incoming data
         xml_items = self.xml
         for attr in xml_attr.split("."):

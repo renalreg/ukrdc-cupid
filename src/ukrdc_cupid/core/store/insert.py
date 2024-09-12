@@ -14,7 +14,7 @@ from ukrdc_cupid.core.investigate.create_investigation import (
     get_patients,
     Investigation,
 )
-from ukrdc_cupid.core.store.keygen import mint_new_pid
+from ukrdc_cupid.core.store.keygen import mint_new_pid, mint_new_ukrdcid
 
 from ukrdc_cupid.core.match.identify import (
     identify_patient_feed,
@@ -224,6 +224,8 @@ def process_file(xml_body: str, ukrdc_session: Session, mode: str = "full"):
             patient_info=patient_info,
         )
         is_new = True
+        if not ukrdcid:
+            ukrdcid = mint_new_ukrdcid(session=ukrdc_session)
     else:
         # look up pid against investigations
         is_new = False
