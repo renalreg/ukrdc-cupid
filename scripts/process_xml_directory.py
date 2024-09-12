@@ -15,6 +15,7 @@ from ukrdc_cupid.core.utils import UKRDCConnection
 from ukrdc_cupid.core.store.insert import process_file
 
 
+
 # Configure 
 SOURCE_FOLDER = ".xml_errors/*.xml"
 DB_URL = "postgresql://postgres:postgres@localhost:8008/ukrdc_test_docker"
