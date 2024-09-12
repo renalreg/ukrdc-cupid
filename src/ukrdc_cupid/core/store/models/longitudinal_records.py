@@ -115,10 +115,7 @@ class LabOrder(Node):
 
             # Map the rest of the fields
             result_obj.map_xml_to_orm()
-            # result_obj.add_item("orderid",order_id, optional=False)
             result_obj.orm_object.order_id = order_id
-            print(result_obj.orm_object.order_id)
-            # result_obj.orm_object.orderid = order_id
             result_obj.updated_status()
 
             # append to parent

@@ -1,24 +1,19 @@
-from ukrdc_cupid.core.store.keygen import mint_new_pid
-
 from fastapi import Depends, FastAPI, Request, HTTPException, Response
 from ukrdc_cupid.core.parse.xml_validate import validate_rda_xml_string
 from ukrdc_cupid.core.utils import UKRDCConnection
-from ukrdc_cupid.core.parse.utils import load_xml_from_str
-from ukrdc_cupid.core.parse.xml_validate import SUPPORTED_VERSIONS
-from ukrdc_cupid.core.match.identify import (
-    identify_patient_feed,
-    read_patient_metadata,
-    identify_across_ukrdc,
-)
-from ukrdc_cupid.core.store.insert import insert_incoming_data
-from ukrdc_cupid.core.modify.id_update import ukrdcid_split_merge
-from ukrdc_cupid.core.investigate.create_investigation import get_patients
+from ukrdc_cupid.core.store.insert import process_file
 
+# from ukrdc_cupid.core.store.exceptions import
+from ukrdc_cupid.core.modify.edit_feed import ukrdcid_split_merge, force_quarantined
 from sqlalchemy.orm import Session
+from ukrdc_sqla.ukrdc import PatientRecord
+from ukrdc_cupid.core.store.exceptions import (
+    SchemaVersionError,
+    InsertionBlockedError,
+)
+
 
 app = FastAPI()
-
-CURRENT_SCHEMA = max(SUPPORTED_VERSIONS)
 
 
 def get_session() -> Session:
@@ -81,79 +76,35 @@ async def validate_xml(schema_version: str, xml_body=Depends(_get_xml_body)):
     return Response(content=msg)
 
 
-@app.post("/store/upload_patient/{mode}")
+@app.post("/store/upload_patient_file/{mode}")
 async def load_xml(
     mode: str,
     xml_body: str = Depends(_get_xml_body),
-    ukrdc_session: Session = Depends(get_session),
+    ukrdc_session_factory: Session = Depends(get_session),
 ):
-    # async def load_xml(mode: str, xml_body: str = Depends(_get_xml_body)):
-    # Load XML and check it
-    xml_object, xml_version = load_xml_from_str(xml_body)
-    if xml_version < CURRENT_SCHEMA:
-        raise HTTPException(
-            status_code=422,
-            detail=f"XML request on version {xml_version} but cupid requires version {CURRENT_SCHEMA}",
-        )
 
-    with ukrdc_session as session:
+    with ukrdc_session_factory as session:
         # identify patient
-        patient_info = read_patient_metadata(xml_object)
-        pid, ukrdcid, investigation = identify_patient_feed(
-            ukrdc_session=session,
-            patient_info=patient_info,
-        )
+        try:
+            msg = process_file(xml_body, session, mode)
+        except Exception as e:
+            # handle exception based on what it is
+            if isinstance(e, SchemaVersionError):
+                raise HTTPException(status_code=422, detail=str(e))
 
-        # if an investigation has been raised in identifying the patient we do not insert
-        # (we could introduce a force mode to make it try regardless)
-        if investigation:
-            investigation.create_issue()
-            investigation.append_extras(xml=xml_body, metadata=patient_info)
+            elif isinstance(e, InsertionBlockedError):
+                raise HTTPException(status_code=422, detail=str(e))
 
-            raise HTTPException(
-                status_code=422, content="Something something issue id..."
-            )
-
-        # generate new patient ids if required
-        if not pid:
-            pid = mint_new_pid(session=session)
-            # Attempt to identify patient across the ukrdc
-            ukrdcid, investigation = identify_across_ukrdc(
-                ukrdc_session=session,
-                patient_info=patient_info,
-            )
-            is_new = True
-        else:
-            # look up pid against investigations
-
-            is_new = False
-
-        # insert into the database
-        insert_incoming_data(
-            ukrdc_session=session,
-            pid=pid,
-            ukrdcid=ukrdcid,
-            incoming_xml_file=xml_object,
-            is_new=is_new,
-            debug=True,
-        )
-
-        # Any investigation at this point will be associated with a merge to
-        # a single patient record therefore there will be a single pid and
-        # ukrdc id associated with it. Are we potentially storing data that
-        # cause problems if the record gets anonomised?
-        if investigation:
-            # should this be an inbuilt method?
-            patient = get_patients((pid, ukrdcid))  # type : ignore
-            investigation.append_patients(patient)
-            msg = "Successfully uploaded file with investigation raised"
-        else:
-            msg = "File uploaded"
+            else:
+                error_msg = str(e)
+                raise HTTPException(
+                    status_code=500, detail=f"Upload failed with error: {error_msg}"
+                )
 
     return Response(content=msg)
 
 
-@app.post("/split_merge/ukrdcid")
+@app.post("/modify/ukrdcid")
 async def split_merge_ukrdcid(
     pid: str, ukrdcid: str = None, ukrdc_session: Session = Depends(get_session)
 ):
@@ -171,4 +122,53 @@ async def split_merge_ukrdcid(
                 status_code=500, detail=f"Split/Merge failed with error: {str(e)}"
             )
 
-    return {"message": "UKRDC ID split/merge operation completed successfully"}
+    return Response(content="UKRDC ID split/merge operation completed successfully")
+
+
+@app.post("/modify/force_merge_file/{issue_id}/{domain_pid}")
+async def force_upload_file(
+    issue_id: str, domain_pid: str, ukrdc_session: Session = Depends(get_session)
+):
+    """API route to reprocess quarantined files
+
+    Args:
+        pid (str): _description_
+        issue_id (str): _description_
+        mode (str): _description_
+        ukrdc_session (Session, optional): _description_. Defaults to Depends(get_session).
+    """
+
+    if domain_pid == "mint":
+        pid = None
+    else:
+        pid = domain_pid
+
+    try:
+        force_quarantined(ukrdc_session, issue_id, pid)
+    except Exception as e:
+        msg = f"Failed with following error {e}"
+        raise HTTPException(status_code=500, detail=msg)
+
+    return Response(content=f"Successfully force merged {issue_id}")
+
+
+@app.post("/modify/delete_patient/{domain_pid}")
+async def delete_patient(
+    domain_pid: str, ukrdc_session: Session = Depends(get_session)
+):
+    """Simply removes patient feed
+
+    Args:
+        domain_pid (str): pid of feed to remove
+    """
+
+    patient_record = ukrdc_session.get(PatientRecord, domain_pid)
+    pid = patient_record.pid
+    ukrdcid = patient_record.ukrdcid
+    localhosp = patient_record.localpatientid
+    ukrdc_session.delete(patient_record)
+    ukrdc_session.commit()
+
+    msg = f"Deleted patient with identifiers: pid = {pid}, ukrdcid = {ukrdcid}, localpatientid = {localhosp}"
+
+    return Response(content=msg)

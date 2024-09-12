@@ -1,5 +1,6 @@
 from __future__ import annotations  # allows typehint of node class
 
+from typing import Union
 from ukrdc_cupid.core.store.models.structure import Node
 from ukrdc_cupid.core.store.models.patient import (
     Patient,
@@ -31,11 +32,31 @@ from ukrdc_cupid.core.store.models.relationships import (
 )
 
 import ukrdc_xsdata.ukrdc as xsd_ukrdc  # type: ignore
+import ukrdc_xsdata.ukrdc.lab_orders as xsd_lab_orders
+import ukrdc_xsdata.ukrdc.observations as xsd_observations
 import ukrdc_sqla.ukrdc as sqla
 from sqlalchemy.orm import Session
 from sqlalchemy import and_
+import datetime as dt
 
 from typing import List
+
+
+def set_start_stop(xml: Union[xsd_lab_orders, xsd_observations], property: str):
+    items = getattr(xml, property)
+    if items:
+        # if start and stop are not present we interpret them as all time up to now
+        if items.start:
+            start = items.start.to_datetime()
+        else:
+            start = dt.datetime(1899, 9, 9)
+
+        if items.stop:
+            stop = items.stop.to_datetime()
+        else:
+            stop = dt.datetime.now()
+
+        return [start, stop]
 
 
 class PatientRecord(Node):
@@ -45,18 +66,9 @@ class PatientRecord(Node):
         # some records have an additional date (aside from the usual ones update by db triggers)
         # we will now use this to host the date that gets sent on the sending facility
         self.repository_updated_date = xml.sending_facility.time.to_datetime()
-
-        if xml.lab_orders:
-            self.lab_order_range = [
-                xml.lab_orders.start.to_datetime(),
-                xml.lab_orders.stop.to_datetime(),
-            ]
-
-        if xml.observations:
-            self.observations = [
-                xml.observations.start.to_datetime(),
-                xml.observations.stop.to_datetime(),
-            ]
+        self.lab_order_range = set_start_stop(xml, "lab_orders")
+        self.observation_range = set_start_stop(xml, "observations")
+        print(":)")
 
     def sqla_mapped() -> None:
         return None
@@ -141,11 +153,16 @@ class PatientRecord(Node):
         self.updated_status()
 
     def add_deleted(self, sqla_mapped: str, mapped_ids: List[str]) -> None:
+        # debug
+        getattr(self, "lab_order_range")
+        if sqla_mapped == "lab_orders":
+            print(":)")
+
         # we only delete within a time window for observations and lab orders
         if sqla_mapped == "observations":
             mapped_orms = self.session.query(sqla.Observation)
 
-        elif sqla_mapped == "lab_orders" and hasattr(self, "lab_order_range"):
+        elif sqla_mapped == "lab_orders" and getattr(self, "lab_order_range"):
             mapped_orms = (
                 self.session.query(sqla.LabOrder)
                 .filter(

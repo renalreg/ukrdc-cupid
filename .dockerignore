@@ -1,0 +1,10 @@
+.venv
+.vscode
+.xml_to_load
+.log
+.github
+.mypy_cache
+.ruff_cache
+.tox 
+.env.test
+.env

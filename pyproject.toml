@@ -24,6 +24,9 @@ requests = "^2.31.0"
 fastapi = "^0.111.0"
 pyodbc = "^5.1.0"
 psycopg2 = "^2.9.9"
+uvicorn = "^0.30.6"
+fabric = "^3.2.2"
+gnupg = "^2.3.1"
 
 [tool.poetry.group.dev.dependencies]
 black = {version = "^22.10.0", allow-prereleases = true}

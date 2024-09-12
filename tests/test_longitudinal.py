@@ -12,7 +12,7 @@ from sqlalchemy.orm import Session
 from datetime import timedelta
 import os
 import pytest
-import uuid
+
 
 TEST_PID = "test_pid"
 TEST_UKRDCID = "test_id"

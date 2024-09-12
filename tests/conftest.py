@@ -35,7 +35,6 @@ def ukrdc_sessionmaker(url: str, gp_info: bool = False):
         populate_ukrdc_tables(session, gp_info=gp_info)
         session.commit()
 
-    print(url)
 
     return sessionmaker
 
