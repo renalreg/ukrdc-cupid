@@ -218,7 +218,7 @@ class Allergy(Node):
         self.add_code("cliniciancode","cliniciancodestd","cliniciandesc",self.xml.clinician)
         self.add_item("discoverytime", self.xml.discovery_time, optional=True)
         self.add_item("confirmedtime", self.xml.confirmed_time, optional=True)
-        self.add_item("comments", self.xml.comments, optional=True)
+        self.add_item("commenttext", self.xml.comments, optional=True)
         self.add_item("inactivetime", self.xml.inactive_time, optional=True)
         self.add_item("freetextallergy", self.xml.free_text_allergy, optional=True)
         self.add_item("qualifyingdetails", self.xml.qualifying_details, optional=True)
