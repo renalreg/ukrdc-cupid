@@ -22,9 +22,6 @@ def print_loading_bar(iteration, total, length=10):
 ENV = dotenv_values(".env.scripts")
 sftp_path = "/data/rdastaging/archive"
 local_folder = Path(".xml_errored")
-#GNUPG_HOME = '~/.gnupg'
-
-#gpg = gnupg.GPG()
 
 # Create local_folder if it doesn't exist
 os.makedirs(local_folder, exist_ok=True)

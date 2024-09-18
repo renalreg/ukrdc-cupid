@@ -153,10 +153,6 @@ class PatientRecord(Node):
         self.updated_status()
 
     def add_deleted(self, sqla_mapped: str, mapped_ids: List[str]) -> None:
-        # debug
-        getattr(self, "lab_order_range")
-        if sqla_mapped == "lab_orders":
-            print(":)")
 
         # we only delete within a time window for observations and lab orders
         if sqla_mapped == "observations":

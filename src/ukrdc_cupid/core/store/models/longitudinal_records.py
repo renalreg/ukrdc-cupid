@@ -310,7 +310,9 @@ class Medication(Node):
         self.add_item("totime", self.xml.to_time)
         self.add_code("enteringorganizationcode", "enteringorganizationcodestd", "enteringorganizationdesc", self.xml.entering_organization)
         self.add_code( "routecode", "routecodestd", "routedesc", self.xml.route)
-        self.add_drug_product()
+        if self.xml.drug_product:
+            self.add_drug_product()
+        
         self.add_item("frequency", self.xml.frequency)
         self.add_item("commenttext", self.xml.comments)
         self.add_item("dosequantity", self.xml.dose_quantity)
