@@ -20,7 +20,7 @@ ENV = {
     **os.environ,
     **dotenv_values(".env"),
     **dotenv_values(".env.test"),
-    **dotenv_values(".env.test"),
+    **dotenv_values(".env.docker"),
 }
 
 # There is probably a better home for these than this.

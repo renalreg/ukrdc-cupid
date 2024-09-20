@@ -1,6 +1,7 @@
 from __future__ import annotations  # allows typehint of node class
 
 from typing import Union
+from ukrdc_cupid.core.store.models.utils import cull_singlet_lists
 from ukrdc_cupid.core.store.models.structure import Node
 from ukrdc_cupid.core.store.models.patient import (
     Patient,
@@ -46,10 +47,7 @@ from typing import List
 def set_start_stop(
     xml: Union[xsd_lab_orders, xsd_observations, xsd_dialysis_sessions], property: str
 ):
-    items = getattr(xml, property)
-    if isinstance(items, list):
-        # just another xsdata quirk
-        items = items[0]
+    items = cull_singlet_lists(getattr(xml, property))
 
     if items:
         # if start and stop are not present we interpret them as all time up to now

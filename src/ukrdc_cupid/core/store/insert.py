@@ -169,8 +169,10 @@ def insert_incoming_data(
 
         else:
             # otherwise we raise an error this will usually be some sort of sql
-            # statement
-            raise DataInsertionError("New patient could not be inserted - {error}")
+            # statement. In theory I think the patient should still have their
+            # demographics information inserted this allows it to be handled as
+            # an investigation rather than an error.
+            raise DataInsertionError(f"New patient could not be inserted - {error}")
 
     if debug:
         return new, dirty, unchanged
