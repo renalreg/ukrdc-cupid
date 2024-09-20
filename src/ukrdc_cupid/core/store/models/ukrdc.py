@@ -34,6 +34,7 @@ from ukrdc_cupid.core.store.models.relationships import (
 import ukrdc_xsdata.ukrdc as xsd_ukrdc  # type: ignore
 import ukrdc_xsdata.ukrdc.lab_orders as xsd_lab_orders
 import ukrdc_xsdata.ukrdc.observations as xsd_observations
+import ukrdc_xsdata.ukrdc.dialysis_sessions as xsd_dialysis_sessions
 import ukrdc_sqla.ukrdc as sqla
 from sqlalchemy.orm import Session
 from sqlalchemy import and_
@@ -42,8 +43,14 @@ import datetime as dt
 from typing import List
 
 
-def set_start_stop(xml: Union[xsd_lab_orders, xsd_observations], property: str):
+def set_start_stop(
+    xml: Union[xsd_lab_orders, xsd_observations, xsd_dialysis_sessions], property: str
+):
     items = getattr(xml, property)
+    if isinstance(items, list):
+        # just another xsdata quirk
+        items = items[0]
+
     if items:
         # if start and stop are not present we interpret them as all time up to now
         if items.start:
@@ -58,6 +65,8 @@ def set_start_stop(xml: Union[xsd_lab_orders, xsd_observations], property: str):
 
         return [start, stop]
 
+    return None
+
 
 class PatientRecord(Node):
     def __init__(self, xml: xsd_ukrdc.PatientRecord):
@@ -68,7 +77,12 @@ class PatientRecord(Node):
         self.repository_updated_date = xml.sending_facility.time.to_datetime()
         self.lab_order_range = set_start_stop(xml, "lab_orders")
         self.observation_range = set_start_stop(xml, "observations")
-        print(":)")
+
+        self.dialysis_session_range = None
+        if xml.procedures:
+            self.dialysis_session_range = set_start_stop(
+                xml.procedures, "dialysis_sessions"
+            )
 
     def sqla_mapped() -> None:
         return None
@@ -153,25 +167,59 @@ class PatientRecord(Node):
         self.updated_status()
 
     def add_deleted(self, sqla_mapped: str, mapped_ids: List[str]) -> None:
-
         # we only delete within a time window for observations and lab orders
+        # don't like this solution very much. Think may sqla needs to become
+        # a function which returns the mapped_orms.
         if sqla_mapped == "observations":
-            mapped_orms = self.session.query(sqla.Observation)
-
-        elif sqla_mapped == "lab_orders" and getattr(self, "lab_order_range"):
-            mapped_orms = (
-                self.session.query(sqla.LabOrder)
-                .filter(
-                    and_(
-                        sqla.LabOrder.specimen_collected_time
-                        >= self.lab_order_range[0],
-                        sqla.LabOrder.specimen_collected_time
-                        <= self.lab_order_range[1],
+            if self.observation_range is not None:
+                mapped_orms = (
+                    self.session.query(sqla.Observation)
+                    .filter(
+                        and_(
+                            sqla.Observation.observation_time
+                            >= self.observation_range[0],
+                            sqla.Observation.observation_time
+                            <= self.observation_range[1],
+                        )
                     )
+                    .all()
                 )
-                .all()
-            )
+            else:
+                mapped_orms = []
 
+        elif sqla_mapped == "lab_orders":
+            if self.lab_order_range is not None:
+                mapped_orms = (
+                    self.session.query(sqla.LabOrder)
+                    .filter(
+                        and_(
+                            sqla.LabOrder.specimen_collected_time
+                            >= self.lab_order_range[0],
+                            sqla.LabOrder.specimen_collected_time
+                            <= self.lab_order_range[1],
+                        )
+                    )
+                    .all()
+                )
+            else:
+                mapped_orms = []
+
+        elif sqla_mapped == "dialysis_sessions":
+            if self.dialysis_session_range is not None:
+                mapped_orms = (
+                    self.session.query(sqla.DialysisSession)
+                    .filter(
+                        and_(
+                            sqla.DialysisSession.proceduretime
+                            >= self.dialysis_session_range[0],
+                            sqla.DialysisSession.proceduretime
+                            <= self.dialysis_session_range[1],
+                        )
+                    )
+                    .all()
+                )
+            else:
+                mapped_orms = []
         else:
             # In most cases we can just use the lazy mapping from the sqla models
             mapped_orms = getattr(self.orm_object, sqla_mapped)

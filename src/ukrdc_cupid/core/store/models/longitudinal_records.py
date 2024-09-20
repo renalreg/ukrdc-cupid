@@ -24,6 +24,9 @@ class Observation(Node):
     def sqla_mapped() -> str:
         return "observations"
 
+    def generate_id(self, seq_no) -> str:
+        return key_gen.generate_key_observations(self.xml, self.pid, seq_no)
+
     def map_xml_to_orm(self, _) -> None:
 
         # fmt: off
@@ -194,8 +197,8 @@ class Procedure(Node):
 
     def map_xml_to_orm(self, _) -> None:
         # fmt: off
-        # fmt: on
         pass
+        # fmt: on
 
 
 class VascularAccess(Node):

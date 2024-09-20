@@ -1,4 +1,4 @@
-FROM python:3.11-bookworm
+FROM python:3.11-bookworm-slim
 
 ENV PYTHONUNBUFFERED=1 \
     #POETRY_VIRTUALENVS_IN_PROJECT=true \

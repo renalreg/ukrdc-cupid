@@ -9,6 +9,7 @@ from ukrdc_cupid.core.store.models.ukrdc import PatientRecord
 from ukrdc_cupid.core.store.exceptions import (
     SchemaVersionError,
     InsertionBlockedError,
+    DataInsertionError,
 )
 from ukrdc_cupid.core.investigate.create_investigation import (
     get_patients,
@@ -156,10 +157,20 @@ def insert_incoming_data(
 
         print(f"Updated records: {len(ukrdc_session.dirty)}")
     else:
-        investigation = Investigation(
-            ukrdc_session, patient_ids=[(pid, ukrdcid)], issue_type_id=8
-        )
-        investigation.append_extras(xml=incoming_xml_file)
+        if not is_new:
+            # if the patient is in the database raise a workitem
+            investigation = Investigation(
+                ukrdc_session,
+                patient_ids=[(pid, ukrdcid)],
+                issue_type_id=8,
+                error_msg=str(error),
+            )
+            investigation.append_extras(xml=incoming_xml_file)
+
+        else:
+            # otherwise we raise an error this will usually be some sort of sql
+            # statement
+            raise DataInsertionError("New patient could not be inserted - {error}")
 
     if debug:
         return new, dirty, unchanged

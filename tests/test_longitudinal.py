@@ -18,6 +18,126 @@ TEST_PID = "test_pid"
 TEST_UKRDCID = "test_id"
 
 
+def generate_persistent_lab_orders(session:Session, start, stop):
+    # Add records to session that are require for testing laborders
+    lab_orders = [
+        # this laborder is within the range so will be deleted as its key would
+        # wouldn't match any of the cupid generated compond keys
+        sqla.LabOrder(
+            pid=TEST_PID,
+            id="to_delete_1",
+            specimencollectedtime=start + timedelta(weeks=1),
+        ),
+
+        # this two records should persist as they are outside the range
+        sqla.LabOrder(
+            pid=TEST_PID,
+            id="to_persist_1",
+            specimencollectedtime=start - timedelta(weeks=1),
+        ),
+        sqla.LabOrder(
+            pid=TEST_PID,
+            id="to_persist_2",
+            specimencollectedtime=stop + timedelta(weeks=1),
+        ),
+        
+        # this record should be overwritten with laborder in the file with
+        # placerid = 1 if it exists
+        sqla.LabOrder(
+            pid=TEST_PID,
+            id=f"{TEST_PID}:1",
+            specimencollectedtime=stop + timedelta(weeks=1),
+        ),
+    ]
+    session.add_all(lab_orders)
+
+    result_items = [
+        sqla.ResultItem(id="RI_to_delete_1", order_id="to_delete_1"),
+    ]
+    session.add_all(result_items)
+    session.commit()
+
+    loaded_ids = [order.id for order in session.query(sqla.LabOrder).all()]
+    for order in lab_orders:
+        assert order.id in loaded_ids
+    
+    return
+
+
+def generate_persistent_dialysis_sessions(session:Session, start, stop):
+    # Add records to session that are require for testing laborders
+    dialysis_sessions = [
+        # this laborder is within the range so will be deleted as its key would
+        # wouldn't match any of the cupid generated compond keys
+        sqla.DialysisSession(
+            pid=TEST_PID,
+            id="to_delete_1",
+            procedure_time=start + timedelta(weeks=1),
+        ),
+
+        # this two records should persist as they are outside the range
+        sqla.DialysisSession(
+            pid=TEST_PID,
+            id="to_persist_1",
+            procedure_time=start - timedelta(weeks=1),
+        ),
+        sqla.DialysisSession(
+            pid=TEST_PID,
+            id="to_persist_2",
+            procedure_time=stop + timedelta(weeks=1),
+        ),
+        
+    ]
+    session.add_all(dialysis_sessions)
+    session.commit()
+
+    loaded_ids = [sesh.id for sesh in session.query(sqla.DialysisSession).all()]
+    for order in dialysis_sessions:
+        assert order.id in loaded_ids
+    
+    return 
+
+
+def generate_persistent_observations(session:Session, start, stop):
+    # Add records to session that are require for testing laborders
+    observations = [
+        # this laborder is within the range so will be deleted as its key would
+        # wouldn't match any of the cupid generated compond keys
+        sqla.Observation(
+            pid=TEST_PID,
+            id="to_delete_1",
+            observation_time=start + timedelta(weeks=1),
+        ),
+
+        # this two records should persist as they are outside the range
+        sqla.Observation(
+            pid=TEST_PID,
+            id="to_persist_1",
+            observation_time=start - timedelta(weeks=1),
+        ),
+        sqla.Observation(
+            pid=TEST_PID,
+            id="to_persist_2",
+            observation_time=stop + timedelta(weeks=1),
+        ),
+        
+        # this record should be overwritten with laborder in the file with
+        # placerid = 1 if it exists
+        sqla.Observation(
+            pid=TEST_PID,
+            id=f"{TEST_PID}:1",
+            observation_time=stop + timedelta(weeks=1),
+        ),
+    ]
+    session.add_all(observations)
+    session.commit()
+
+    loaded_ids = [obs.id for obs in session.query(sqla.Observation).all()]
+    for order in observations:
+        assert order.id in loaded_ids
+    
+    return 
+
 @pytest.fixture(scope="function")
 def ukrdc_test_with_data(ukrdc_test_session: Session):
     """Function creates the database state prior to running cupid. To do this
@@ -39,42 +159,32 @@ def ukrdc_test_with_data(ukrdc_test_session: Session):
         os.path.join("tests", "xml_files", "store_tests", "test_2.xml")
     )
 
+    # Add some laborders for incoming xml to interact with
     lab_order_start = xml_test_2.lab_orders.start.to_datetime()
     lab_order_stop = xml_test_2.lab_orders.stop.to_datetime()
+    generate_persistent_lab_orders(
+        ukrdc_test_session, 
+        lab_order_start,
+        lab_order_stop
+    )
 
-    lab_orders = [
-        sqla.LabOrder(
-            pid=TEST_PID,
-            id="to_delete_1",
-            specimencollectedtime=lab_order_start + timedelta(weeks=1),
-        ),
-        sqla.LabOrder(
-            pid=TEST_PID,
-            id="to_persist_1",
-            specimencollectedtime=lab_order_start - timedelta(weeks=1),
-        ),
-        sqla.LabOrder(
-            pid=TEST_PID,
-            id="to_persist_2",
-            specimencollectedtime=lab_order_stop + timedelta(weeks=1),
-        ),
-        sqla.LabOrder(
-            pid=TEST_PID,
-            id=f"{TEST_PID}:1",
-            specimencollectedtime=lab_order_stop + timedelta(weeks=1),
-        ),
-    ]
-    ukrdc_test_session.add_all(lab_orders)
+    # add observations in 
+    obs_start = xml_test_2.observations.start.to_datetime()
+    obs_stop = xml_test_2.observations.stop.to_datetime()
+    generate_persistent_observations(
+        ukrdc_test_session,
+        obs_start,
+        obs_stop
+    )
 
-    result_items = [
-        sqla.ResultItem(id="RI_to_delete_1", order_id="to_delete_1"),
-    ]
-    ukrdc_test_session.add_all(result_items)
-    ukrdc_test_session.commit()
-
-    loaded_ids = [order.id for order in ukrdc_test_session.query(sqla.LabOrder).all()]
-    for order in lab_orders:
-        assert order.id in loaded_ids
+    # add 
+    ds_start = xml_test_2.procedures.dialysis_sessions[0].start.to_datetime()
+    ds_stop = xml_test_2.procedures.dialysis_sessions[0].stop.to_datetime()
+    generate_persistent_dialysis_sessions(
+        ukrdc_test_session,
+        ds_start,
+        ds_stop
+    )
 
     return ukrdc_test_session
 
@@ -159,11 +269,22 @@ def test_laborder_start_stop(patient_record: PatientRecord):
     # should staged for deletion
 
     ids_to_delete = ["to_delete_1", "RI_to_delete_1"]
-    deleted_ids = [orm.id for orm in patient_record.deleted_orm]
+    deleted_ids = [orm.id for orm in patient_record.deleted_orm if isinstance(orm, sqla.ResultItem) or isinstance(orm, sqla.LabOrder)]
 
     # check the records we expect to delete are staged for deletion
     assert ids_to_delete == deleted_ids
 
+def test_observation_start_stop(patient_record:PatientRecord):
+    ids_to_delete = ["to_delete_1"]
+    deleted_ids = [orm.id for orm in patient_record.deleted_orm if isinstance(orm, sqla.Observation)]
+    
+    assert ids_to_delete == deleted_ids
+
+def test_dialysis_sessions_start_stop(patient_record:PatientRecord):
+    ids_to_delete = ["to_delete_1"]
+    deleted_ids = [orm.id for orm in patient_record.deleted_orm if isinstance(orm, sqla.DialysisSession)]
+    
+    assert ids_to_delete == deleted_ids
 
 def test_result_items(patient_record: PatientRecord):
     # check all the result item attributes are being loaded into the orm

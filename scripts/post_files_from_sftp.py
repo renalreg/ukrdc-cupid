@@ -11,7 +11,7 @@ from pathlib import Path
 from fabric import Connection
 from dotenv import dotenv_values
 
-def print_loading_bar(iteration, total, length=10):
+def print_loading_bar(iteration, total, length=20):
     """Print a simple loading bar using the print statement."""
     percent = int(100 * (iteration / float(total)))
     filled_length = int(length * iteration // total)
@@ -36,11 +36,11 @@ with Connection(
     # List files from SFTP server
     sftp_files = c.run(f'find {sftp_path} -name "*.xml.gpg"', hide=True).stdout.split()
     number_of_files = len(sftp_files)
-    number_of_files = 5000
+    #number_of_files = 5000
     response_cache = defaultdict(int)
     print(f"Loading {number_of_files} files")
-    for i, sftp_file in enumerate(sftp_files[:number_of_files]):
-    #for i, sftp_file in enumerate(sftp_files):
+    #for i, sftp_file in enumerate(sftp_files[:number_of_files]):
+    for i, sftp_file in enumerate(sftp_files):
         #local_file_path = os.path.join(local_folder, os.path.basename(sftp_file))
         #c.get(sftp_file, local_file_path)
 

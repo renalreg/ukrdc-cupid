@@ -68,13 +68,16 @@ class Investigation:
         patient_ids: List[Tuple[str, str]],
         issue_type_id: int,
         is_blocking: bool = True,
+        error_msg: str = None,
     ) -> None:
         self.issue_type_id = issue_type_id
         self.patients: List[PatientID] = get_patients(session, patient_ids)
         self.session = session
-        self.issue: Issue = self.create_issue(is_blocking=is_blocking)
+        self.issue: Issue = self.create_issue(
+            is_blocking=is_blocking, error_msg=error_msg
+        )
 
-    def create_issue(self, is_blocking: bool = True) -> Issue:
+    def create_issue(self, is_blocking: bool = True, error_msg=None) -> Issue:
         """Function creates a new issue and adds it to the DB then returns
         it.
 
@@ -89,6 +92,7 @@ class Investigation:
             date_created=today,
             patients=self.patients,
             is_blocking=is_blocking,
+            error_message=error_msg,
         )
 
         # Link the issue to patients

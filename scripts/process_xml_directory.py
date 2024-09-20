@@ -1,5 +1,4 @@
 """Simple script to throw files from a folder directly at the cupid process
-
 """
 
 
