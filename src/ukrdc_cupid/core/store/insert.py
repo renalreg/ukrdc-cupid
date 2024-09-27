@@ -176,7 +176,6 @@ def insert_incoming_data(
 
     if debug:
         return new, dirty, unchanged
-
     return None
 
 
@@ -208,6 +207,7 @@ def process_file(xml_body: str, ukrdc_session: Session, mode: str = "full"):
 
     # async def load_xml(mode: str, xml_body: str = Depends(_get_xml_body)):
     # Load XML and check it
+    t0 = time.time()
     xml_object, xml_version = load_xml_from_str(xml_body)
     if xml_version < CURRENT_SCHEMA:
         msg = f"XML request on version {xml_version} but cupid requires version {CURRENT_SCHEMA}"
@@ -265,5 +265,7 @@ def process_file(xml_body: str, ukrdc_session: Session, mode: str = "full"):
         msg = f"New patient was uploaded successfully but there was an issue in linking to ukrdc data check issue id: {issue_id} for more details"
     else:
         msg = "File uploaded successfully"
+
+    print(f"That took {time.time() - t0:.2f} secs")
 
     return msg

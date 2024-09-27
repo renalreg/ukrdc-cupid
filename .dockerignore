@@ -1,6 +1,9 @@
 .venv
 .vscode
 .xml_to_load
+.xml_errored
+.xml_decrypted
+xml_processed
 .log
 .github
 .mypy_cache
