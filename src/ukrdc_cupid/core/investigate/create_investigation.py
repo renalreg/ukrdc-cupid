@@ -128,7 +128,7 @@ class Investigation:
 
             # Would something like this be a better idea for some of the more
             # complicated compound keys
-            xml_file_hash = hashlib.sha1(
+            xml_file_hash = hashlib.sha256(
                 xml.encode("utf-8"), usedforsecurity=False
             ).hexdigest()
             xml_file = self.session.execute(
