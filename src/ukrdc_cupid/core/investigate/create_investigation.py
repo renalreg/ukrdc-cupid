@@ -128,9 +128,7 @@ class Investigation:
 
             # Would something like this be a better idea for some of the more
             # complicated compound keys
-            xml_file_hash = hashlib.sha256(
-                xml.encode("utf-8")
-            ).hexdigest()
+            xml_file_hash = hashlib.sha256(xml.encode("utf-8")).hexdigest()
             xml_file = self.session.execute(
                 select(XmlFile).filter_by(file_hash=xml_file_hash)
             ).scalar_one_or_none()
