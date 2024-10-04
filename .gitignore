@@ -167,3 +167,4 @@ cython_debug/
 .xml_errors
 .xml_errored
 .xml_decrypted
+.do_not_commit

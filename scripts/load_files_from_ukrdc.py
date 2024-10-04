@@ -82,6 +82,7 @@ with LiveSession() as live_session:
 
             
                             cupid_session.commit()
-            except:
+            except Exception as e:
+                print(e)
                 print(f"{pid} could not be transfered")
 

@@ -1,10 +1,11 @@
 import json
+import hashlib
 
 from ukrdc_cupid.core.investigate.models import PatientID, Issue, XmlFile
 from datetime import datetime
 from typing import List, Tuple, Union
 from sqlalchemy.orm import Session
-from sqlalchemy import select, func
+from sqlalchemy import select
 from xsdata.formats.dataclass.serializers import XmlSerializer
 import ukrdc_xsdata.ukrdc as xsd_ukrdc  # type: ignore
 
@@ -115,13 +116,21 @@ class Investigation:
             other side of MIRTH)
         """
 
-        # look up xml file and append the issue to it
-        # if it exists or create it if not
+        # look up xml file and append the issue to it if it exists or create it
+        # if not. TODO: Look into doing things like stripping out file sent
+        # date to avoid it being to pedantic about what it counts as a new
+        # file.
         if xml is not None:
             if not isinstance(xml, str):
-                xml = serializer.render(xml)
+                xml = serializer.render()
 
-            xml_file_hash = func.md5(xml)
+            xml = xml.strip(" ").strip("\n")
+
+            # Would something like this be a better idea for some of the more
+            # complicated compound keys
+            xml_file_hash = hashlib.sha1(
+                xml.encode("utf-8"), usedforsecurity=False
+            ).hexdigest()
             xml_file = self.session.execute(
                 select(XmlFile).filter_by(file_hash=xml_file_hash)
             ).scalar_one_or_none()
@@ -129,8 +138,9 @@ class Investigation:
             if xml_file is None:
                 xml_file = XmlFile(file=xml, file_hash=xml_file_hash)
 
-            xml_file.issues.append(self.issue)
             self.session.add(xml_file)
+            self.session.flush()
+            self.issue.xml_file_id = xml_file.id
 
         if filename is not None:
             self.issue.filename = filename  # type:ignore

@@ -1,3 +1,24 @@
+"""
+These models contain the orm specific bits of deserialising/converting the xml 
+to orm. Currently they try and strike a balance between code that is to verbose
+and boilerplatey and code which is complicated/implicit. 
+
+In the future this would benefit from a separate set of ukrdc deserialisation 
+models which:
+
+1) Creates boilerplate for the models programatically/intellegently this might 
+require making liberal use of the sqla synonym properties
+2) Bin off xsdata and pyxb tortoises. Would be better to convert from the xml
+to orm.  
+3) Can take either lxml or or orm as an input
+4) Contain to_xml() and to_orm() methods and unify functionality with repos
+5) Contain the relationship between the primary keys and the order of items
+this could include a sort by date or something. 
+
+These would save a considerable amount of effort in the different places where
+we are doing this kind of thing. 
+"""
+
 from __future__ import annotations  # allows typehint of node class
 
 from typing import Union
