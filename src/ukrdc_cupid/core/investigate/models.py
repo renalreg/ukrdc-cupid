@@ -45,7 +45,7 @@ class Issue(Base):  # type:ignore
     issue_id = Column(Integer, ForeignKey("issuetype.id"))
 
     date_created = Column(DateTime, nullable=False)
-    error_message = Column(String(100))
+    error_message = Column(Text)
     filename = Column(String(100))
     xml_file_id = Column(Integer, ForeignKey("xmlfile.id"))
     is_resolved = Column(Boolean, nullable=False, server_default=text("false"))

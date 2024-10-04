@@ -12,10 +12,10 @@ class ProgramMembership(Node):
     def sqla_mapped() -> str:
         return "program_memberships"
 
-    def map_xml_to_tree(self):
+    def map_xml_to_orm(self, _):
         # fmt: off
-        self.add_code("enteredbycode", "enteredbycodestd","enteredbycodedesc",self.xml.entered_by)
-        self.add_code("enteredatcode", "enteredatcodestd", "enteredatcodedesc", self.xml.entered_at)
+        self.add_code("enteredbycode", "enteredbycodestd","enteredbydesc",self.xml.entered_by)
+        self.add_code("enteredatcode", "enteredatcodestd", "enteredatdesc", self.xml.entered_at)
         self.add_item("programname", self.xml.program_name, optional=True)
         self.add_item("programdescription", self.xml.program_description, optional=True)
         self.add_item("fromtime", self.xml.from_time, optional=False)
@@ -32,7 +32,7 @@ class OptOut(Node):
     def sqla_mapped() -> str:
         return "opt_outs"
 
-    def map_xml_to_tree(self):
+    def map_xml_to_orm(self, _):
         # fmt: off
         self.add_item("program_name", self.xml.program_name)
         self.add_item("program_description", self.xml.program_description)

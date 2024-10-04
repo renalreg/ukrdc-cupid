@@ -8,6 +8,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import Sequence
 import ukrdc_xsdata.ukrdc.lab_orders as xsd_lab_orders  # type:ignore
 import ukrdc_xsdata.ukrdc.dialysis_sessions as xsd_dialysis_sessions  # type:ignore
+import ukrdc_xsdata.ukrdc.observations as xsd_observations
 
 from typing import Optional
 
@@ -66,10 +67,18 @@ def generate_key_resultitem(xml, order_id: int, seq_no: int) -> str:
 
 
 def generate_key_dialysis_session(
-    dialysis_session_xml: xsd_dialysis_sessions.DialysisSession,
+    xml: xsd_dialysis_sessions.DialysisSession,
     pid: str,
     seq_no: int = 0,
 ) -> str:
-    procedure_time_uts = dialysis_session_xml.procedure_time.to_datetime().timestamp()
-    procedure_type_code = dialysis_session_xml.procedure_type.code
+    procedure_time_uts = xml.procedure_time.to_datetime().timestamp()
+    procedure_type_code = xml.procedure_type.code
     return f"{pid}{KEY_SEPERATOR}{procedure_time_uts}{KEY_SEPERATOR}{procedure_type_code}{KEY_SEPERATOR}{seq_no}"
+
+
+def generate_key_observations(
+    xml: xsd_observations.Observation, pid: str, seq_no: int = 0
+):
+    time_uts = xml.observation_time.to_datetime().timestamp()
+    code = xml.observation_code.code
+    return f"{pid}{KEY_SEPERATOR}{time_uts}{KEY_SEPERATOR}{code}{KEY_SEPERATOR}{seq_no}"

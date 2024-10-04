@@ -103,7 +103,7 @@ class FamilyDoctor(Node):
             self.orm_object.contactvalue = xml.contact_detail.value
             self.orm_object.commenttext = xml.contact_detail.comments
 
-    def map_xml_to_orm(self, session: Session) -> None:
+    def map_xml_to_orm(self, _) -> None:
         self.add_item("gpname", self.xml.gpname)
         self.add_item("gpid", self.xml.gpid)
         self.add_item("gppracticeid", self.xml.gppractice_id)
@@ -132,13 +132,13 @@ class Patient(Node):
             if xml.contact_details:
                 # TODO: convince myself the getting the first contact details is correct
                 self.orm_object.persontocontact_contactnumber = (
-                    self.xml.contact_details[0].value
+                    self.xml.contact_details.contact_detail[0].value
                 )
                 self.orm_object.persontocontact_contactnumbercomments = (
-                    self.xml.contact_details[0].comments
+                    self.xml.contact_details.contact_detail[0].comments
                 )
                 self.orm_object.persontocontact_contactnumbertype = (
-                    self.xml.contact_details[0].use
+                    self.xml.contact_details.contact_detail[0].use
                 )
 
     def map_xml_to_orm(self, session: Session) -> None:
@@ -218,7 +218,7 @@ class Allergy(Node):
         self.add_code("cliniciancode","cliniciancodestd","cliniciandesc",self.xml.clinician)
         self.add_item("discoverytime", self.xml.discovery_time, optional=True)
         self.add_item("confirmedtime", self.xml.confirmed_time, optional=True)
-        self.add_item("comments", self.xml.comments, optional=True)
+        self.add_item("commenttext", self.xml.comments, optional=True)
         self.add_item("inactivetime", self.xml.inactive_time, optional=True)
         self.add_item("freetextallergy", self.xml.free_text_allergy, optional=True)
         self.add_item("qualifyingdetails", self.xml.qualifying_details, optional=True)

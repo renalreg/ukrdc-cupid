@@ -52,7 +52,8 @@ async def _get_xml_body(request: Request) -> str:
 @app.post("/parse/xml_validate/{schema_version}")
 async def validate_xml(schema_version: str, xml_body=Depends(_get_xml_body)):
     """Cupid validation functionality simply checks if an xml file is valid
-    against the UKRDC RDA schema
+    against the UKRDC RDA schema. Should this contain an option to list the
+    schema versions which are available to validate against?
     """
 
     try:
@@ -82,6 +83,22 @@ async def load_xml(
     xml_body: str = Depends(_get_xml_body),
     ukrdc_session_factory: Session = Depends(get_session),
 ):
+    """Main CUPID Api route. Cupid will attempt to load any xml posted here to
+    the database.
+
+    Args:
+        mode (str): _description_
+        xml_body (str, optional): _description_. Defaults to Depends(_get_xml_body).
+        ukrdc_session_factory (Session, optional): _description_. Defaults to Depends(get_session).
+
+    Raises:
+        HTTPException: _description_
+        HTTPException: _description_
+        HTTPException: _description_
+
+    Returns:
+        _type_: _description_
+    """
 
     with ukrdc_session_factory as session:
         # identify patient

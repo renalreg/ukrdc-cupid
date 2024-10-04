@@ -9,6 +9,7 @@ from ukrdc_cupid.core.store.models.ukrdc import PatientRecord
 from ukrdc_cupid.core.store.exceptions import (
     SchemaVersionError,
     InsertionBlockedError,
+    DataInsertionError,
 )
 from ukrdc_cupid.core.investigate.create_investigation import (
     get_patients,
@@ -156,14 +157,25 @@ def insert_incoming_data(
 
         print(f"Updated records: {len(ukrdc_session.dirty)}")
     else:
-        investigation = Investigation(
-            ukrdc_session, patient_ids=[(pid, ukrdcid)], issue_type_id=8
-        )
-        investigation.append_extras(xml=incoming_xml_file)
+        if not is_new:
+            # if the patient is in the database raise a workitem
+            investigation = Investigation(
+                ukrdc_session,
+                patient_ids=[(pid, ukrdcid)],
+                issue_type_id=8,
+                error_msg=str(error),
+            )
+            investigation.append_extras(xml=incoming_xml_file)
+
+        else:
+            # otherwise we raise an error this will usually be some sort of sql
+            # statement. In theory I think the patient should still have their
+            # demographics information inserted this allows it to be handled as
+            # an investigation rather than an error.
+            raise DataInsertionError(f"New patient could not be inserted - {error}")
 
     if debug:
         return new, dirty, unchanged
-
     return None
 
 
@@ -195,6 +207,7 @@ def process_file(xml_body: str, ukrdc_session: Session, mode: str = "full"):
 
     # async def load_xml(mode: str, xml_body: str = Depends(_get_xml_body)):
     # Load XML and check it
+    t0 = time.time()
     xml_object, xml_version = load_xml_from_str(xml_body)
     if xml_version < CURRENT_SCHEMA:
         msg = f"XML request on version {xml_version} but cupid requires version {CURRENT_SCHEMA}"
@@ -252,5 +265,7 @@ def process_file(xml_body: str, ukrdc_session: Session, mode: str = "full"):
         msg = f"New patient was uploaded successfully but there was an issue in linking to ukrdc data check issue id: {issue_id} for more details"
     else:
         msg = "File uploaded successfully"
+
+    print(f"That took {time.time() - t0:.2f} secs")
 
     return msg

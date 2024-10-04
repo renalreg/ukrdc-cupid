@@ -15,7 +15,13 @@ from ukrdc_cupid.core.investigate.utils import update_picklists
 from ukrdc_cupid.core.store.models.lookup_tables import GPInfoType
 
 # Load environment varibles from wither they are found
-ENV = {**os.environ, **dotenv_values(".env"), **dotenv_values(".env.test")}
+
+ENV = {
+    **os.environ,
+    **dotenv_values(".env"),
+    **dotenv_values(".env.test"),
+    **dotenv_values(".env.docker"),
+}
 
 # There is probably a better home for these than this.
 ID_SEQUENCES = {

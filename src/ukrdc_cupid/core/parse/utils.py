@@ -10,7 +10,7 @@ def load_xml_from_str(xml_str: str):
 
 
 def load_xml_from_path(filepath: str) -> PatientRecord:
-    with open(filepath, "r") as file:
+    with open(filepath, "r", encoding="utf-8") as file:
         data = file.read()
 
     xsobject = XmlParser().from_string(data, PatientRecord)  # type:ignore
