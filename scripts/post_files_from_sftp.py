@@ -20,6 +20,10 @@ def print_loading_bar(iteration, total, length=20):
 
 
 ENV = dotenv_values(".env.scripts")
+CENTRES = [
+    "RH8"
+]
+
 sftp_path = "/data/rdastaging/archive"
 errored_files_folder = Path(".xml_errored")
 decrypted_folder = Path(".xml_decrypted")
@@ -39,7 +43,12 @@ if LOAD_FILES_FROM_SFTP:
         connect_kwargs={'password': ENV["SFTP_PASSWORD"]}
     ) as c:
         # List files from SFTP server
-        sftp_files = c.run(f'find {sftp_path} -name "*.xml.gpg"', hide=True).stdout.split()
+        sftp_files = [
+            file for file in 
+            c.run(f'find {sftp_path} -name "*.xml.gpg"', hide=True).stdout.split()
+            if Path(file).stem.split("_")[0] in CENTRES
+        ]
+        
         number_of_files = len(sftp_files)
 
         print(f"Downloading {number_of_files} files")
@@ -57,13 +66,13 @@ if LOAD_FILES_FROM_SFTP:
             try:
                 # decrypt and capture stdout
                 decrypted_data = c.run(decrypt_command, hide=True).stdout
-            except:
+            except Exception as e:
                 # if it doesn't work we don't sweat
                 continue
             else:
                 # save file locally
-                decrypted_file_name = Path(sftp_file).stem
-                decrypted_file_path = decrypted_folder / decrypted_file_name
+                file_name = Path(sftp_file).stem
+                decrypted_file_path = decrypted_folder / file_name
                 
                 with open(decrypted_file_path, "w") as decrypted_file:
                         decrypted_file.write(decrypted_data)
@@ -71,7 +80,9 @@ if LOAD_FILES_FROM_SFTP:
 
 # Load files from folder and time how long it takes cupid to rinse through it
 response_cache = defaultdict(int)
-xml_to_load = [file for file in decrypted_folder.glob("*.xml")]
+xml_to_load = [file for file in decrypted_folder.glob("*.xml")
+               if file.stem.split("_")[0] in CENTRES ]
+
 #xml_to_load = xml_to_load[:100]
 t0 = time()
 files_to_load = len(xml_to_load)
