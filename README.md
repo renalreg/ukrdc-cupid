@@ -23,7 +23,7 @@ As of 07/10/24 a test version of cupid can be built with docker. This includes a
 To fire this beast up run the following:
 
 1. Build image:
-`docker compose build --env-file=.env.docker`
+`docker compose --env-file=.env.docker build`
 
 2. Start up application:
 `docker compose --env-file=.env.docker up -d`
