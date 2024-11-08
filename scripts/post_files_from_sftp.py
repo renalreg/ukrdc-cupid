@@ -28,7 +28,9 @@ sftp_path = "/data/rdastaging/archive"
 errored_files_folder = Path(".xml_errored")
 decrypted_folder = Path(".xml_decrypted")
 
+
 LOAD_FILES_FROM_SFTP = False
+SPECIFIC_FILES = ["RH8_000022_RH8_11063796.xml"]
 
 # Create local_folder if it doesn't exist
 os.makedirs(errored_files_folder, exist_ok=True)
@@ -93,6 +95,9 @@ if files_to_load == 0:
 else:
     print(f"Loading {files_to_load} files into Cupid")
     for i, xml_file in enumerate(xml_to_load):
+        if len(SPECIFIC_FILES) > 0 and xml_file.name not in SPECIFIC_FILES:
+            continue
+
         print_loading_bar(i, files_to_load)
         with open(xml_file) as file:
             data = file.read()
