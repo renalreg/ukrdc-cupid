@@ -1,10 +1,9 @@
 """
 Script to lift files from the UKRDC staging, detach, and insert them into the test database.
-"""
 
-"""
-Script to lift files from the UKRDC staging, detach, and insert them into the test database,
-using polymorphism to download the whole hierarchy.
+Ideally after running this use pg_dump 
+ docker-compose --env-file=.env.docker exec db pg_dump -U postgres ukrdc_test_docker > .do_not_commit/dumpfile.sql
+
 """
 
 GLOBAL_LAZY = "selectin"
