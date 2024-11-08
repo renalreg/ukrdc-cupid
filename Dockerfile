@@ -34,5 +34,7 @@ RUN poetry lock
 #RUN
 RUN python -m pip install .
 
-CMD ["python", "scripts/test_deploy/initialise_db.py"]
+
+#CMD ["python", "scripts/test_deploy/initialise_db.py"]
 #CMD ["poetry", "run", "uvicorn", "ukrdc_xml_converter.api:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["python", "scripts/test_deploy/start_api.py"]

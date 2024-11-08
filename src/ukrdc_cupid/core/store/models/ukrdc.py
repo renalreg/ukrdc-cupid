@@ -52,6 +52,7 @@ from ukrdc_cupid.core.store.models.relationships import (
     OptOut,
     ProgramMembership,
 )
+from ukrdc_cupid.core.parse.utils import hash_xml
 
 import ukrdc_xsdata.ukrdc as xsd_ukrdc  # type: ignore
 import ukrdc_xsdata.ukrdc.lab_orders as xsd_lab_orders
@@ -175,12 +176,21 @@ class PatientRecord(Node):
         self.is_new_record = is_new
 
         # load or create the orm
+        file_hash = hash_xml(self.xml)
         if is_new:
             self.orm_object = self.orm_model(
                 pid=self.pid, ukrdcid=ukrdcid
             )  # type:ignore
+            self.orm_object.channelid = file_hash
         else:
             self.orm_object = session.get(self.orm_model, self.pid)
+            # check the file hash against the channelid
+            # TODO: this needs to be renamed to something more helpful when the
+            # database gets updated.
+            if self.orm_object.channelid == file_hash:
+                return
+
+            self.orm_object == file_hash
 
         self.map_xml_to_orm(session)
         self.updated_status()

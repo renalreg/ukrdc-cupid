@@ -1,7 +1,8 @@
 import json
-import hashlib
 
 from ukrdc_cupid.core.investigate.models import PatientID, Issue, XmlFile
+from ukrdc_cupid.core.parse.utils import load_xml_from_str, hash_xml
+
 from datetime import datetime
 from typing import List, Tuple, Union
 from sqlalchemy.orm import Session
@@ -121,14 +122,17 @@ class Investigation:
         # date to avoid it being to pedantic about what it counts as a new
         # file.
         if xml is not None:
-            if not isinstance(xml, str):
-                xml = serializer.render()
+            if isinstance(xml, str):
+                xml_obj, _ = load_xml_from_str(xml)
+            else:
+                xml_obj = xml
+                xml = serializer.render(xml_obj)
+
+            if not isinstance(xml_obj, xsd_ukrdc.PatientRecord):
+                raise Exception("No bueno hombre")
 
             xml = xml.strip(" ").strip("\n")
-
-            # Would something like this be a better idea for some of the more
-            # complicated compound keys
-            xml_file_hash = hashlib.sha256(xml.encode("utf-8")).hexdigest()
+            xml_file_hash = hash_xml(xml_obj)
             xml_file = self.session.execute(
                 select(XmlFile).filter_by(file_hash=xml_file_hash)
             ).scalar_one_or_none()
