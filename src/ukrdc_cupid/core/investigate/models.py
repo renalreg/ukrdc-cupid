@@ -93,6 +93,7 @@ class IssueType(Base):  # type:ignore
     __tablename__ = "issuetype"
     id = Column(Integer, primary_key=True)
     issue_type = Column(String(100), nullable=False)
+    is_domain_issue = Column(Boolean, nullable=False)
 
 
 class XmlFile(Base):
