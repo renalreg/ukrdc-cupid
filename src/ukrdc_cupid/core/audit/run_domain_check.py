@@ -1,10 +1,9 @@
 # Load environment variables
-from sqlalchemy.orm import sessionmaker, with_polymorphic
+from sqlalchemy.orm import sessionmaker
 from sqlalchemy import create_engine
 from dotenv import dotenv_values
 
 from ukrdc_cupid.core.audit.domain import (
-    mrn_similarity_matched,
     generate_domain_workitems,
 )
 

@@ -165,8 +165,8 @@ class UKRDCConnection(DatabaseConnection):
         # install postgres module for fuzzy matching
         with self.engine.connect() as connection:
             trans = connection.begin()
-            connection.execute(text(f"CREATE EXTENSION pg_trgm;"))
-            connection.execute(text(f"CREATE EXTENSION fuzzystrmatch;"))
+            connection.execute(text("CREATE EXTENSION pg_trgm;"))
+            connection.execute(text("CREATE EXTENSION fuzzystrmatch;"))
             trans.commit()
 
 

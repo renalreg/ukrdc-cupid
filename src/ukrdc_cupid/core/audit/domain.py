@@ -8,13 +8,11 @@ Care should be taken to not link patients which have been unlinked by the opt
 out process or other deliberate unlinkings.
 """
 from ukrdc_cupid.core.audit.validate_matches import validate_demog_ukrdc
-from ukrdc_cupid.core.investigate.create_investigation import Investigation
 
 
 from sqlalchemy.orm import Session
 from sqlalchemy import select, func, and_
 from sqlalchemy.orm import aliased
-from ukrdc_cupid.core.investigate.models import LinkPatientToIssue, Issue, IssueType
 from ukrdc_sqla.ukrdc import PatientNumber, PatientRecord, Patient, Address, Name
 
 # levenstein distance for fuzzy matchin this
@@ -47,7 +45,6 @@ def close_matches_ukrdc(
 
         # if successfully validated we raise an investigation
         if is_valid:
-            patient_ids = [[pid_1, ukrdcid_1], [pid_2, ukrdcid_2]]
 
             # TODO: look up patients against issue investigations db
             # we need a mechanism for something like "this is a false positive"

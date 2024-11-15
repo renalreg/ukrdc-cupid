@@ -131,7 +131,7 @@ def read_patient_metadata(xml: xsd_ukrdc.PatientRecord) -> dict:
             patient_info["NI"].append([number.number, number.organization.value])
 
         if number.organization.value in ("NHS", "HSC", "CHI"):
-            if not is_valid(number.number.value):
+            if not is_valid(number.number):
                 raise Exception("placeholder exception...nhs number invalid")
 
     # MRN is non negotiable for cupid matching
