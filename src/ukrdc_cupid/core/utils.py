@@ -162,6 +162,13 @@ class UKRDCConnection(DatabaseConnection):
             populate_ukrdc_tables(session, gp_info=gp_info)
             session.commit()
 
+        # install postgres module for fuzzy matching
+        with self.engine.connect() as connection:
+            trans = connection.begin()
+            connection.execute(text("CREATE EXTENSION pg_trgm;"))
+            connection.execute(text("CREATE EXTENSION fuzzystrmatch;"))
+            trans.commit()
+
 
 class UKRRConnection(DatabaseConnection):
     def __init__(

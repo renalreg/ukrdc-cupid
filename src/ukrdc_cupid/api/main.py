@@ -11,6 +11,7 @@ from ukrdc_cupid.core.store.exceptions import (
     SchemaVersionError,
     InsertionBlockedError,
 )
+from ukrdc_cupid.core.audit.domain import generate_domain_match_workitems, generate_domain_data_audit
 
 
 app = FastAPI()
@@ -189,3 +190,14 @@ async def delete_patient(
     msg = f"Deleted patient with identifiers: pid = {pid}, ukrdcid = {ukrdcid}, localpatientid = {localhosp}"
 
     return Response(content=msg)
+
+
+@app.post("/audit/run")
+async def run_audit_functions(ukrdc_session: Session = Depends(get_session)):
+    """Api route to trigger functions which audit records in the database
+    against each other. 
+    """
+    generate_domain_match_workitems(ukrdc_session)
+
+    generate_domain_data_audit(ukrdc_session)
+
