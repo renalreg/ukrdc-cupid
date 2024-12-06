@@ -183,6 +183,7 @@ def insert_incoming_data(
 
     if debug:
         return new, dirty, unchanged
+    
     return None
 
 

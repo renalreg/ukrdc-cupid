@@ -226,5 +226,5 @@ def generate_domain_match_workitems(session):
     close_matches_ukrdc(session, name_matched_soundex, 10)
 
 
-def generate_domain_data_issues(session):
+def generate_domain_data_audit(session):
     return

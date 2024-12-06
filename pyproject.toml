@@ -34,6 +34,15 @@ tox = "^4.5.1"
 bandit = "^1.7.5"
 pytest = "<7.4.3"
 
+[tool.poetry.group.database-migration]
+# Dependency group for running the demo notebooks
+# Not installed by default. Use `poetry install --with demo`
+optional = true
+
+[tool.poetry.group.database-migration.dependencies]
+alembic = "^1.14.0"
+
+
 [build-system]
 build-backend = "poetry.core.masonry.api"
 requires = ["poetry-core"]
