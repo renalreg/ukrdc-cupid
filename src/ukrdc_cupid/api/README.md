@@ -31,11 +31,13 @@ Uploads and stores the provided XML patient file in the UKRDC database.
 
 - **Params**:
   - `mode` (str): Upload mode. The options are as follows:
+
   | Mode | Description |
   |------|-------------|
-  | full ||
-  | ex-missing ||
-  | clear ||
+  | full |             |
+  | ex-missing |       |
+  | clear |            |
+  
   These have yet to be implemented.
 - **Body**: XML data (must be of type `application/xml`).
 - **Response**: Success message or error details.
