@@ -174,3 +174,6 @@ cython_debug/
 *.dump
 
 .venv
+.env.database
+.env.docker
+#.env.docker

@@ -1,6 +1,8 @@
 """
 Script to lift files from the UKRDC to simulate data dump. We only need the
 bits to match the schema converter archive. =
+
+docker exec -t <container_name> pg_dump -U <username> --data-only <database_name> > data_dump.sql
 """
 
 from sqlalchemy.orm import sessionmaker, with_polymorphic
