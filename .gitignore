@@ -124,6 +124,8 @@ celerybeat.pid
 .env.test
 .env.scripts
 .venv
+*.venv
+
 env/
 venv/
 ENV/
@@ -168,3 +170,10 @@ cython_debug/
 .xml_errored
 .xml_decrypted
 .do_not_commit
+
+*.dump
+
+.venv
+.env.database
+.env.docker
+#.env.docker

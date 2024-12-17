@@ -100,6 +100,7 @@ def insert_incoming_data(
     ukrdcid: str,
     incoming_xml_file: xsd_ukrdc.PatientRecord,
     is_new: bool = False,
+    mode: str = "full",
     debug: bool = False,
 ) -> Optional[Tuple[Base, Base, Base]]:  # type:ignore
     """Insert file into the database having matched to pid.
@@ -112,11 +113,17 @@ def insert_incoming_data(
     """
 
     # load incoming xml file into cupid store models
-    patient_record = PatientRecord(xml=incoming_xml_file)
+    if mode == "ex-missing":
+        patient_record = PatientRecord(xml=incoming_xml_file, ex_missing=True)
+    else:
+        patient_record = PatientRecord(xml=incoming_xml_file)
 
     # map xml to rows in the database using the orm
     patient_record.map_to_database(
-        session=ukrdc_session, ukrdcid=ukrdcid, pid=pid, is_new=is_new
+        session=ukrdc_session,
+        ukrdcid=ukrdcid,
+        pid=pid,
+        is_new=is_new,
     )
 
     # extract a list of records from cupid models
@@ -176,6 +183,7 @@ def insert_incoming_data(
 
     if debug:
         return new, dirty, unchanged
+    
     return None
 
 
@@ -188,22 +196,6 @@ def process_file(xml_body: str, ukrdc_session: Session, mode: str = "full"):
         xml_object (PatientRecord): _description_
         ukrdc_session (Session): _description_
     """
-
-    # The original specs contained several different insertion modes this
-    # will probably need to be reflected here in some sort of way
-    if mode == "full":
-        # this does an update in which existing domain record is overwritten
-        # with incoming
-        pass
-
-    elif mode == "ex-missing":
-        # this mode doesn't delete records which are missing between the start
-        # stop times for those records where everything isn't sent every time
-        pass
-
-    elif mode == "clear":
-        # delete patient before inserting data
-        pass
 
     # async def load_xml(mode: str, xml_body: str = Depends(_get_xml_body)):
     # Load XML and check it
@@ -243,6 +235,12 @@ def process_file(xml_body: str, ukrdc_session: Session, mode: str = "full"):
         # look up pid against investigations
         is_new = False
 
+    if mode == "clear":
+        # delete patient before inserting data
+        if not is_new:
+            ukrdc_session.delete(PatientRecord(pid=pid))
+            ukrdc_session.flush()
+
     # insert into the database
     insert_incoming_data(
         ukrdc_session=ukrdc_session,
@@ -250,6 +248,7 @@ def process_file(xml_body: str, ukrdc_session: Session, mode: str = "full"):
         ukrdcid=ukrdcid,
         incoming_xml_file=xml_object,
         is_new=is_new,
+        mode=mode,
         debug=True,
     )
 

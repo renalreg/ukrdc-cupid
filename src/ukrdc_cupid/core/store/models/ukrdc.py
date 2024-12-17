@@ -89,7 +89,7 @@ def set_start_stop(
 
 
 class PatientRecord(Node):
-    def __init__(self, xml: xsd_ukrdc.PatientRecord):
+    def __init__(self, xml: xsd_ukrdc.PatientRecord, ex_missing=False):
         super().__init__(xml, sqla.PatientRecord)
 
         # some records have an additional date (aside from the usual ones update by db triggers)
@@ -97,8 +97,9 @@ class PatientRecord(Node):
         self.repository_updated_date = xml.sending_facility.time.to_datetime()
         self.lab_order_range = set_start_stop(xml, "lab_orders")
         self.observation_range = set_start_stop(xml, "observations")
-
         self.dialysis_session_range = None
+        self.is_ex_missing = ex_missing
+
         if xml.procedures:
             self.dialysis_session_range = set_start_stop(
                 xml.procedures, "dialysis_sessions"
@@ -200,7 +201,8 @@ class PatientRecord(Node):
         # don't like this solution very much. Think may sqla needs to become
         # a function which returns the mapped_orms.
         if sqla_mapped == "observations":
-            if self.observation_range is not None:
+
+            if self.observation_range is not None and not self.is_ex_missing:
                 mapped_orms = (
                     self.session.query(sqla.Observation)
                     .filter(
@@ -217,7 +219,7 @@ class PatientRecord(Node):
                 mapped_orms = []
 
         elif sqla_mapped == "lab_orders":
-            if self.lab_order_range is not None:
+            if self.lab_order_range is not None and not self.is_ex_missing:
                 mapped_orms = (
                     self.session.query(sqla.LabOrder)
                     .filter(
@@ -234,7 +236,7 @@ class PatientRecord(Node):
                 mapped_orms = []
 
         elif sqla_mapped == "dialysis_sessions":
-            if self.dialysis_session_range is not None:
+            if self.dialysis_session_range is not None and not self.is_ex_missing:
                 mapped_orms = (
                     self.session.query(sqla.DialysisSession)
                     .filter(
