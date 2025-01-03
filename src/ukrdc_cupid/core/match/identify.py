@@ -18,6 +18,7 @@ from ukrdc_cupid.core.investigate.models import Issue, PatientID, LinkPatientToI
 from ukrdc_cupid.core.investigate.create_investigation import Investigation
 
 from typing import List, Any
+from nhs_number.validate import is_valid
 
 
 def match_ni(session: Session, patient_info: dict) -> Any:
@@ -120,13 +121,18 @@ def read_patient_metadata(xml: xsd_ukrdc.PatientRecord) -> dict:
         "NI": [],
     }
 
-    # main matching against pid and ukrdc is done using patient numbers
+    # main matching against pid and ukrdc is done using patient numbers.
+    # validate these numbers where possible.
     for number in xml.patient.patient_numbers.patient_number:
         if number.number_type.value == "MRN":
             patient_info["MRN"] = [number.number, number.organization.value]
 
         if number.number_type.value == "NI":
             patient_info["NI"].append([number.number, number.organization.value])
+
+        if number.organization.value in ("NHS", "HSC", "CHI"):
+            if not is_valid(number.number):
+                raise Exception("placeholder exception...nhs number invalid")
 
     # MRN is non negotiable for cupid matching
     if not patient_info.get("MRN"):

@@ -20,3 +20,8 @@ Code relating to:
 ## Side-effects
 
 - Insersion/updating of the incoming file into the UKRDC database
+
+
+# Future 
+
+- Something like this https://sqlmodel.tiangolo.com/features/ to do the mapping
