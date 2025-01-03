@@ -21,7 +21,7 @@ def print_loading_bar(iteration, total, length=20):
 
 ENV = dotenv_values(".env.scripts")
 CENTRES = [
-    "RH8"
+    "RFBAK"
 ]
 
 sftp_path = "/data/rdastaging/archive"
@@ -29,8 +29,9 @@ errored_files_folder = Path(".xml_errored")
 decrypted_folder = Path(".xml_decrypted")
 
 
-LOAD_FILES_FROM_SFTP = False
-SPECIFIC_FILES = ["RH8_000022_RH8_11063796.xml"]
+LOAD_FILES_FROM_SFTP = True
+#SPECIFIC_FILES = ["RH8_000022_RH8_11063796.xml"]
+SPECIFIC_FILES = []
 
 # Create local_folder if it doesn't exist
 os.makedirs(errored_files_folder, exist_ok=True)
@@ -50,6 +51,7 @@ if LOAD_FILES_FROM_SFTP:
             c.run(f'find {sftp_path} -name "*.xml.gpg"', hide=True).stdout.split()
             if Path(file).stem.split("_")[0] in CENTRES
         ]
+        sftp_files = sftp_files[:10]
         
         number_of_files = len(sftp_files)
 
