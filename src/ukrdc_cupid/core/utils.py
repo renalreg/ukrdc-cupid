@@ -62,6 +62,11 @@ class DatabaseConnection:
         self.password = self.get_property("password", "password")
         self.port = self.get_property("port", "port")
         self.name = self.get_property("name", "path")
+        self.host = self.get_property("host", "hostname")
+
+        if self.host == "":
+            self.host = "localhost"
+
         self.engine = None
 
         if self.name is not None:
@@ -98,7 +103,7 @@ class DatabaseConnection:
             return
 
     def generate_database_url(self) -> str:
-        return f"{self.driver}://{self.user}:{self.password}@localhost:{self.port}/{self.name}"
+        return f"{self.driver}://{self.user}:{self.password}@{self.host}:{self.port}/{self.name}"
 
     def create_sessionmaker(self) -> sessionmaker:
 

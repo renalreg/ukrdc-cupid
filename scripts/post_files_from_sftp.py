@@ -126,6 +126,7 @@ else:
         # Check the response status
         if response.status_code !=200:
             errored_file_path = errored_files_folder / xml_file.name
+            print(response.content)
             with open(errored_file_path, "w") as f:
                 f.write(data)
                 response_cache[response.content]+=1

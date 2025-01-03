@@ -13,7 +13,7 @@ RUN apt-get update && \
 
 # install psycopg2 dependencies
 RUN apt-get update && \
-    apt-get install -y postgresql-server-dev-all gcc python3-dev musl-dev && \
+    apt-get install -y postgresql-server-dev-all gcc python3-dev musl-dev nano && \
     rm -rf /var/lib/apt/lists/*    
 
 WORKDIR /app
@@ -37,4 +37,4 @@ RUN python -m pip install .
 
 #CMD ["python", "scripts/test_deploy/initialise_db.py"]
 #CMD ["poetry", "run", "uvicorn", "ukrdc_xml_converter.api:app", "--host", "0.0.0.0", "--port", "8000"]
-CMD ["python", "scripts/test_deploy/start_api.py"]
+CMD ["python", "scripts/start_api_docker.py"]
