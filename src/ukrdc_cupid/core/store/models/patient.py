@@ -4,8 +4,10 @@ Models to create sqla objects from an xml file
 
 from __future__ import annotations  # allows typehint of node class
 
+from typing import Type
 
 import ukrdc_sqla.ukrdc as sqla
+import ukrdc_cupid.core.store.keygen as key_gen
 from sqlalchemy.orm import Session
 
 from ukrdc_cupid.core.store.models.structure import Node
@@ -287,6 +289,22 @@ class RenalDiagnosis(Node):
             print("Biopsy performed status not currently supported")
         # fmt: on
 
+class Assessment(Node):
+    def __init__(self, xml: xsd_diagnosis.Assessment):
+        super().__init__(xml, sqla.Assessment)
+
+    def sqla_mapped() -> str:
+        return "assessments"
+
+    def map_xml_to_orm(self, _):
+
+        # fmt: off
+        self.add_item("assessmentstart", self.xml.assessment_start)
+        self.add_item("assessmentend", self.xml.assessment_end)
+        self.add_code("assessmenttypecode", "assessmenttypecodestd", "assessmenttypedesc", self.xml.assessment_type)
+        self.add_code("assessmentoutcomecode", "assessmentoutcomecodestd", "assessmentoutcomedesc", self.xml.assessment_outcome)
+        # fmt: on
+
 
 class CauseOfDeath(Node):
     def __init__(self, xml: xsd_diagnosis.CauseOfDeath):
@@ -317,7 +335,7 @@ class Document(Node):
     def sqla_mapped() -> str:
         return "documents"
 
-    def map_xml_to_orm(self, orm_object):
+    def map_xml_to_orm(self, _):
         self.add_code(
             "cliniciancode", "cliniciancodestd", "cliniciandesc", self.xml.clinician
         )
@@ -357,9 +375,60 @@ class Survey(Node):
 
     def sqla_mapped() -> str:
         return "surveys"
+    
+    def generate_id(self, _ ) -> str:
+        return key_gen.generate_key_surveys(self.xml, self.pid)
+    
+    def add_children(self, child_node:Type[Node], xml_attr:str, session):
+        """Override of add children function due to slightly different key
+        pattern. Maybe be able to achieve the same result by overwriting the
+        pid with the surveyid.
+
+        Args:
+            child_node (Type[Node]): _description_
+            xml_attr (str): _description_
+            session (_type_): _description_
+        """
+        xml_items = getattr(self.xml, xml_attr)
+        if xml_items:
+            child_ids = []
+            for child_xml, seq_no in enumerate(xml_items):
+                # generate the id for the child and map it to the database
+                survey_id = self.orm_model.id
+                child_node_instance = child_node(xml=child_xml)
+                child_id = child_node_instance.map_to_database(session, survey_id, seq_no)
+                child_ids.append(child_id)
+
+                # map information in xml 
+                child_node_instance.map_xml_to_orm()
+                child_node_instance.orm_object.child_node.survey_id = survey_id
+                child_node_instance.orm_object.idx = seq_no
+                child_node_instance.updated_status()
+
+                # map child class to parent
+                self.mapped_classes.append(child_node_instance)
+            
+            self.add_deleted(child_node.sqla_mapped(), child_ids)
+
 
     def map_xml_to_orm(self, _):
-        pass
+        # fmt: off
+        self.add_children(Score, "scores.score")
+        self.add_children(Question, "questions.question")
+        self.add_children(Level, "levels.level")
+
+        self.add_item("surveytime", self.xml.survey_time)
+        self.add_code("surveytypecode", "surveytypecodestd", "surveytypedesc", self.xml.survey_type)
+        self.add_item("typeoftreatment", self.xml.type_of_treatment)
+        self.add_item("hdlocation", self.xml.hd_location)
+        self.add_item("template", self.xml.template)
+        self.add_code("enteredbycode", "enteredbycodestd", "enteredbydesc", self.xml.entered_by)
+        self.add_code("enteredatcode", "enteredatcodestd", "enteredatdesc", self.xml.entered_at)
+        self.add_item("updatedon", self.xml.updated_on)
+        self.add_item("actioncode", self.xml.action_code)
+        self.add_item("externalid", self.xml.external_id)
+        self.add_item("updated_date", self.xml.updated_date)
+        # fmt: on
 
 
 class Score(Node):
@@ -370,8 +439,11 @@ class Score(Node):
         return "scores"
 
     def map_xml_to_orm(self, _):
-        pass
-
+        # fmt: off
+        self.add_item("scorevalue", self.xml.score_value)
+        self.add_code("scoretypecode", "scoretypecodestd", "scoretypedesc", self.xml.score_type)
+        self.add_item("update_date", self.xml.update_date)
+        # fmt: on
 
 class Question(Node):
     def __init__(self, xml: xsd_surveys.Question):
@@ -381,4 +453,24 @@ class Question(Node):
         return "questions"
 
     def map_xml_to_orm(self, _):
-        pass
+        # fmt:on
+        self.add_item("surveyid", self.xml.survey_id)
+        self.add_code("questiontypecode", "questiontypecodestd", "questiontypedesc", self.xml.question_type)
+        self.add_item("response", self.xml.response)
+        self.add_item("quesiontext", self.xml.question_text)
+        self.add_item("update_date", self.xml.update_date)
+        # fmt:off
+
+class Level(Node):
+    def __init__(self, xml: xsd_surveys.Level):
+        super().__init__(xml, sqla.Level)
+
+    def sqla_mapped() -> str:
+        return "levels"
+
+    def map_xml_to_orm(self, _):
+        # fmt:off
+        self.add_item("levelvalue", self.xml.level_value)
+        self.add_code("leveltypecode", "leveltypecodestd", "leveltypedesc", self.xml.level_type)
+        self.add_item("update_date", self.xml.update_date)
+        # fmt:on

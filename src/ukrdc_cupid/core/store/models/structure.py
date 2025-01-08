@@ -121,7 +121,7 @@ class Node(ABC):
             if value is not None:
                 if isinstance(value, (XmlDateTime, XmlDate)):
                     # When the xml datetime parser does it's magic it will produce a time aware datetime
-                    # The persistant datetimes are naive by default.
+                    # The persistent datetimes are naive by default.
                     # To avoid issues when it comes to comparing them have to tell the datetime module that
                     # the persistant datetimes are assumed to be london.
                     if attr_persistant:

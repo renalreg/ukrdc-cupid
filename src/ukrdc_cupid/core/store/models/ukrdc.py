@@ -16,7 +16,8 @@ to orm.
 this could include a sort by date or something. 
 
 These would save a considerable amount of effort in the different places where
-we are doing this kind of thing. 
+we are doing this kind of thing. Saying that github copilot is pretty good at 
+churning out the more boilerplatey stuff.
 """
 
 from __future__ import annotations  # allows typehint of node class
@@ -148,6 +149,7 @@ class PatientRecord(Node):
         self.add_children(Allergy, "allergies.allergy", session)
         self.add_children(Medication, "medications.medication", session)
 
+        self.add_children()
         self.add_children(Diagnosis, "diagnoses.diagnosis", session)
         self.add_children(RenalDiagnosis, "diagnoses.renal_diagnosis", session)
         self.add_children(CauseOfDeath, "diagnoses.cause_of_death", session)

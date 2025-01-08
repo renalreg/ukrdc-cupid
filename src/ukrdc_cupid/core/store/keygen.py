@@ -9,6 +9,7 @@ from sqlalchemy import Sequence
 import ukrdc_xsdata.ukrdc.lab_orders as xsd_lab_orders  # type:ignore
 import ukrdc_xsdata.ukrdc.dialysis_sessions as xsd_dialysis_sessions  # type:ignore
 import ukrdc_xsdata.ukrdc.observations as xsd_observations
+import ukrdc_xsdata.ukrdc.surveys as xsd_surveys
 
 from typing import Optional
 
@@ -82,3 +83,9 @@ def generate_key_observations(
     time_uts = xml.observation_time.to_datetime().timestamp()
     code = xml.observation_code.code
     return f"{pid}{KEY_SEPERATOR}{time_uts}{KEY_SEPERATOR}{code}{KEY_SEPERATOR}{seq_no}"
+
+
+def generate_key_surveys(xml:xsd_surveys.Survey, pid:str):
+    time_uts = xml.survey_time.to_datetime().timestamp()
+    xml.survey_code.code = xml.survey_code.code
+    return f"{pid}{KEY_SEPERATOR}{time_uts}{KEY_SEPERATOR}{code}"
