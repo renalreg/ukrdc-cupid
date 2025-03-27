@@ -44,14 +44,12 @@ jobs:
       #    ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
 
       - name: Install and configure Poetry
-        #uses: snok/install-poetry@v1
-        run: pip install poetry
-
-      - name: Update lock
-        run: poetry lock
 
       - name: Install Dependencies
         run: 
+          sudo apt-get update
+          sudo apt-get install -y libxml2-dev libxslt-dev python3-dev
+          poetry lock        
           poetry install
 
       - name: Run Tox
