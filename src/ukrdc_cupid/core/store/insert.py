@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import text
 
 from ukrdc_cupid.core.parse.xml_validate import SUPPORTED_VERSIONS
-from ukrdc_cupid.core.parse.utils import load_xml_from_str, get_file_metadata
+from ukrdc_cupid.core.parse.utils import load_xml_from_str
 from ukrdc_cupid.core.store.models.ukrdc import PatientRecord
 from ukrdc_cupid.core.store.exceptions import (
     InsertionBlockedError,
