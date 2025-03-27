@@ -20,7 +20,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python: [ "3.8", "3.9", "3.10", "3.11", "3.12"]
+        python: ["3.10", "3.11", "3.12", "3.13"]
 
 
     steps:
@@ -44,7 +44,8 @@ jobs:
       #    ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
 
       - name: Install and configure Poetry
-        uses: snok/install-poetry@v1
+        #uses: snok/install-poetry@v1
+        run pip install poetry
 
       - name: Install Dependencies
         run: poetry install
