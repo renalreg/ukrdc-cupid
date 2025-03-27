@@ -289,6 +289,7 @@ class RenalDiagnosis(Node):
             print("Biopsy performed status not currently supported")
         # fmt: on
 
+
 class Assessment(Node):
     def __init__(self, xml: xsd_diagnosis.Assessment):
         super().__init__(xml, sqla.Assessment)
@@ -375,11 +376,11 @@ class Survey(Node):
 
     def sqla_mapped() -> str:
         return "surveys"
-    
-    def generate_id(self, _ ) -> str:
+
+    def generate_id(self, _) -> str:
         return key_gen.generate_key_surveys(self.xml, self.pid)
-    
-    def add_children(self, child_node:Type[Node], xml_attr:str, session):
+
+    def add_children(self, child_node: Type[Node], xml_attr: str, session):
         """Override of add children function due to slightly different key
         pattern. Maybe be able to achieve the same result by overwriting the
         pid with the surveyid.
@@ -396,10 +397,12 @@ class Survey(Node):
                 # generate the id for the child and map it to the database
                 survey_id = self.orm_model.id
                 child_node_instance = child_node(xml=child_xml)
-                child_id = child_node_instance.map_to_database(session, survey_id, seq_no)
+                child_id = child_node_instance.map_to_database(
+                    session, survey_id, seq_no
+                )
                 child_ids.append(child_id)
 
-                # map information in xml 
+                # map information in xml
                 child_node_instance.map_xml_to_orm()
                 child_node_instance.orm_object.child_node.survey_id = survey_id
                 child_node_instance.orm_object.idx = seq_no
@@ -407,9 +410,8 @@ class Survey(Node):
 
                 # map child class to parent
                 self.mapped_classes.append(child_node_instance)
-            
-            self.add_deleted(child_node.sqla_mapped(), child_ids)
 
+            self.add_deleted(child_node.sqla_mapped(), child_ids)
 
     def map_xml_to_orm(self, _):
         # fmt: off
@@ -445,6 +447,7 @@ class Score(Node):
         self.add_item("update_date", self.xml.update_date)
         # fmt: on
 
+
 class Question(Node):
     def __init__(self, xml: xsd_surveys.Question):
         super().__init__(xml, sqla.Question)
@@ -455,11 +458,17 @@ class Question(Node):
     def map_xml_to_orm(self, _):
         # fmt:on
         self.add_item("surveyid", self.xml.survey_id)
-        self.add_code("questiontypecode", "questiontypecodestd", "questiontypedesc", self.xml.question_type)
+        self.add_code(
+            "questiontypecode",
+            "questiontypecodestd",
+            "questiontypedesc",
+            self.xml.question_type,
+        )
         self.add_item("response", self.xml.response)
         self.add_item("quesiontext", self.xml.question_text)
         self.add_item("update_date", self.xml.update_date)
         # fmt:off
+
 
 class Level(Node):
     def __init__(self, xml: xsd_surveys.Level):

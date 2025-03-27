@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import text
 
 from ukrdc_cupid.core.parse.xml_validate import SUPPORTED_VERSIONS
-from ukrdc_cupid.core.parse.utils import load_xml_from_str, get_file_metadata
+from ukrdc_cupid.core.parse.utils import load_xml_from_str
 from ukrdc_cupid.core.store.models.ukrdc import PatientRecord
 from ukrdc_cupid.core.store.exceptions import (
     InsertionBlockedError,
@@ -182,16 +182,16 @@ def insert_incoming_data(
 
     if debug:
         return new, dirty, unchanged
-    
+
     return None
 
 
 def process_file(
-    xml_body: str, 
-    ukrdc_session: Session, 
-    mode: str = "full", 
-    validate: bool = False, 
-    check_current_schema: bool = False
+    xml_body: str,
+    ukrdc_session: Session,
+    mode: str = "full",
+    validate: bool = False,
+    check_current_schema: bool = False,
 ) -> str:
     """Takes an xml file as a string and
     applies the cupid matching algorithm to attempt uploading it to the
@@ -206,7 +206,9 @@ def process_file(
     # Load XML and check it
     t0 = time.time()
 
-    xml_object = load_xml_from_str(xml_body, validate=validate, check_current_schema=check_current_schema)
+    xml_object = load_xml_from_str(
+        xml_body, validate=validate, check_current_schema=check_current_schema
+    )
 
     # identify patient
     patient_info = read_patient_metadata(xml_object)

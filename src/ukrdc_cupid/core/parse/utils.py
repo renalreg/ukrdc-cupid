@@ -5,7 +5,10 @@ from typing import Dict
 from lxml import etree  # nosec B410
 from xsdata.formats.dataclass.parsers import XmlParser
 from ukrdc_xsdata.ukrdc import PatientRecord  # type:ignore
-from ukrdc_cupid.core.parse.xml_validate import validate_rda_xml_string, SUPPORTED_VERSIONS
+from ukrdc_cupid.core.parse.xml_validate import (
+    validate_rda_xml_string,
+    SUPPORTED_VERSIONS,
+)
 from ukrdc_cupid.core.parse.exceptions import SchemaInvalidError
 from ukrdc_cupid.core.store.exceptions import SchemaVersionError
 from xsdata.formats.dataclass.serializers import XmlSerializer
@@ -15,7 +18,8 @@ CURRENT_SCHEMA = max(SUPPORTED_VERSIONS)
 
 serializer = XmlSerializer()
 
-def get_file_metadata(xml_str: str)->Dict[str, str]:
+
+def get_file_metadata(xml_str: str) -> Dict[str, str]:
     """Get file meta data without assuming it conforms to xsdata schema
 
     Args:
@@ -40,7 +44,10 @@ def get_file_metadata(xml_str: str)->Dict[str, str]:
 
     return metadata
 
-def load_xml_from_str(xml_str: str, check_current_schema: bool = False, validate: bool = False) -> PatientRecord:
+
+def load_xml_from_str(
+    xml_str: str, check_current_schema: bool = False, validate: bool = False
+) -> PatientRecord:
     """Utility function to load xml from a string. It applies some checks to
     ensure loading the xml into the xsdata model is possible. However both
     default to False because in a production environment mirth should have
@@ -58,7 +65,6 @@ def load_xml_from_str(xml_str: str, check_current_schema: bool = False, validate
     Returns:
         PatientRecord: xsdata model of the xml
     """
-    
 
     if check_current_schema:
         # Check schema version matches the current xsdata version
@@ -71,23 +77,29 @@ def load_xml_from_str(xml_str: str, check_current_schema: bool = False, validate
         # Check string is valid against xsdata schema
         errors = validate_rda_xml_string(xml_str)
         if not errors:
-            print(f"file successfully validated")
+            print("file successfully validated")
         else:
             error_table = "\n".join(
                 f"Line {line}: {error}" for line, error in errors.items()
             )
-            raise SchemaInvalidError(f"File failed validation with errors:\n{error_table}")
+            raise SchemaInvalidError(
+                f"File failed validation with errors:\n{error_table}"
+            )
 
     return XmlParser().from_string(xml_str, PatientRecord)
 
 
-def load_xml_from_path(filepath: str, validate: bool = True, check_current_schema: bool = True) -> PatientRecord:
+def load_xml_from_path(
+    filepath: str, validate: bool = True, check_current_schema: bool = True
+) -> PatientRecord:
     with open(filepath, "r", encoding="utf-8") as file:
         data = file.read()
 
     try:
-        return load_xml_from_str(data, validate=validate, check_current_schema=check_current_schema)
-    
+        return load_xml_from_str(
+            data, validate=validate, check_current_schema=check_current_schema
+        )
+
     except Exception as e:
         raise Exception(f"Failed to load XML from path {filepath}") from e
 

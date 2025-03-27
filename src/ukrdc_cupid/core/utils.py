@@ -17,7 +17,7 @@ from ukrdc_cupid.core.store.models.lookup_tables import GPInfoType
 # Load environment varibles from wither they are found
 
 ENV = {
-    **os.environ, # The docker stack loads directly into env
+    **os.environ,  # The docker stack loads directly into env
     **dotenv_values(".env"),
     **dotenv_values(".env.test"),
     **dotenv_values(".env.docker"),
