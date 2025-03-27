@@ -1,6 +1,8 @@
 from fastapi import Depends, FastAPI, Request, HTTPException, Response
 from ukrdc_cupid.core.parse.xml_validate import validate_rda_xml_string
+
 from ukrdc_cupid.core.utils import UKRDCConnection
+
 from ukrdc_cupid.core.store.insert import process_file
 
 # from ukrdc_cupid.core.store.exceptions import
@@ -11,7 +13,10 @@ from ukrdc_cupid.core.store.exceptions import (
     SchemaVersionError,
     InsertionBlockedError,
 )
-from ukrdc_cupid.core.audit.domain import generate_domain_match_workitems, generate_domain_data_audit
+from ukrdc_cupid.core.audit.domain import (
+    generate_domain_match_workitems,
+    generate_domain_data_audit,
+)
 
 
 app = FastAPI()
@@ -195,9 +200,8 @@ async def delete_patient(
 @app.post("/audit/run")
 async def run_audit_functions(ukrdc_session: Session = Depends(get_session)):
     """Api route to trigger functions which audit records in the database
-    against each other. 
+    against each other.
     """
     generate_domain_match_workitems(ukrdc_session)
 
     generate_domain_data_audit(ukrdc_session)
-

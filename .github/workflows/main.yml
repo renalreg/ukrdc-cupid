@@ -20,7 +20,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python: [ "3.8", "3.9", "3.10", "3.11", "3.12"]
+        python: ["3.10", "3.11", "3.12", "3.13"]
 
 
     steps:
@@ -38,16 +38,13 @@ jobs:
         with:
           python-version: ${{ matrix.python }}
 
-      #- name: Set up SSH keys
-      #  uses: webfactory/ssh-agent@v0.7.0
-      #  with:
-      #    ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
-
-      - name: Install and configure Poetry
-        uses: snok/install-poetry@v1
-
-      - name: Install Dependencies
-        run: poetry install
+      - name: install
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libxml2-dev libxslt-dev python3-dev
+          pip install poetry
+          poetry install --with dev
 
       - name: Run Tox
-        run: poetry run tox
+        run:
+          poetry run tox

@@ -85,7 +85,7 @@ def generate_key_observations(
     return f"{pid}{KEY_SEPERATOR}{time_uts}{KEY_SEPERATOR}{code}{KEY_SEPERATOR}{seq_no}"
 
 
-def generate_key_surveys(xml:xsd_surveys.Survey, pid:str):
+def generate_key_surveys(xml: xsd_surveys.Survey, pid: str):
     time_uts = xml.survey_time.to_datetime().timestamp()
-    xml.survey_code.code = xml.survey_code.code
+    code = xml.survey_code.code
     return f"{pid}{KEY_SEPERATOR}{time_uts}{KEY_SEPERATOR}{code}"
