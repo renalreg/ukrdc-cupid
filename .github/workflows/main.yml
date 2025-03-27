@@ -48,8 +48,7 @@ jobs:
       - name: Install Dependencies
         run: 
           sudo apt-get update
-          sudo apt-get install -y libxml2-dev libxslt-dev python3-dev
-          poetry lock        
+          sudo apt-get install -y libxml2-dev libxslt-dev python3-dev        
           poetry install
 
       - name: Run Tox
