@@ -47,8 +47,12 @@ jobs:
         #uses: snok/install-poetry@v1
         run: pip install poetry
 
+      - name: Update lock
+        run: poetry lock
+
       - name: Install Dependencies
-        run: poetry install
+        run: 
+          poetry install
 
       - name: Run Tox
         run: poetry run tox
