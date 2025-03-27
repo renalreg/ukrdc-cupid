@@ -139,7 +139,7 @@ def load_schema(schema_version: str) -> Tuple[etree.XMLSchema, str]:
 
 
 def validate_rda_xml_string(
-    rda_xml: str, schema_version: str = "4.0.0"
+    rda_xml: str, schema_version: str = max(SUPPORTED_VERSIONS)
 ) -> Union[dict, None]:
     """
     Validate an RDA XML file against the UKRDC schema. It should be noted that the code assumes the enviroment variables are set up such that the minor release can be thrown away. TODO: maybe this is something to be made more explicit or changed in the future.
@@ -152,10 +152,11 @@ def validate_rda_xml_string(
         dict or None: If validation fails, returns a dictionary of errors (None if validation passes).
     """
 
-    xml_schema, _ = load_schema(schema_version)
-
     # Load the XML file
     xml_doc = etree.XML(rda_xml.encode())
+
+    # Load the schema
+    xml_schema, _ = load_schema(schema_version)
 
     # Initially catch errors to allow more specific processing of errors
     try:

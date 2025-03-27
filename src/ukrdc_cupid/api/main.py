@@ -1,6 +1,7 @@
 from fastapi import Depends, FastAPI, Request, HTTPException, Response
 from ukrdc_cupid.core.parse.xml_validate import validate_rda_xml_string
-from ukrdc_cupid.core.utils import UKRDCConnection
+#from ukrdc_cupid.core.utils import UKRDCConnection
+
 from ukrdc_cupid.core.store.insert import process_file
 
 # from ukrdc_cupid.core.store.exceptions import
@@ -200,4 +201,3 @@ async def run_audit_functions(ukrdc_session: Session = Depends(get_session)):
     generate_domain_match_workitems(ukrdc_session)
 
     generate_domain_data_audit(ukrdc_session)
-

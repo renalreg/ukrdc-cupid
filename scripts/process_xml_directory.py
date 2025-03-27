@@ -6,39 +6,49 @@ import glob
 import os
 import shutil
 from time import time
-
-from ukrdc_cupid.core.utils import UKRDCConnection
 from ukrdc_cupid.core.store.insert import process_file
+from ukrdc_cupid.core.parse.utils import load_xml_from_path
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
 
 
 # Configure 
-SOURCE_FOLDER = ".xml_decrypted/*.xml"
-PROCESSED_FOLDER = ".xml_to_load/loaded/"
-DB_URL = "postgresql+psycopg://postgres:postgres@localhost:8008/ukrdc_test_docker"
+SOURCE_FOLDER = ".xml_to_load/*.xml"
+PROCESSED_FOLDER = ".xml_to_load/"
+DB_URL = "postgresql+psycopg://postgres:postgres@localhost:8000/ukrdc4"
+HANDLE_ERRORS = False
 
 files =  glob.glob(SOURCE_FOLDER)
-connector = UKRDCConnection(url = DB_URL)
-sessionmaker = connector.create_sessionmaker()
-total_thinking_time = time() - time()
-with sessionmaker() as session:
-    for file_url in files[:100]:
-        print(file_url)
-        with open(file_url, encoding='utf-8') as f:
-            xml_file = f.read()
 
-        #process_file(xml_body=xml_file, ukrdc_session=session)
+total_thinking_time = time() - time()
+engine = create_engine(DB_URL)
+sessionmaker = sessionmaker(bind=engine)
+with sessionmaker() as session:
+    for file_url in files:
+        with open(file_url, "r", encoding="utf-8") as file:
+            xml_file = file.read()
+
+        # Process the file
+        t0 = time()
+        #if HANDLE_ERRORS:
         try:
-            # Process the file
-            t0 = time()
-            process_file(xml_body=xml_file, ukrdc_session=session)
-            time_diff = time() - t0
-            print(time_diff)
-            total_thinking_time += time_diff
-            # If successful, move the file to the processed folder
-            new_location = os.path.join(PROCESSED_FOLDER, os.path.basename(file_url))
-            shutil.move(file_url, new_location)
-            print(f"Successfully processed and moved: {file_url} -> {new_location}")
+            process_file(xml_body=xml_file, ukrdc_session=session, validate=True, check_current_schema=True)
         except Exception as e:
             # Log or print the exception if processing fails
-            print(f"Failed to process {file_url}: {e}")
+            msg = f"Failed to process {file_url}"
+            if HANDLE_ERRORS:
+                print(msg)
+            else:
+                raise Exception(msg) from e
+            
+        
+        time_diff = time() - t0
+        print(time_diff)
+        total_thinking_time += time_diff
+        # If successful, move the file to the processed folder
+        new_location = os.path.join(PROCESSED_FOLDER, os.path.basename(file_url))
+        shutil.move(file_url, new_location)
+        print(f"Successfully processed and moved: {file_url} -> {new_location}")
+
+
     print(total_thinking_time/100)

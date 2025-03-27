@@ -4,10 +4,9 @@ from sqlalchemy.orm import Session
 from sqlalchemy import text
 
 from ukrdc_cupid.core.parse.xml_validate import SUPPORTED_VERSIONS
-from ukrdc_cupid.core.parse.utils import load_xml_from_str
+from ukrdc_cupid.core.parse.utils import load_xml_from_str, get_file_metadata
 from ukrdc_cupid.core.store.models.ukrdc import PatientRecord
 from ukrdc_cupid.core.store.exceptions import (
-    SchemaVersionError,
     InsertionBlockedError,
     DataInsertionError,
 )
@@ -187,23 +186,27 @@ def insert_incoming_data(
     return None
 
 
-def process_file(xml_body: str, ukrdc_session: Session, mode: str = "full"):
+def process_file(
+    xml_body: str, 
+    ukrdc_session: Session, 
+    mode: str = "full", 
+    validate: bool = False, 
+    check_current_schema: bool = False
+) -> str:
     """Takes an xml file as a string and
     applies the cupid matching algorithm to attempt uploading it to the
     database
 
     Args:
-        xml_object (PatientRecord): _description_
-        ukrdc_session (Session): _description_
+        xml_body (str): xml file as a string
+        ukrdc_session (Session): ukrdc4 database session
     """
 
     # async def load_xml(mode: str, xml_body: str = Depends(_get_xml_body)):
     # Load XML and check it
     t0 = time.time()
-    xml_object, xml_version = load_xml_from_str(xml_body)
-    if xml_version < CURRENT_SCHEMA:
-        msg = f"XML request on version {xml_version} but cupid requires version {CURRENT_SCHEMA}"
-        raise SchemaVersionError(msg)
+
+    xml_object = load_xml_from_str(xml_body, validate=validate, check_current_schema=check_current_schema)
 
     # identify patient
     patient_info = read_patient_metadata(xml_object)
