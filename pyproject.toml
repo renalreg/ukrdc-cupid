@@ -9,9 +9,8 @@ readme = "README.md"
 version = "0.2.0"
 
 [tool.poetry.dependencies]
-python = "^3.8"
+python = "^3.10"
 ukrdc-sqla = {git ="http://git@github.com/renalreg/ukrdc-sqla.git", branch = "v5"}
-lxml = "^4.9.2"
 gitpython = "^3.1.41"
 pydantic = "^2.1.1"
 pydantic-settings = "^2.0.2"
@@ -26,6 +25,7 @@ fabric = "^3.2.2"
 gnupg = "^2.3.1"
 psycopg = "^3.2.2"
 nhs-number = "^1.3.4"
+lxml = "^5.3.1"
 
 [tool.poetry.group.dev.dependencies]
 black = {version = "^22.10.0", allow-prereleases = true}
@@ -33,14 +33,6 @@ ruff = "^0.0.263"
 tox = "^4.5.1"
 bandit = "^1.7.5"
 pytest = "<7.4.3"
-
-[tool.poetry.group.database-migration]
-# Dependency group for running the demo notebooks
-# Not installed by default. Use `poetry install --with demo`
-optional = true
-
-[tool.poetry.group.database-migration.dependencies]
-alembic = "^1.14.0"
 
 
 [build-system]
