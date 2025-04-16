@@ -123,7 +123,7 @@ class Investigation:
         # file.
         if xml is not None:
             if isinstance(xml, str):
-                xml_obj, _ = load_xml_from_str(xml)
+                xml_obj = load_xml_from_str(xml)
             else:
                 xml_obj = xml
                 xml = serializer.render(xml_obj)
