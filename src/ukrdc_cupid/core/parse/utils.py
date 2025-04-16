@@ -22,9 +22,6 @@ serializer = XmlSerializer()
 def get_file_metadata(xml_str: str) -> Dict[str, str]:
     """Get file meta data without assuming it conforms to xsdata schema
 
-def get_file_metadata(xml_str: str) -> Dict[str, str]:
-    """Get file meta data without assuming it conforms to xsdata schema
-
     Args:
         xml_str (str): XML file as a string.
 
