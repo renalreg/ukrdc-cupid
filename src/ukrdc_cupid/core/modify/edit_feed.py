@@ -86,7 +86,7 @@ def force_quarantined(
 
     xml_file_id = issue_to_merge.xml_file_id
     file_orm = session.get(XmlFile, xml_file_id)
-    xml_file, _ = load_xml_from_str(file_orm.file)
+    xml_file = load_xml_from_str(file_orm.file)
 
     # write to record with the specific pid
     # does exception need to be handled here?
