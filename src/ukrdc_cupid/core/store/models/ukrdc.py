@@ -149,7 +149,7 @@ class PatientRecord(Node):
         self.add_children(Allergy, "allergies.allergy", session)
         self.add_children(Medication, "medications.medication", session)
 
-        self.add_children()
+        #self.add_children()
         self.add_children(Diagnosis, "diagnoses.diagnosis", session)
         self.add_children(RenalDiagnosis, "diagnoses.renal_diagnosis", session)
         self.add_children(CauseOfDeath, "diagnoses.cause_of_death", session)
