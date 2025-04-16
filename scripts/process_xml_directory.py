@@ -7,7 +7,6 @@ import os
 import shutil
 from time import time
 from ukrdc_cupid.core.store.insert import process_file
-from ukrdc_cupid.core.parse.utils import load_xml_from_path
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
@@ -16,7 +15,7 @@ from sqlalchemy.orm import sessionmaker
 SOURCE_FOLDER = ".xml_to_load/*.xml"
 PROCESSED_FOLDER = ".xml_to_load/"
 DB_URL = "postgresql+psycopg://postgres:postgres@localhost:8000/ukrdc4"
-HANDLE_ERRORS = False
+HANDLE_ERRORS = True
 
 files =  glob.glob(SOURCE_FOLDER)
 
@@ -41,7 +40,6 @@ with sessionmaker() as session:
             else:
                 raise Exception(msg) from e
             
-        
         time_diff = time() - t0
         print(time_diff)
         total_thinking_time += time_diff

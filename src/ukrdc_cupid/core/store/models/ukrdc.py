@@ -180,6 +180,7 @@ class PatientRecord(Node):
 
         # load or create the orm
         file_hash = hash_xml(self.xml)
+
         if is_new:
             self.orm_object = self.orm_model(
                 pid=self.pid, ukrdcid=ukrdcid
@@ -193,7 +194,7 @@ class PatientRecord(Node):
             if self.orm_object.channelid == file_hash:
                 return
 
-            self.orm_object == file_hash
+            self.orm_object.channelid = file_hash
 
         self.map_xml_to_orm(session)
         self.updated_status()
