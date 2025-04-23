@@ -209,7 +209,6 @@ class PatientRecord(Node):
 
         return True
 
-
     def add_deleted(self, sqla_mapped: str, mapped_ids: List[str]) -> None:
         # we only delete within a time window for observations and lab orders
         # don't like this solution very much. Think may sqla needs to become

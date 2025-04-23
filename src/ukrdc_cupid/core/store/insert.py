@@ -126,8 +126,10 @@ def insert_incoming_data(
     )
 
     if not is_update:
-        print("Incoming file is identical to last uploaded file. No action has been taken.")
-        return 
+        print(
+            "Incoming file is identical to last uploaded file. No action has been taken."
+        )
+        return
 
     # extract a list of records from cupid models
     if debug:
@@ -224,7 +226,6 @@ def process_file(
         ukrdc_session=ukrdc_session,
         patient_info=patient_info,
     )
-
 
     # if an investigation has been raised in identifying the patient we do not insert
     # (we could introduce a force mode to make it try regardless)

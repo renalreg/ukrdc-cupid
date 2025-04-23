@@ -1,6 +1,5 @@
 import hashlib
 import copy
-from time import time
 
 from typing import Dict
 from lxml import etree  # nosec B410
