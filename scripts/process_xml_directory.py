@@ -14,10 +14,10 @@ from sqlalchemy.orm import sessionmaker
 # Configure 
 #SOURCE_FOLDER = ".xml_to_load/*.xml"
 #PROCESSED_FOLDER = ".xml_to_load/"
-SOURCE_FOLDER = "tests/xml_files/store_tests/*.xml"
-PROCESSED_FOLDER ="tests/xml_files/store_tests/"
+SOURCE_FOLDER = ".xml_decrypted/test_170425/*.xml"
+PROCESSED_FOLDER =".xml_decrypted/test_170425"
 DB_URL = "postgresql+psycopg://postgres:postgres@localhost:8000/ukrdc4"
-HANDLE_ERRORS = True
+HANDLE_ERRORS = False
 
 files =  glob.glob(SOURCE_FOLDER)
 
@@ -33,7 +33,13 @@ with sessionmaker() as session:
         t0 = time()
         #if HANDLE_ERRORS:
         try:
-            process_file(xml_body=xml_file, ukrdc_session=session, validate=True, check_current_schema=True)
+            process_file(
+                xml_body=xml_file, 
+                ukrdc_session=session, 
+                validate=False, 
+                mode = "full",
+                check_current_schema=False
+            )
         except Exception as e:
             # Log or print the exception if processing fails
             msg = f"Failed to process {file_url}"
@@ -41,6 +47,7 @@ with sessionmaker() as session:
                 print(msg)
             else:
                 raise Exception(msg) from e
+            session.rollback()
             
         time_diff = time() - t0
         print(time_diff)

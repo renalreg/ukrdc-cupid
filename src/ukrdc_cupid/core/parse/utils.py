@@ -1,5 +1,6 @@
 import hashlib
 import copy
+from time import time
 
 from typing import Dict
 from lxml import etree  # nosec B410
@@ -106,7 +107,9 @@ def load_xml_from_path(
 
 def hash_xml(xml: PatientRecord) -> str:
     """
-    Take file strip dates etc and produce a hashed version of it
+    Take file strip dates etc and produce a hashed version of it. This is
+    pretty quick overall but if you wanted to do something more complicated
+    like starting to strip out more data it might get slow.
     """
     xml_copy = copy.deepcopy(xml)
     del xml_copy.sending_extract

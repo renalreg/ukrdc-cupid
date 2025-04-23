@@ -115,7 +115,7 @@ class Node(ABC):
         """
 
         attr_value: Union[str, int, bool, Decimal, datetime, None]
-        attr_persistant = getattr(self.orm_object, sqla_property)
+        attr_persist = getattr(self.orm_object, sqla_property)
         # parse value from xml into a python variable
         if (optional and value is not None) or (not optional):
             if value is not None:
@@ -124,10 +124,10 @@ class Node(ABC):
                     # The persistent datetimes are naive by default.
                     # To avoid issues when it comes to comparing them have to tell the datetime module that
                     # the persistant datetimes are assumed to be london.
-                    if attr_persistant:
-                        if isinstance(attr_persistant, datetime):
+                    if attr_persist:
+                        if isinstance(attr_persist, datetime):
                             local_tz = timezone("Europe/London")
-                            attr_persistant = local_tz.localize(attr_persistant)
+                            attr_persist = local_tz.localize(attr_persist)
 
                     attr_value = value.to_datetime()
 
@@ -141,7 +141,7 @@ class Node(ABC):
             attr_value = None
 
         # get persistant attribute and compare to incoming
-        if attr_value != attr_persistant:
+        if attr_value != attr_persist:
             setattr(self.orm_object, sqla_property, attr_value)
             self.is_modified = True
 
@@ -151,8 +151,10 @@ class Node(ABC):
         """Still not completely happy with this algorithm since it requires the
         objects to be added and deleted explicitly rather than just being
         appended although maybe this gives more control to fine tune the
-        process. In principle we shouldn't need the recursive functions at all.
-        refer to laborder for a simplified version of most of these functions.
+        process. The complexity here is allows the process which is general,
+        for and example of how it would work without the generalisation look
+        at the laborder, and result items where these methods have been
+        overwritten.
 
         Args:
             child_node (Type[Node]): _description_
@@ -167,6 +169,14 @@ class Node(ABC):
         # Step into the xml_file and extract the xml containing incoming data
         xml_items = self.xml
         for attr in xml_attr.split("."):
+            # This pattern is used where the xml looks something like
+            # <Procedures>
+            #    <Treatment>
+            #    </Treatment>
+            # </Procedures>
+            # with the ultimate goal of just creating a list of bits of xml
+            # whose attributes correspond specifically to attributes of a
+            # ukrdc_sqla model
             if isinstance(xml_items, list):
                 # this is necessary because of the weirdness of xsdata
                 if xml_items:
@@ -186,7 +196,7 @@ class Node(ABC):
                 # there is a possibility here to sort the items before enumerating them
                 node_object = child_node(xml=xml_item)  # type:ignore
 
-                # Generate parent data which is required by child
+                # Generate parent data also required for setting primary keys
                 parent_data = self.generate_parent_data(seq_no)
 
                 # map to existing object or create new
@@ -265,7 +275,8 @@ class Node(ABC):
         return orm_objects
 
     def get_orm_deleted(self) -> list:
-        # function to walk through the patient record structure an retrieve records staged for deletion
+        # function to walk through the patient record structure an retrieve
+        # records staged for deletion
         if self.mapped_classes:
             orm_objects = self.deleted_orm
             for child_class in self.mapped_classes:
@@ -276,23 +287,27 @@ class Node(ABC):
 
     def updated_status(self) -> None:
         # function to update things like dates if object is changed
-        # Personally I think this should all be moved to db triggers
-        # Currently it will be null for new records
         # these type of changes should be made carefully to avoid churn
+        # should potentially be set in the db in the future
         assert self.orm_object is not None  # nosec
         if self.is_modified is True:
             self.orm_object.update_date = datetime.now()
 
     def generate_parent_data(self, seq_no: int) -> dict:
         # This function allows attributes to be passed from parent to child
+        # Overwrite with whatever is needed to generate the id or whatever
+        # of the child record.
         return {"pid": self.pid, "idx": seq_no}
 
+    # In most cases the model for any give xml item can be added by simply
+    # overwriting the following two methods
     @classmethod
     @abstractmethod
     def sqla_mapped() -> str:
-        # if the parent class has a list like relationship to the Node this should be the name of that relationship
-        # otherwise it should be None. In the case of a one to many relationship between parent and child this
-        # is used to delete any associated objects which don't appear in the file.
+        # Set to the name of the relationship to the child in the parent sqla
+        # model. It is used to delete any records which are not found in the
+        # incoming file. If there is always a single child  per parent set to
+        # None.
         pass
 
     @abstractmethod

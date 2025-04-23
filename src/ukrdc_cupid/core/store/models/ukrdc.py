@@ -16,8 +16,7 @@ to orm.
 this could include a sort by date or something. 
 
 These would save a considerable amount of effort in the different places where
-we are doing this kind of thing. Saying that github copilot is pretty good at 
-churning out the more boilerplatey stuff.
+we are doing this kind of thing.
 """
 
 from __future__ import annotations  # allows typehint of node class
@@ -173,7 +172,16 @@ class PatientRecord(Node):
 
     def map_to_database(
         self, pid: str, ukrdcid: str, session: Session, is_new=True
-    ) -> None:
+    ) -> bool:
+        """
+        Normally this function would map the xml to an orm object and return
+        id of that object. In this case we know the id which is the pid and
+        the record is only mapped to the orm if the hash of the incoming file
+        doesn't match the last loaded file.
+
+        Instead of id we return true false. With false indicating that the
+        incoming file is the same as the last stored file.
+        """
         self.pid = pid
         self.session = session
         self.is_new_record = is_new
@@ -192,12 +200,15 @@ class PatientRecord(Node):
             # TODO: this needs to be renamed to something more helpful when the
             # database gets updated.
             if self.orm_object.channelid == file_hash:
-                return
+                return False
 
             self.orm_object.channelid = file_hash
 
         self.map_xml_to_orm(session)
         self.updated_status()
+
+        return True
+
 
     def add_deleted(self, sqla_mapped: str, mapped_ids: List[str]) -> None:
         # we only delete within a time window for observations and lab orders
