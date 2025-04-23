@@ -118,12 +118,16 @@ def insert_incoming_data(
         patient_record = PatientRecord(xml=incoming_xml_file)
 
     # map xml to rows in the database using the orm
-    patient_record.map_to_database(
+    is_update = patient_record.map_to_database(
         session=ukrdc_session,
         ukrdcid=ukrdcid,
         pid=pid,
         is_new=is_new,
     )
+
+    if not is_update:
+        print("Incoming file is identical to last uploaded file. No action has been taken.")
+        return 
 
     # extract a list of records from cupid models
     if debug:
@@ -136,6 +140,7 @@ def insert_incoming_data(
         unchanged = patient_record.get_orm_list(
             is_dirty=False, is_new=True, is_unchanged=True
         )
+        print(f"New : {len(new)}, Dirty : {len(dirty)}, Unchanged : {len(unchanged)}")
     else:
         new = patient_record.get_orm_list(
             is_dirty=False, is_new=True, is_unchanged=False
@@ -162,6 +167,8 @@ def insert_incoming_data(
         print(f"New records: {len(ukrdc_session.new)}")
 
         print(f"Updated records: {len(ukrdc_session.dirty)}")
+
+        print(f"Deleted records: {len(ukrdc_session.deleted)}")
     else:
         if not is_new:
             # if the patient is in the database raise a workitem
@@ -174,7 +181,7 @@ def insert_incoming_data(
             investigation.append_extras(xml=incoming_xml_file)
 
         else:
-            # otherwise we raise an error this will usually be some sort of sql
+            # Otherwise we raise an error this will usually be some sort of sql
             # statement. In theory I think the patient should still have their
             # demographics information inserted this allows it to be handled as
             # an investigation rather than an error.
@@ -210,12 +217,14 @@ def process_file(
         xml_body, validate=validate, check_current_schema=check_current_schema
     )
 
+    print(f"Time to load file {time.time()-t0}")
     # identify patient
     patient_info = read_patient_metadata(xml_object)
     pid, ukrdcid, investigation = identify_patient_feed(
         ukrdc_session=ukrdc_session,
         patient_info=patient_info,
     )
+
 
     # if an investigation has been raised in identifying the patient we do not insert
     # (we could introduce a force mode to make it try regardless)
@@ -245,6 +254,8 @@ def process_file(
         if not is_new:
             ukrdc_session.delete(PatientRecord(pid=pid))
             ukrdc_session.flush()
+
+    print(f"Time to load validate and match {time.time()-t0}")
 
     # insert into the database
     insert_incoming_data(
