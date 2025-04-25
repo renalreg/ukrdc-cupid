@@ -1,5 +1,4 @@
 import os
-from typing import override
 from dotenv import dotenv_values
 from urllib.parse import urlparse
 
@@ -123,10 +122,10 @@ class UKRDCConnection(DatabaseConnection):
         self.pool_size = ENV.get("UKRDC_POOL_SIZE", 10)
         super().__init__("UKRDC", url)
 
-    @override
     def get_engine(self) -> Engine:
-        # We don't want an unlimited number of connections to the databse at
-        # any one time
+        # We want to limit the number of connections to the database at any one
+        # time. In theory mirth shouldn't spin up lots of connections but we
+        # want to be sure.
         return create_engine(
             url=self.url,
             poolclass=QueuePool,
