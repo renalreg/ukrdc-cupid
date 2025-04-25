@@ -92,7 +92,7 @@ def commit_changes(ukrdc_session: Session):
         return errormsg
 
 
-# @advisory_lock
+@advisory_lock
 def insert_incoming_data(
     ukrdc_session: Session,
     pid: str,

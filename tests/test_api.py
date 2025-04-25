@@ -82,12 +82,10 @@ def test_force_upload_file(client, ukrdc_test_session):
     # test_basic functionality of force merging
     
     # create fictitious patient
-    pid_test = "test_pid"
-    ukrdcid = "test_id"
+    pid_test = "1111111"
+    ukrdcid = "\(00)/"
     nhs_num = "2222222222"
     birthtime = dt.datetime(1912,4,14,23,40)
-
-
 
     creation_date = dt.datetime.today()
     ukrdc_test_session.add(

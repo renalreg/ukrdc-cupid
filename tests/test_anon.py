@@ -28,7 +28,7 @@ from ukrdc_cupid.core.match.identify import (
 )
 
 
-TEST_PID = "test_pid:15"
+TEST_PID = "1111111"
 TEST_UKRDCID = "\(00)/"
 UKRR_UID = "2718281818"
 

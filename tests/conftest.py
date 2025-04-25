@@ -1,10 +1,10 @@
 import uuid
 import pytest
+import sqlalchemy
 
 from ukrdc_cupid.core.utils import (
-    UKRDCConnection,
-    create_id_generation_sequences,
-    populate_ukrdc_tables,
+    generate_database,
+    UKRDCConnection
 )
 from ukrdc_cupid.api import app
 from ukrdc_cupid.api.main import get_session
@@ -15,28 +15,26 @@ from sqlalchemy_utils import (
 )  # type:ignore
 
 from fastapi.testclient import TestClient
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, sessionmaker
+from sqlalchemy import create_engine
 
 
 def ukrdc_sessionmaker(url: str, gp_info: bool = False):
-    """_summary_
+    """
+    This fixture creates a new ukrdc database with unique name. It then
+    populates with existing schema, updates with new features that cupid will
+    require, and populates some but not all of the lookup tables.
 
-    Args:
-        url (str): _description_
+    The aim of this is that databases can be created cheaply. This doesn't drop
+    them after it's done.
 
     Yields:
-        _type_: _description_
+        Session: session on new ukrdc
     """
-    connector = UKRDCConnection(url=url)
-    connector.generate_schema()
-    sessionmaker = connector.create_sessionmaker()
-    with sessionmaker() as session:
-        create_id_generation_sequences(session)
-        populate_ukrdc_tables(session, gp_info=gp_info)
-        session.commit()
 
+    generate_database(url=url, gp_info=gp_info)
+    return UKRDCConnection(url=url).create_sessionmaker()
 
-    return sessionmaker
 
 
 def generate_ukrdc_test_session(gp_info: bool = False, teardown: bool = True):

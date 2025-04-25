@@ -7,6 +7,7 @@ import os
 import shutil
 from time import time
 from ukrdc_cupid.core.store.insert import process_file
+from ukrdc_cupid.core.utils import UKRDCConnection
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
@@ -23,8 +24,10 @@ HANDLE_ERRORS = True
 files =  glob.glob(SOURCE_FOLDER)
 
 total_thinking_time = time() - time()
-engine = create_engine(DB_URL)
-sessionmaker = sessionmaker(bind=engine)
+#engine = create_engine(DB_URL)
+#sessionmaker = sessionmaker(bind=engine)
+sessionmaker = UKRDCConnection(url=DB_URL).create_sessionmaker()
+
 with sessionmaker() as session:
     for file_url in files:
         with open(file_url, "r", encoding="utf-8") as file:
@@ -32,7 +35,6 @@ with sessionmaker() as session:
 
         # Process the file
         t0 = time()
-        #if HANDLE_ERRORS:
         try:
             process_file(
                 xml_body=xml_file, 
