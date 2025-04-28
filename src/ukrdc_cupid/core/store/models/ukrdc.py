@@ -23,7 +23,7 @@ from __future__ import annotations  # allows typehint of node class
 
 from typing import Union
 from ukrdc_cupid.core.store.models.utils import cull_singlet_lists
-from ukrdc_cupid.core.store.models.structure import Node
+from ukrdc_cupid.core.store.models.structure import Node, RecordStatus
 from ukrdc_cupid.core.store.models.patient import (
     Patient,
     SocialHistory,
@@ -118,14 +118,28 @@ class PatientRecord(Node):
 
     def updated_status(self) -> None:
         super().updated_status()
-        if self.is_new_record:
+
+        # Repository created is fairly straight forward however repository
+        # updated could be specified in a few different ways:
+        # 
+        # Options:
+        # 1) When ever any change is made to the patientrecord record (current
+        # implementation)
+        # 2) " " or children
+        # 3) Every time an incoming file is matched to and tries to write
+        # the file. For example if the same xml file is inserted twice it will
+        # match via the hash and it skips the rest of the process.
+
+        if self.status == RecordStatus.NEW:
             self.orm_object.repositorycreationdate = (
                 self.repository_updated_date
             )  # type:ignore
+            
+            self.orm_object.repositoryupdatedate = (
+                self.repository_updated_date
+            )
 
-        if self.is_modified or self.is_new_record:
-            # what is the correct behaviour should this be set if any part of the patient record has been changed?
-            # I think this should be a nullable field
+        if self.status == RecordStatus.MODIFIED:
             self.orm_object.repositoryupdatedate = (
                 self.repository_updated_date
             )  # type:ignore

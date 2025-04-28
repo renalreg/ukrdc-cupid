@@ -1,11 +1,15 @@
 import time
 
+from pydantic import BaseModel
+from typing import Optional
+
 from sqlalchemy.orm import Session
 from sqlalchemy import text
 
 from ukrdc_cupid.core.parse.xml_validate import SUPPORTED_VERSIONS
 from ukrdc_cupid.core.parse.utils import load_xml_from_str
 from ukrdc_cupid.core.store.models.ukrdc import PatientRecord
+from ukrdc_cupid.core.store.models.structure import RecordStatus
 from ukrdc_cupid.core.store.exceptions import (
     InsertionBlockedError,
     DataInsertionError,
@@ -26,10 +30,19 @@ from sqlalchemy.exc import OperationalError
 from ukrdc_sqla.ukrdc import Base
 
 import ukrdc_xsdata.ukrdc as xsd_ukrdc  # type: ignore
-from typing import Optional, Tuple
 
 CURRENT_SCHEMA = max(SUPPORTED_VERSIONS)
 
+class DataInsertionResponse(BaseModel):
+    """Response model for data insertion operations"""
+    new_records: int = 0
+    deleted_records: int = 0 
+    unchanged_records: int = 0
+    modified_records: int = 0
+    identical_to_last: bool = True
+    msg: str = ""
+    errormsg: Optional[str] = None
+    #investigation: Optional[Investigation] = None
 
 def advisory_lock(func):
     def wrapper(ukrdc_session: Session, pid: str, *args, **kwargs):
@@ -101,7 +114,7 @@ def insert_incoming_data(
     is_new: bool = False,
     mode: str = "full",
     debug: bool = False,
-) -> Optional[Tuple[Base, Base, Base]]:  # type:ignore
+) -> dict:
     """Insert file into the database having matched to pid.
     do we need a no delete mode?
 
@@ -111,69 +124,55 @@ def insert_incoming_data(
         no_delete (bool, optional): _description_. Defaults to False.
     """
 
+    response = DataInsertionResponse()
+
     # load incoming xml file into cupid store models
     if mode == "ex-missing":
         patient_record = PatientRecord(xml=incoming_xml_file, ex_missing=True)
     else:
         patient_record = PatientRecord(xml=incoming_xml_file)
 
-    # map xml to rows in the database using the orm
-    is_update = patient_record.map_to_database(
+    # Map xml to rows in the database using cupid models this will produce a
+    # tree of cupid models. These contain ukrdc_sqla models which can be
+    # committed to the database to sync it to the incoming file.
+    different_file = patient_record.map_to_database(
         session=ukrdc_session,
         ukrdcid=ukrdcid,
         pid=pid,
         is_new=is_new,
     )
 
-    if not is_update:
-        print(
-            "Incoming file is identical to last uploaded file. No action has been taken."
-        )
-        return
+    if not different_file:
+        response.msg = f"Incoming file matched hash for last inserted file for pid = {pid}. Nothing has been inserted."
+        response.identical_to_last = True
+        return response
 
-    # extract a list of records from cupid models
-    if debug:
-        new = patient_record.get_orm_list(
-            is_dirty=False, is_new=True, is_unchanged=False
-        )
-        dirty = patient_record.get_orm_list(
-            is_dirty=True, is_new=False, is_unchanged=False
-        )
-        unchanged = patient_record.get_orm_list(
-            is_dirty=False, is_new=True, is_unchanged=True
-        )
-        print(f"New : {len(new)}, Dirty : {len(dirty)}, Unchanged : {len(unchanged)}")
-    else:
-        new = patient_record.get_orm_list(
-            is_dirty=False, is_new=True, is_unchanged=False
-        )
-
-    # if patient record is new it needs to be added to session
+    # get the orm objects for the records that need to be created and add them
+    # to the session
+    orm_objects, counts = patient_record.get_orm_list()
+    new = orm_objects[RecordStatus.NEW]
     ukrdc_session.add_all(new)
+    response.new_records = counts[RecordStatus.NEW]
+    response.modified_records = counts[RecordStatus.MODIFIED]
 
-    # get list of records to delete
+    # get the orm objects for records not in the file
     records_for_deletion = patient_record.get_orm_deleted()
     for record in records_for_deletion:
         ukrdc_session.delete(record)
 
+    response.deleted_records = len(records_for_deletion)
+
     # insert changes into database if valid
     error = commit_changes(ukrdc_session)
-
     if error is None:
-        print("================================================")
         if is_new:
-            print(f"Creating Patient: pid = {pid}, ukrdcid = {ukrdcid}")
+            response.msg = f"Successfully created patient: pid = {pid}, ukrdcid = {ukrdcid}"
         else:
-            print(f"Updating Patient: pid = {pid}, ukrdcid = {ukrdcid}")
-
-        print(f"New records: {len(ukrdc_session.new)}")
-
-        print(f"Updated records: {len(ukrdc_session.dirty)}")
-
-        print(f"Deleted records: {len(ukrdc_session.deleted)}")
+            response.msg = f"Successfully updated patient: pid = {pid}, ukrdcid = {ukrdcid}"
     else:
         if not is_new:
-            # if the patient is in the database raise a workitem
+            # if the patient is in the database raise an investigation for a 
+            # human insight to figure out what is going on.
             investigation = Investigation(
                 ukrdc_session,
                 patient_ids=[(pid, ukrdcid)],
@@ -181,18 +180,16 @@ def insert_incoming_data(
                 error_msg=str(error),
             )
             investigation.append_extras(xml=incoming_xml_file)
+            response.errormsg = f"Patient could not be updated due to error:\n{error}\n"
+            response.errormsg += f"See investigation id = {investigation.issue.id} for more details"
 
         else:
-            # Otherwise we raise an error this will usually be some sort of sql
-            # statement. In theory I think the patient should still have their
-            # demographics information inserted this allows it to be handled as
-            # an investigation rather than an error.
-            raise DataInsertionError(f"New patient could not be inserted - {error}")
-
-    if debug:
-        return new, dirty, unchanged
-
-    return None
+            # TODO: Alternatively create a patient using the minimum possible
+            # information (probably the contents of the patient_demog) and
+            # raise and attach an investigation to that. 
+            raise DataInsertionError(f"New patient could not be inserted due to error- {error}")
+    
+    return response
 
 
 def process_file(
@@ -220,6 +217,7 @@ def process_file(
     )
 
     print(f"Time to load file {time.time()-t0}")
+
     # identify patient
     patient_info = read_patient_metadata(xml_object)
     pid, ukrdcid, investigation = identify_patient_feed(
@@ -228,7 +226,7 @@ def process_file(
     )
 
     # if an investigation has been raised in identifying the patient we do not insert
-    # (we could introduce a force mode to make it try regardless)
+    # This can be force merged if the incoming file is correct
     if investigation:
         investigation.create_issue()
         investigation.append_extras(xml=xml_body, metadata=patient_info)
@@ -259,7 +257,7 @@ def process_file(
     print(f"Time to load validate and match {time.time()-t0}")
 
     # insert into the database
-    insert_incoming_data(
+    response = insert_incoming_data(
         ukrdc_session=ukrdc_session,
         pid=pid,
         ukrdcid=ukrdcid,

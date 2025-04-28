@@ -27,7 +27,6 @@ from ukrdc_cupid.core.match.identify import (
     read_patient_metadata,
     identify_across_ukrdc
 )
-from ukrdc_cupid.core.utils import DatabaseConnection
 
 
 TEST_PID = "test_pid:731"
@@ -197,3 +196,5 @@ def test_multiple_matches_ukrdcid(ukrdc_test:Session):
     assert investigation.issue.issue_id in POSSIBLE_ISSUES
     assert investigation.issue.issue_id == 6
     assert not investigation.issue.is_blocking
+
+
