@@ -121,7 +121,7 @@ class PatientRecord(Node):
 
         # Repository created is fairly straight forward however repository
         # updated could be specified in a few different ways:
-        # 
+        #
         # Options:
         # 1) When ever any change is made to the patientrecord record (current
         # implementation)
@@ -134,10 +134,8 @@ class PatientRecord(Node):
             self.orm_object.repositorycreationdate = (
                 self.repository_updated_date
             )  # type:ignore
-            
-            self.orm_object.repositoryupdatedate = (
-                self.repository_updated_date
-            )
+
+            self.orm_object.repositoryupdatedate = self.repository_updated_date
 
         if self.status == RecordStatus.MODIFIED:
             self.orm_object.repositoryupdatedate = (

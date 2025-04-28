@@ -27,22 +27,24 @@ from ukrdc_cupid.core.match.identify import (
 )
 
 from sqlalchemy.exc import OperationalError
-from ukrdc_sqla.ukrdc import Base
 
 import ukrdc_xsdata.ukrdc as xsd_ukrdc  # type: ignore
 
 CURRENT_SCHEMA = max(SUPPORTED_VERSIONS)
 
+
 class DataInsertionResponse(BaseModel):
     """Response model for data insertion operations"""
+
     new_records: int = 0
-    deleted_records: int = 0 
+    deleted_records: int = 0
     unchanged_records: int = 0
     modified_records: int = 0
     identical_to_last: bool = True
     msg: str = ""
     errormsg: Optional[str] = None
-    #investigation: Optional[Investigation] = None
+    # investigation: Optional[Investigation] = None
+
 
 def advisory_lock(func):
     def wrapper(ukrdc_session: Session, pid: str, *args, **kwargs):
@@ -166,12 +168,16 @@ def insert_incoming_data(
     error = commit_changes(ukrdc_session)
     if error is None:
         if is_new:
-            response.msg = f"Successfully created patient: pid = {pid}, ukrdcid = {ukrdcid}"
+            response.msg = (
+                f"Successfully created patient: pid = {pid}, ukrdcid = {ukrdcid}"
+            )
         else:
-            response.msg = f"Successfully updated patient: pid = {pid}, ukrdcid = {ukrdcid}"
+            response.msg = (
+                f"Successfully updated patient: pid = {pid}, ukrdcid = {ukrdcid}"
+            )
     else:
         if not is_new:
-            # if the patient is in the database raise an investigation for a 
+            # if the patient is in the database raise an investigation for a
             # human insight to figure out what is going on.
             investigation = Investigation(
                 ukrdc_session,
@@ -181,14 +187,18 @@ def insert_incoming_data(
             )
             investigation.append_extras(xml=incoming_xml_file)
             response.errormsg = f"Patient could not be updated due to error:\n{error}\n"
-            response.errormsg += f"See investigation id = {investigation.issue.id} for more details"
+            response.errormsg += (
+                f"See investigation id = {investigation.issue.id} for more details"
+            )
 
         else:
             # TODO: Alternatively create a patient using the minimum possible
             # information (probably the contents of the patient_demog) and
-            # raise and attach an investigation to that. 
-            raise DataInsertionError(f"New patient could not be inserted due to error- {error}")
-    
+            # raise and attach an investigation to that.
+            raise DataInsertionError(
+                f"New patient could not be inserted due to error- {error}"
+            )
+
     return response
 
 
@@ -257,7 +267,7 @@ def process_file(
     print(f"Time to load validate and match {time.time()-t0}")
 
     # insert into the database
-    response = insert_incoming_data(
+    insert_incoming_data(
         ukrdc_session=ukrdc_session,
         pid=pid,
         ukrdcid=ukrdcid,

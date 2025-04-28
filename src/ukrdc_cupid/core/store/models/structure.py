@@ -17,10 +17,12 @@ import ukrdc_xsdata.ukrdc.types as xsd_types  # type: ignore
 
 from pytz import timezone
 
+
 class RecordStatus(Enum):
     NEW = auto()
     MODIFIED = auto()
     UNCHANGED = auto()
+
 
 class Node(ABC):
     """
@@ -239,48 +241,52 @@ class Node(ABC):
         ]
 
     def get_orm_list(
-        self, 
-        statuses: List[RecordStatus] = [RecordStatus.NEW],
-        count_all: bool = True
+        self, statuses: List[RecordStatus] = [RecordStatus.NEW], count_all: bool = True
     ) -> Tuple[Dict[RecordStatus, List], Dict[RecordStatus, int]]:
         """Get ORM objects grouped by status with optional counting.
-        
+
         Args:
             statuses: Statuses to filter by. Defaults to [NEW].
             count_all: Whether to count all statuses. Defaults to True.
-        
+
         Returns:
             Tuple of (objects_by_status, counts_by_status).
             objects_by_status will only contain keys for requested statuses.
         """
         # Initialize results
         orm_objects = {status: [] for status in statuses}
-        counts = {RecordStatus.NEW: 0, RecordStatus.MODIFIED: 0, RecordStatus.UNCHANGED: 0}
-        
+        counts = {
+            RecordStatus.NEW: 0,
+            RecordStatus.MODIFIED: 0,
+            RecordStatus.UNCHANGED: 0,
+        }
+
         # Get current record's status
         current_state = self.status
-        
+
         # Add to counts
         counts[current_state] += 1
-        
+
         # Add to objects dict if status matches requested statuses
         if current_state in statuses:
             orm_objects[current_state].append(self.orm_object)
-        
+
         # Process children
         if self.mapped_classes:
             for child_class in self.mapped_classes:
-                child_objects, child_counts = child_class.get_orm_list(statuses, count_all)
-                
+                child_objects, child_counts = child_class.get_orm_list(
+                    statuses, count_all
+                )
+
                 # Merge child objects for each status
                 for status in statuses:
                     if status in child_objects:
                         orm_objects[status].extend(child_objects[status])
-                
+
                 # Add child counts
                 for s in RecordStatus:
                     counts[s] += child_counts[s]
-        
+
         return orm_objects, counts
 
     def get_orm_deleted(self) -> list:
