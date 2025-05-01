@@ -3,8 +3,9 @@ Models to create sqla objects from an xml file
 """
 
 from __future__ import annotations  # allows typehint of node class
+from decimal import Decimal
 
-from typing import Type, override
+from typing import Type, Optional, Union
 
 import ukrdc_sqla.ukrdc as sqla
 import ukrdc_cupid.core.store.keygen as key_gen
@@ -18,6 +19,7 @@ import ukrdc_xsdata.ukrdc.allergies as xsd_allergy  # type: ignore
 import ukrdc_xsdata.ukrdc.diagnoses as xsd_diagnosis  # type: ignore
 import ukrdc_xsdata.ukrdc.surveys as xsd_surveys  # type: ignore
 import ukrdc_xsdata.ukrdc.family_histories as xsd_family_histories
+from xsdata.models.datatype import XmlDateTime, XmlDate
 
 # import ukrdc_xsdata.ukrdc
 
@@ -126,24 +128,26 @@ class Patient(Node):
     def generate_id(self, _) -> str:
         return self.pid
 
-    def add_item(self, sqla_property: str, value: Optional[Union[str, XmlDateTime, XmlDate, bool, int, Decimal]], optional: bool = True) -> None:
-        # Birthtime is a date in disguise so we reset the status if only the
-        # time is changing 
-        if sqla_property ==  "birthtime":
-            year = self.orm_object.birthtime.year
-            month = self.orm_object.birthtime.month
-            day = self.orm_object.birthtime.day 
+    def add_item(
+        self,
+        sqla_property: str,
+        value: Optional[Union[str, XmlDateTime, XmlDate, bool, int, Decimal]],
+        optional: bool = True,
+    ) -> None:
+        # Birthtime is a date in disguise so it should only affect status if
+        # the date changes.
+        if (
+            sqla_property == "birthtime"
+            and self.orm_object.birthtime
+            and self.status == RecordStatus.UNCHANGED
+        ):
+            dob = self.orm_object.birthtime.date()
             super().add_item(sqla_property, value, optional)
-            if (
-                self.status == RecordStatus.MODIFIED
-                and self.orm_object.birthtime.day == day
-                and self.orm_object.birthtime.month == month
-                and self.orm_object.birthtime.year == year 
-            ):
+            if self.orm_object.birthtime.date() == dob:
                 self.status = RecordStatus.UNCHANGED
         else:
             super().add_item(sqla_property, value, optional)
-        
+
     def add_person_to_contact(self, xml: xsd_types.PersonalContactType) -> None:
         # handle section of xml which the generic add functions cant handle
         if xml:

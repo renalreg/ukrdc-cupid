@@ -114,8 +114,8 @@ def hash_xml(xml: PatientRecord) -> str:
 
     # delete some bits of metadata which are likely to change every time
     if xml_copy.sending_facility.batch_no:
-        del xml_copy.sending_facility.batch_no 
-    
+        del xml_copy.sending_facility.batch_no
+
     if xml_copy.sending_facility.time:
         del xml_copy.sending_facility.time
 
@@ -127,11 +127,10 @@ def hash_xml(xml: PatientRecord) -> str:
     if xml_copy.lab_orders:
         del xml_copy.lab_orders.start
         del xml_copy.lab_orders.stop
-    
+
     if xml_copy.observations:
         del xml_copy.observations.start
         del xml_copy.observations.stop
-
 
     xml_reduced = serializer.render(xml_copy)
     xml_hash = hashlib.sha256(xml_reduced.encode("utf-8")).hexdigest()

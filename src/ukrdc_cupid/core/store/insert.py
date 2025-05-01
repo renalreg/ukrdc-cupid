@@ -52,7 +52,6 @@ class DataInsertionResponse(BaseModel):
     investigation: Optional[Investigation] = None
 
 
-
 def advisory_lock(func):
     def wrapper(ukrdc_session: Session, pid: str, *args, **kwargs):
         # this wrapper function applies for an advisory lock on a a particular pid
@@ -173,7 +172,6 @@ def insert_incoming_data(
 
     response.deleted_records = len(records_for_deletion)
 
-
     # insert changes into database if valid
     error = commit_changes(ukrdc_session)
     if error is None:
@@ -291,7 +289,7 @@ def process_file(
     # output response from data insertion
     if response.errormsg:
         print(response.errormsg)
-    else: 
+    else:
         print(response.msg)
 
     # Any investigation at this point will be associated with a merge to

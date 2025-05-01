@@ -1,6 +1,6 @@
 from __future__ import annotations  # allows typehint of node class
 from abc import ABC, abstractmethod
-from typing import Optional, Union, List, Type
+from typing import Optional, Union, List, Type, Tuple, Dict
 from decimal import Decimal
 from enum import Enum, auto
 

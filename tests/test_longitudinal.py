@@ -546,7 +546,7 @@ def test_transplant_list(patient_record: PatientRecord):
 
 def test_encounter(patient_record: PatientRecord):
     encounter_orms = []
-    for orm_object in patient_record.get_orm_list():
+    for orm_object in patient_record.get_new_records():
         if orm_object.__tablename__ == "encounter":
             encounter_orms.append(orm_object)
     
