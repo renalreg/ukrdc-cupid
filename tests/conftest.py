@@ -1,6 +1,5 @@
 import uuid
 import pytest
-import sqlalchemy
 
 from ukrdc_cupid.core.utils import (
     generate_database,
@@ -15,8 +14,7 @@ from sqlalchemy_utils import (
 )  # type:ignore
 
 from fastapi.testclient import TestClient
-from sqlalchemy.orm import Session, sessionmaker
-from sqlalchemy import create_engine
+from sqlalchemy.orm import Session
 
 
 def ukrdc_sessionmaker(url: str, gp_info: bool = False):
@@ -33,9 +31,8 @@ def ukrdc_sessionmaker(url: str, gp_info: bool = False):
     """
 
     generate_database(url=url, gp_info=gp_info)
+
     return UKRDCConnection(url=url).create_sessionmaker()
-
-
 
 def generate_ukrdc_test_session(gp_info: bool = False, teardown: bool = True):
     """This fixture creates a new ukrdc database with unique name. It then
@@ -49,7 +46,7 @@ def generate_ukrdc_test_session(gp_info: bool = False, teardown: bool = True):
     """
 
     # Generate a random string as part of the URL
-    random_string = str(uuid.uuid4()).replace("-", "")
+    random_string = str(uuid.uuid4()).replace("-", "")[:5]
     db_name = f"test_ukrdc_{random_string}"
     url = f"postgresql+psycopg://postgres:postgres@localhost:5432/{db_name}"
     sessionmaker = ukrdc_sessionmaker(url=url, gp_info=gp_info)
@@ -60,16 +57,13 @@ def generate_ukrdc_test_session(gp_info: bool = False, teardown: bool = True):
     if database_exists(url) and teardown:
         drop_database(url)
 
-
 @pytest.fixture(scope="function")
 def ukrdc_test_session():
     yield from generate_ukrdc_test_session(gp_info=False)
 
-
 @pytest.fixture(scope="function")
 def ukrdc_test_session_with_gp_info():
     yield from generate_ukrdc_test_session(gp_info=True)
-
 
 @pytest.fixture(scope="function")
 def client(ukrdc_test_session:Session):

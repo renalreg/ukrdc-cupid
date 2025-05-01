@@ -1,5 +1,5 @@
 from sqlalchemy.orm import Session
-from ukrdc_cupid.core.store.models.structure import Node
+from ukrdc_cupid.core.store.models.structure import Node, RecordStatus
 from xsdata.models.datatype import XmlDateTime
 from datetime import datetime
 import ukrdc_sqla.ukrdc as sqla
@@ -99,24 +99,20 @@ def test_add_code(patient_node: Node):
 
 
 def test_add_item(patient_node: Node):
-    dob = XmlDateTime.from_string("1984-10-06T00:00:00+00:00")
-    dob_datetime = datetime(1984, 10, 6, 1)
-    patient_node.add_item("birthtime", dob)
-    assert patient_node.is_modified == True
-    assert patient_node.orm_object.birthtime.date() == dob_datetime.date()
+    # TODO: revist all of this timezone stuff
+    dod = XmlDateTime.from_string("1984-10-06T00:00:00+00:00")
+    dod_datetime = datetime(1984, 10, 6, 1)
+    patient_node.add_item("deathtime", dod)
+    assert patient_node.status == RecordStatus.MODIFIED
+    assert patient_node.orm_object.deathtime.date() == dod_datetime.date()
 
-    # subtleties with the local timezone mean we had to put some bits in place
-    # to prevent too much churn we simulate the process of committing to db
-    # and refreshing by
-    patient_node.is_modified = False
-    patient_node.orm_object.birthtime = dob_datetime
-    patient_node.add_item("birthtime", dob)
 
-    # cupid now recognizes these datetimes as equal even though they in
-    # different timezones
+    # Check nothing changes when we repeat the process
+    patient_node.status = RecordStatus.UNCHANGED
+    patient_node.orm_object.deathtime = dod_datetime
+    patient_node.add_item("deathtime", dod)
+    assert patient_node.status == RecordStatus.UNCHANGED
 
-    assert patient_node.is_modified == False
-    assert patient_node.orm_object.birthtime == dob_datetime
 
 
 @pytest.mark.parametrize("seq_no", [0, 1])

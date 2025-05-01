@@ -28,7 +28,7 @@ def ukrdc_test(ukrdc_test_session: Session):
 def commit_patient_record(ukrdc_session: Session, pid, ukrdcid, xml):
     patient_record = PatientRecord(xml)
     patient_record.map_to_database(pid, ukrdcid, ukrdc_session)
-    ukrdc_session.add_all(patient_record.get_orm_list())
+    ukrdc_session.add_all(patient_record.get_new_records())
     ukrdc_session.commit()
     return
 

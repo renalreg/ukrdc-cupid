@@ -16,7 +16,6 @@ from ukrdc_cupid.core.investigate.utils import update_picklists
 from ukrdc_cupid.core.store.models.lookup_tables import GPInfoType
 
 # Load environment varibles from wither they are found
-
 ENV = {
     **os.environ,  # The docker stack loads directly into env
     **dotenv_values(".env"),  # Otherwise we use an env file

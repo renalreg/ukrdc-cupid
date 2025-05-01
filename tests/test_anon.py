@@ -20,6 +20,7 @@ from sqlalchemy import select
 #from ukrdc_sqla.ukrdc import PatientNumber as PatientNumberORM
 import ukrdc_sqla.ukrdc as sqla_orm
 from ukrdc_cupid.core.store.models.ukrdc import PatientRecord
+from ukrdc_cupid.core.store.models.structure import RecordStatus
 from ukrdc_cupid.core.parse.utils import load_xml_from_path
 from ukrdc_cupid.core.store.insert import insert_incoming_data
 from ukrdc_cupid.core.match.identify import (
@@ -62,7 +63,7 @@ def commit_patient_record(ukrdc_session: Session, pid, ukrdcid, xml):
     patient_record = PatientRecord(xml)
     patient_record.map_to_database(pid, ukrdcid, ukrdc_session)
     # We add family doctor to avoid dependency issues 
-    orm_objects = patient_record.get_orm_list()
+    orm_objects = patient_record.get_new_records()
     for obj in orm_objects:
         if obj.__tablename__ == "familydoctor":
             # Add in some dependant codes

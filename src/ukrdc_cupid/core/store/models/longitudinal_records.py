@@ -3,11 +3,12 @@ Models to create sqla objects from an xml file
 """
 
 from __future__ import annotations
-
 from sqlalchemy.orm import Session
-from ukrdc_cupid.core.store.models.structure import Node
-import ukrdc_cupid.core.store.keygen as key_gen  # type: ignore
+
 import ukrdc_sqla.ukrdc as sqla
+from ukrdc_cupid.core.store.models.structure import Node, RecordStatus
+import ukrdc_cupid.core.store.keygen as key_gen  # type: ignore
+
 import ukrdc_xsdata.ukrdc.observations as xsd_observations  # type: ignore
 import ukrdc_xsdata.ukrdc.lab_orders as xsd_lab_orders  # type: ignore
 import ukrdc_xsdata.ukrdc.dialysis_sessions as xsd_dialysis_sessions  # type: ignore
@@ -62,7 +63,7 @@ class ResultItem(Node):
 
         if self.orm_object is None:
             self.orm_object = self.orm_model(id=id)  # type:ignore
-            self.is_new_record = True
+            self.status = RecordStatus.NEW
 
         else:
             self.is_new_record = False
