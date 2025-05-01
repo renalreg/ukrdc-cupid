@@ -289,6 +289,10 @@ class Node(ABC):
 
         return orm_objects, counts
 
+    def get_new_records(self):
+        orm_objects, _ = self.get_orm_list()
+        return orm_objects[RecordStatus.NEW]
+
     def get_orm_deleted(self) -> list:
         # function to walk through the patient record structure an retrieve
         # records staged for deletion

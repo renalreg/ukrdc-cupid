@@ -171,7 +171,7 @@ def test_delete_patient(client, ukrdc_test_session):
 
     assert response.status_code == 200
 
-def test_non_ascii(client, ukrdc_test_session):
+def test_non_ascii(client):
     my_lab_non_ascii = """
     <Medications>
         <Medication>
@@ -211,7 +211,7 @@ def test_non_ascii(client, ukrdc_test_session):
 
     assert response.status_code == 200
 
-def test_empty_lab(client, ukrdc_test_session):
+def test_empty_lab(client):
     xml = xml_template(SCHEMA_VERSION, "<LabOrders/>")
     response = client.post(
         "/store/upload_patient_file/overwrite", 

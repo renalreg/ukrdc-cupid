@@ -39,7 +39,7 @@ def patient_record(ukrdc_test_session: Session):
 def test_patient_record(patient_record: PatientRecord):
 
     patient_record_orm = False
-    for orm_object in patient_record.get_orm_list():
+    for orm_object in patient_record.get_new_records():
         if orm_object.__tablename__ == "patientrecord":
             patient_record_orm = orm_object
             break
@@ -57,7 +57,7 @@ def test_patient_record(patient_record: PatientRecord):
 
 def test_patient(patient_record: PatientRecord):
     patient_orm = False
-    for orm_object in patient_record.get_orm_list():
+    for orm_object in patient_record.get_new_records():
         if orm_object.__tablename__ == "patient":
             patient_orm = orm_object
             break
@@ -81,7 +81,7 @@ def test_patient(patient_record: PatientRecord):
 
 def test_name(patient_record: PatientRecord):
     name_orm = False
-    for orm_object in patient_record.get_orm_list():
+    for orm_object in patient_record.get_new_records():
         if orm_object.__tablename__ == "name":
             name_orm = orm_object
             break
@@ -98,7 +98,7 @@ def test_name(patient_record: PatientRecord):
 
 def test_contact_detail(patient_record: PatientRecord):
     contact_detail_orm = False
-    for orm_object in patient_record.get_orm_list():
+    for orm_object in patient_record.get_new_records():
         if orm_object.__tablename__ == "contactdetail":
             contact_detail_orm = orm_object
             break
@@ -117,7 +117,7 @@ def test_contact_detail(patient_record: PatientRecord):
 
 def test_address(patient_record: PatientRecord):
     address_orm = False
-    for orm_object in patient_record.get_orm_list():
+    for orm_object in patient_record.get_new_records():
         if orm_object.__tablename__ == "address":
             address_orm = orm_object
             break
@@ -140,7 +140,7 @@ def test_address(patient_record: PatientRecord):
 
 def test_family_doctor(patient_record: PatientRecord):
     family_doctor_orm = False
-    for orm_object in patient_record.get_orm_list():
+    for orm_object in patient_record.get_new_records():
         if orm_object.__tablename__ == "familydoctor":
             family_doctor_orm = orm_object
             break
@@ -158,7 +158,7 @@ def test_family_doctor(patient_record: PatientRecord):
 
 def test_family_history(patient_record: PatientRecord):
     family_history_orm = False
-    for orm_object in patient_record.get_orm_list():
+    for orm_object in patient_record.get_new_records():
         if orm_object.__tablename__ == "familyhistory":
             family_history_orm = orm_object
             break
@@ -196,7 +196,7 @@ def test_family_history(patient_record: PatientRecord):
 
 def test_cause_of_death(patient_record: PatientRecord):
     cause_of_death_orm = False
-    for orm_object in patient_record.get_orm_list():
+    for orm_object in patient_record.get_new_records():
         if orm_object.__tablename__ == "causeofdeath":
             cause_of_death_orm = orm_object
             break
@@ -207,7 +207,7 @@ def test_cause_of_death(patient_record: PatientRecord):
 
 def test_document(patient_record: PatientRecord):
     document_orm = False
-    for orm_object in patient_record.get_orm_list():
+    for orm_object in patient_record.get_new_records():
         if orm_object.__tablename__ == "document":
             document_orm = orm_object
             break

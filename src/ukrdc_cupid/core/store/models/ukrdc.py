@@ -111,14 +111,16 @@ class PatientRecord(Node):
     def add_sending_facility(self):
         """Parse sendingfacility"""
         sending_facility = self.xml.sending_facility
-        self.orm_object.sendingfacility = sending_facility.value
-        self.orm_object.channelname = sending_facility.channel_name
-        self.orm_object.schemaversion = sending_facility.schema_version
+        #self.orm_object.sendingfacility = sending_facility.value
+        #self.orm_object.channelname = sending_facility.channel_name
+        #self.orm_object.schemaversion = sending_facility.schema_version
         # self.orm_object.
-
+        self.add_item("sendingfacility", sending_facility.value)
+        self.add_item("channelname", sending_facility.channel_name)
+        self.add_item("schemaversion", sending_facility.schema_version)
+    
     def updated_status(self) -> None:
         super().updated_status()
-
         # Repository created is fairly straight forward however repository
         # updated could be specified in a few different ways:
         #
@@ -196,7 +198,8 @@ class PatientRecord(Node):
         """
         self.pid = pid
         self.session = session
-        self.is_new_record = is_new
+        if is_new:
+            self.status = RecordStatus.NEW
 
         # load or create the orm
         file_hash = hash_xml(self.xml)

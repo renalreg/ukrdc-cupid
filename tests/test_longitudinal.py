@@ -6,7 +6,6 @@ this is the core functionality of CUPID.
 
 from ukrdc_cupid.core.store.models.ukrdc import PatientRecord
 from ukrdc_cupid.core.parse.utils import load_xml_from_path
-from ukrdc_cupid.core.utils import DatabaseConnection
 import ukrdc_sqla.ukrdc as sqla
 from sqlalchemy.orm import Session
 from datetime import timedelta
@@ -153,7 +152,7 @@ def ukrdc_test_with_data(ukrdc_test_session: Session):
 
     patient_record = PatientRecord(xml_test_1)
     patient_record.map_to_database(TEST_PID, TEST_UKRDCID, ukrdc_test_session)
-    ukrdc_test_session.add_all(patient_record.get_orm_list())
+    ukrdc_test_session.add_all(patient_record.get_new_records())
 
     xml_test_2 = load_xml_from_path(
         os.path.join("tests", "xml_files", "store_tests", "test_2.xml")
@@ -213,7 +212,7 @@ def patient_record(ukrdc_test_with_data: Session):
 def test_lab_orders(patient_record: PatientRecord):
 
     lab_order_orm = False
-    for orm_object in patient_record.get_orm_list():
+    for orm_object in patient_record.get_new_records():
         if orm_object.__tablename__ == "laborder":
             lab_order_orm = orm_object
             break
@@ -289,7 +288,7 @@ def test_dialysis_sessions_start_stop(patient_record:PatientRecord):
 def test_result_items(patient_record: PatientRecord):
     # check all the result item attributes are being loaded into the orm
     result_orms = []
-    for orm_object in patient_record.get_orm_list():
+    for orm_object in patient_record.get_new_records():
         if orm_object.__tablename__ == "resultitem":
             result_orms.append(orm_object)
 
@@ -319,7 +318,7 @@ def test_result_items(patient_record: PatientRecord):
 def test_dialysis_session(patient_record: PatientRecord):
 
     dialysis_session_orms = []
-    for orm_object in patient_record.get_orm_list():
+    for orm_object in patient_record.get_new_records():
         if orm_object.__tablename__ == "dialysissession":
             dialysis_session_orms.append(orm_object)
 
@@ -358,7 +357,7 @@ def test_procedure(patient_record: PatientRecord):
 
 def test_vascular_access(patient_record: PatientRecord):
     vascular_access_orms = []
-    for orm_object in patient_record.get_orm_list():
+    for orm_object in patient_record.get_new_records():
         if orm_object.__tablename__ == "vascularaccess":
             vascular_access_orms.append(orm_object)
 
@@ -382,7 +381,7 @@ def test_vascular_access(patient_record: PatientRecord):
 
 def test_transplant(patient_record: PatientRecord):
     transplant_orms = []
-    orm_objects = patient_record.get_orm_list()
+    orm_objects = patient_record.get_new_records()
     for orm_object in orm_objects:
         if orm_object.__tablename__ == "transplant":
             transplant_orms.append(orm_object)
@@ -422,7 +421,7 @@ def test_transplant(patient_record: PatientRecord):
 
 def test_treatment(patient_record: PatientRecord):
     treatment_orms = []
-    for orm_object in patient_record.get_orm_list():
+    for orm_object in patient_record.get_new_records():
         if orm_object.__tablename__ == "treatment":
             treatment_orms.append(orm_object)
 
@@ -483,7 +482,7 @@ def test_treatment(patient_record: PatientRecord):
 
 def test_transplant_list(patient_record: PatientRecord):
     transplant_list_orms = []
-    for orm_object in patient_record.get_orm_list():
+    for orm_object in patient_record.get_new_records():
         if orm_object.__tablename__ == "transplantlist":
             transplant_list_orms.append(orm_object)
 

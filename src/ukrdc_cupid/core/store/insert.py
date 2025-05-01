@@ -34,7 +34,12 @@ CURRENT_SCHEMA = max(SUPPORTED_VERSIONS)
 
 
 class DataInsertionResponse(BaseModel):
-    """Response model for data insertion operations"""
+    """
+    Response model for data insertion operations
+    """
+
+    class Config:
+        arbitrary_types_allowed = True
 
     new_records: int = 0
     deleted_records: int = 0
@@ -43,7 +48,9 @@ class DataInsertionResponse(BaseModel):
     identical_to_last: bool = True
     msg: str = ""
     errormsg: Optional[str] = None
-    # investigation: Optional[Investigation] = None
+    patient_record: Optional[PatientRecord] = None
+    investigation: Optional[Investigation] = None
+
 
 
 def advisory_lock(func):
@@ -147,6 +154,7 @@ def insert_incoming_data(
     if not different_file:
         response.msg = f"Incoming file matched hash for last inserted file for pid = {pid}. Nothing has been inserted."
         response.identical_to_last = True
+        response.patient_record = patient_record
         return response
 
     # get the orm objects for the records that need to be created and add them
@@ -156,6 +164,7 @@ def insert_incoming_data(
     ukrdc_session.add_all(new)
     response.new_records = counts[RecordStatus.NEW]
     response.modified_records = counts[RecordStatus.MODIFIED]
+    response.unchanged_records = counts[RecordStatus.UNCHANGED]
 
     # get the orm objects for records not in the file
     records_for_deletion = patient_record.get_orm_deleted()
@@ -163,6 +172,7 @@ def insert_incoming_data(
         ukrdc_session.delete(record)
 
     response.deleted_records = len(records_for_deletion)
+
 
     # insert changes into database if valid
     error = commit_changes(ukrdc_session)
@@ -199,6 +209,7 @@ def insert_incoming_data(
                 f"New patient could not be inserted due to error- {error}"
             )
 
+    response.patient_record = patient_record
     return response
 
 
@@ -267,7 +278,7 @@ def process_file(
     print(f"Time to load validate and match {time.time()-t0}")
 
     # insert into the database
-    insert_incoming_data(
+    response = insert_incoming_data(
         ukrdc_session=ukrdc_session,
         pid=pid,
         ukrdcid=ukrdcid,
@@ -277,10 +288,16 @@ def process_file(
         debug=True,
     )
 
+    # output response from data insertion
+    if response.errormsg:
+        print(response.errormsg)
+    else: 
+        print(response.msg)
+
     # Any investigation at this point will be associated with a merge to
     # a single patient record therefore there will be a single pid and
     # ukrdc id associated with it. Are we potentially storing data that
-    # cause problems if the record gets anonomised?
+    # cause problems if the record gets anonymised?
     if investigation:
         # should this be an inbuilt method?
         patient = get_patients((pid, ukrdcid))  # type : ignore
