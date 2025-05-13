@@ -229,7 +229,6 @@ class PatientRecord(Node):
         # don't like this solution very much. Think may sqla needs to become
         # a function which returns the mapped_orms.
         if sqla_mapped == "observations":
-
             if self.observation_range is not None and not self.is_ex_missing:
                 mapped_orms = (
                     self.session.query(sqla.Observation)

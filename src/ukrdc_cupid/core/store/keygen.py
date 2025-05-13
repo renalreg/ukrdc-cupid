@@ -1,8 +1,7 @@
 """
 Primary keys for the records contained within the ukrdc. Hopefully we simplify
-this at some point in the future. Currently it's designed to replicate the data
-repository however I think a lot of that was hacked together to work with the
-limitations of jtrace. 
+this at some point in the future. However for continuity it aims to replicate 
+the data repository code unless the keys were an explicit cause of error.
 """
 from sqlalchemy.orm import Session
 from sqlalchemy import Sequence

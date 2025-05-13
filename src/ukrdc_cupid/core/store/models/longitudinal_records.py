@@ -1,5 +1,11 @@
 """
-Models to create sqla objects from an xml file 
+These models store longitudinal records (where time or perhaps entropy is a key
+variable). 
+
+Some of these occur with such regularity that they are not included in full in
+each xml file which is sent. These are windowed in time which creates a few 
+different modes of insertion depending on whether or not we delete the records 
+missing in the xml file in the window.  
 """
 
 from __future__ import annotations
@@ -25,7 +31,8 @@ class Observation(Node):
     def sqla_mapped() -> str:
         return "observations"
 
-    def generate_id(self, seq_no) -> str:
+    def generate_id(self, seq_no: int) -> str:
+        seq_no = 0  # hardcode as zero to prevent problems with ex-missing
         return key_gen.generate_key_observations(self.xml, self.pid, seq_no)
 
     def map_xml_to_orm(self, _) -> None:
@@ -163,6 +170,9 @@ class DialysisSession(Node):
         return "dialysis_sessions"
 
     def generate_id(self, _) -> str:
+        # See UC-50: This is caused by enumerating the dialysis sessions which
+        # prevents them correctly linked to the right records because of the
+        # idx enumerator
         return key_gen.generate_key_dialysis_session(self.xml, self.pid)
 
     def map_xml_to_orm(self, _) -> None:

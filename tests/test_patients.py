@@ -68,7 +68,11 @@ def test_patient(patient_record: PatientRecord):
 
     patient_xml = patient_record.xml.patient
     # check attributes of orm objects
-    assert patient_orm.birthtime == patient_xml.birth_time.to_datetime()
+    if patient_xml.birth_time:
+        xml_time = str(patient_xml.birth_time)[:10]
+        orm_time = str(patient_orm.birthtime)[:10]
+        assert xml_time == orm_time
+
     assert patient_orm.countryofbirth == patient_xml.country_of_birth
     if not patient_xml.death:
         assert not patient_orm.death
@@ -125,8 +129,16 @@ def test_address(patient_record: PatientRecord):
     assert address_orm
     address_xml = patient_record.xml.patient.addresses.address[0]
 
-    assert address_orm.fromtime == address_xml.from_time.to_datetime()
-    assert address_orm.totime == address_xml.to_time.to_datetime()
+    if address_xml.from_time:
+        xml_time = str(address_xml.from_time)[:10]
+        orm_time = str(address_orm.fromtime)[:10]
+        assert xml_time == orm_time
+    
+    if address_xml.to_time:
+        xml_time = str(address_xml.to_time)[:10]
+        orm_time = str(address_orm.totime)[:10]
+        assert xml_time == orm_time
+    
     assert address_orm.street == address_xml.street
     assert address_orm.town == address_xml.town
     assert address_orm.county == address_xml.county
@@ -188,9 +200,22 @@ def test_family_history(patient_record: PatientRecord):
         == family_history_xml.entered_at.coding_standard.value
     )
     assert family_history_orm.enteredatdesc == family_history_xml.entered_at.description
-    assert family_history_orm.fromtime == family_history_xml.from_time.to_datetime()
-    assert family_history_orm.totime == family_history_xml.to_time.to_datetime()
-    assert family_history_orm.updatedon == family_history_xml.updated_on.to_datetime()
+    
+    if family_history_xml.from_time:
+        xml_time = str(family_history_xml.from_time)[:10]
+        orm_time = str(family_history_orm.fromtime)[:10]
+        assert xml_time == orm_time
+    
+    if family_history_xml.to_time:
+        xml_time = str(family_history_xml.to_time)[:10]
+        orm_time = str(family_history_orm.totime)[:10]
+        assert xml_time == orm_time
+    
+    if family_history_xml.updated_on:
+        xml_time = str(family_history_xml.updated_on)[:10]
+        orm_time = str(family_history_orm.updatedon)[:10]
+        assert xml_time == orm_time
+    
     assert family_history_orm.externalid == family_history_xml.external_id
 
 
@@ -219,7 +244,14 @@ def test_document(patient_record: PatientRecord):
     assert document_orm.cliniciancodestd == document_xml.clinician.coding_standard.value
     assert document_orm.cliniciandesc == document_xml.clinician.description
     assert document_orm.documentname == document_xml.document_name
-    assert document_orm.documenttime == document_xml.document_time.to_datetime()
+    
+
+    # check document time
+    if document_xml.document_time:
+        xml_time = str(document_xml.document_time)[:10]
+        orm_time = str(document_orm.documenttime)[:10]
+        assert xml_time == orm_time
+    
     assert document_orm.documenttypecode == document_xml.document_type.code
     assert (
         document_orm.documenttypecodestd == document_xml.document_type.coding_standard

@@ -116,6 +116,7 @@ class Node(ABC):
 
         attr_value: Union[str, int, bool, Decimal, datetime, None]
         attr_persist = getattr(self.orm_object, sqla_property)
+
         # parse value from xml into a python variable
         if (optional and value is not None) or (not optional):
             if value is not None:
@@ -124,14 +125,18 @@ class Node(ABC):
                     # The persistent datetimes are naive by default.
                     # To avoid issues when it comes to comparing them have to tell the datetime module that
                     # the persistant datetimes are assumed to be london.
+                    local_tz = timezone("Europe/London")
                     if attr_persist:
                         if isinstance(attr_persist, datetime):
-                            local_tz = timezone("Europe/London")
                             attr_persist = local_tz.localize(attr_persist)
 
                     attr_value = value.to_datetime()
+                    if attr_value.tzinfo is None:
+                        attr_value = local_tz.localize(attr_value)
 
                 elif isinstance(value, (str, int, bool, Decimal)):
+                    # unify type of persist and incoming need to be unified
+
                     attr_value = value
                 else:
                     attr_value = value.value
@@ -139,6 +144,11 @@ class Node(ABC):
         else:
             # we over write property with null if it doesn't appear in the file
             attr_value = None
+
+        # coerce type
+        if attr_value and attr_persist and type(attr_value) != type(attr_persist):
+            the_type = type(attr_persist)
+            attr_value = the_type(attr_value)
 
         # get persistant attribute and compare to incoming
         if attr_value != attr_persist:

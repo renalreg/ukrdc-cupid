@@ -45,11 +45,45 @@ class DataInsertionResponse(BaseModel):
     deleted_records: int = 0
     unchanged_records: int = 0
     modified_records: int = 0
-    identical_to_last: bool = True
+    identical_to_last: bool = False
     msg: str = ""
     errormsg: Optional[str] = None
     patient_record: Optional[PatientRecord] = None
     investigation: Optional[Investigation] = None
+
+    def generate_insertion_summary(self) -> str:
+        """
+        Generate a summary table of insertion results.
+
+        Returns:
+            str: Formatted table as a string.
+        """
+        if (
+            self.new_records == 0
+            and self.unchanged_records == 0
+            and self.modified_records == 0
+        ):
+            return ""
+
+        total_records = (
+            self.new_records
+            + self.deleted_records
+            + self.unchanged_records
+            + self.modified_records
+        )
+        percentage_new = 100.0 * self.new_records / total_records
+
+        table = (
+            f"Records Summary\n"
+            f"----------------\n"
+            f"New Records: {self.new_records}\n"
+            f"Deleted Records: {self.deleted_records}\n"
+            f"Unchanged Records: {self.unchanged_records}\n"
+            f"Modified Records: {self.modified_records}\n"
+            f"Total Records: {total_records}\n"
+            f"Percentage New Records: {percentage_new:.2f}%\n"
+        )
+        return table
 
 
 def advisory_lock(func):
@@ -151,7 +185,7 @@ def insert_incoming_data(
     )
 
     if not different_file:
-        response.msg = f"Incoming file matched hash for last inserted file for pid = {pid}. Nothing has been inserted."
+        response.msg = f"Incoming file matched hash for last inserted file for pid = {pid}. No further data insertion has occurred."
         response.identical_to_last = True
         response.patient_record = patient_record
         return response
@@ -161,6 +195,7 @@ def insert_incoming_data(
     orm_objects, counts = patient_record.get_orm_list()
     new = orm_objects[RecordStatus.NEW]
     ukrdc_session.add_all(new)
+
     response.new_records = counts[RecordStatus.NEW]
     response.modified_records = counts[RecordStatus.MODIFIED]
     response.unchanged_records = counts[RecordStatus.UNCHANGED]
@@ -179,10 +214,16 @@ def insert_incoming_data(
             response.msg = (
                 f"Successfully created patient: pid = {pid}, ukrdcid = {ukrdcid}"
             )
+
         else:
-            response.msg = (
-                f"Successfully updated patient: pid = {pid}, ukrdcid = {ukrdcid}"
+            all_records = (
+                response.modified_records
+                + response.unchanged_records
+                + response.new_records
             )
+            new_records = 100.0 * response.new_records / all_records
+
+            response.msg = f"Updated patient: pid = {pid}, ukrdcid = {ukrdcid}. {new_records:.2f}% of {all_records} records were new. {response.deleted_records} were new"
     else:
         if not is_new:
             # if the patient is in the database raise an investigation for a
@@ -198,6 +239,7 @@ def insert_incoming_data(
             response.errormsg += (
                 f"See investigation id = {investigation.issue.id} for more details"
             )
+            response.investigation = investigation
 
         else:
             # TODO: Alternatively create a patient using the minimum possible
@@ -220,7 +262,7 @@ def process_file(
 ) -> str:
     """Takes an xml file as a string and
     applies the cupid matching algorithm to attempt uploading it to the
-    database
+    database.
 
     Args:
         xml_body (str): xml file as a string
@@ -249,7 +291,7 @@ def process_file(
     if investigation:
         investigation.create_issue()
         investigation.append_extras(xml=xml_body, metadata=patient_info)
-        msg = "File could not successfully write to existing patient"
+        msg = "Writing to patient blocked by outstanding investigation"
         raise InsertionBlockedError(msg)
 
     # generate new patient ids if required
@@ -286,12 +328,6 @@ def process_file(
         debug=True,
     )
 
-    # output response from data insertion
-    if response.errormsg:
-        print(response.errormsg)
-    else:
-        print(response.msg)
-
     # Any investigation at this point will be associated with a merge to
     # a single patient record therefore there will be a single pid and
     # ukrdc id associated with it. Are we potentially storing data that
@@ -299,12 +335,22 @@ def process_file(
     if investigation:
         # should this be an inbuilt method?
         patient = get_patients((pid, ukrdcid))  # type : ignore
-        investigation.append_patients(patient)
-        issue_id = investigation.issue.issue_id
-        msg = f"New patient was uploaded successfully but there was an issue in linking to ukrdc data check issue id: {issue_id} for more details"
-    else:
-        msg = "File uploaded successfully"
+        response.investigation.append_patients(patient)
+        issue_id = response.investigation.issue.issue_id
+        if not response.errormsg:
+            msg = f"New patient was uploaded successfully but there was an issue in linking to ukrdc data check issue id: {issue_id} for more details.\n"
+            msg += response.generate_insertion_summary()
+        else:
+            msg = f"New patient contains linkage issues simultaneously cannot be inserted. Check issue id: {issue_id} for more details."
 
+    # add output response from committing the data to the general output
+    if response.errormsg:
+        msg = "File upload failed : " + response.errormsg
+    else:
+        msg = f"File successfully written to patient with pid = {pid} and ukrdcid = {ukrdcid}: \n"
+        msg = msg + response.generate_insertion_summary()
+
+    print(msg)
     print(f"That took {time.time() - t0:.2f} secs")
 
     return msg

@@ -4,7 +4,6 @@ Models to create sqla objects from an xml file
 
 from __future__ import annotations  # allows typehint of node class
 from decimal import Decimal
-
 from typing import Type, Optional, Union
 
 import ukrdc_sqla.ukrdc as sqla

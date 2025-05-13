@@ -1,10 +1,12 @@
 
 import os
+import copy
+import datetime as dt
 
 from ukrdc_cupid.core.parse.utils import load_xml_from_path
 from ukrdc_cupid.core.store.insert import insert_incoming_data
-from ukrdc_cupid.core.store.models.structure import RecordStatus
 
+from xsdata.models.datatype import XmlDateTime
 
 TEST_PID = "314159"
 TEST_UKRDCID = "\(00)/"
@@ -41,28 +43,70 @@ def test_churn(ukrdc_test_session):
         debug=True,
         is_new=False
     )
-    assert status.msg == "Incoming file matched hash for last inserted file for pid = 314159. Nothing has been inserted."
+    assert status.msg == "Incoming file matched hash for last inserted file for pid = 314159. No further data insertion has occurred."
     assert not status.new_records
     assert not status.unchanged_records 
     assert not status.modified_records 
 
-     # ex-missing mode 
-    xml_test.sending_facility.value = 'RDUCK' # change something (note that this would change the b)
+
+    # clear out hash - all records unchanged
+    patient_record = status.patient_record.orm_object
+    patient_record.channelid = None
+    ukrdc_test_session.commit()
     status = insert_incoming_data(
         ukrdc_test_session, 
         TEST_PID, 
         TEST_UKRDCID, 
         xml_test, 
-        debug=True,
         is_new=False,
-        #mode = "ex-missing"
     )
+    assert not status.new_records
+    assert status.unchanged_records == 18 
+    assert not status.modified_records 
+
+    # clear out hash - extract in ex-missing mode
+    # deleted record should not be removed
+    patient_record = status.patient_record.orm_object
+    patient_record.channelid = None
+    ukrdc_test_session.commit()
+
+    # modify xml by removing an observation and modifying the start and stop
+    xml_modified = copy.copy(xml_test)
+    del xml_modified.observations.observation[0]
+    xml_modified.observations.start = XmlDateTime(2006,1,1,0,0,0)
+    xml_modified.observations.stop = XmlDateTime(2006,12,1,0,0,0)
+
+    status = insert_incoming_data(
+        ukrdc_test_session, 
+        TEST_PID, 
+        TEST_UKRDCID, 
+        xml_modified,
+        mode = "ex-missing", 
+        is_new=False,
+    )
+    patient_record = status.patient_record
     
 
-    records_in_file, count = status.patient_record.get_orm_list([RecordStatus.NEW, RecordStatus.MODIFIED, RecordStatus.UNCHANGED])
-    #assert status.msg == "Incoming file matched hash for last inserted file for pid = 314159. Nothing has been inserted."
-    new_records = records_in_file[RecordStatus.NEW]
-    modified_records = records_in_file[RecordStatus.MODIFIED]
-    unchanged_records = records_in_file[RecordStatus.UNCHANGED]
+    assert not status.new_records
+    assert not status.deleted_records
+    assert status.unchanged_records == 17
 
-    print(":)")
+
+    # In full update mode the missing record gets removed
+    patient_record = status.patient_record.orm_object
+    patient_record.channelid = None
+    ukrdc_test_session.commit()
+
+    status = insert_incoming_data(
+        ukrdc_test_session, 
+        TEST_PID, 
+        TEST_UKRDCID, 
+        xml_modified,
+        mode = "full", 
+        is_new=False,
+    )
+
+    
+    assert not status.new_records
+    assert status.deleted_records == 1
+    assert status.unchanged_records == 17      
