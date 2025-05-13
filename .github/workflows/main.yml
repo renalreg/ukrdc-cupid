@@ -27,8 +27,8 @@ jobs:
           compose-file: "./docker-compose.yml"
 
       - name: Run Tests
-        run: docker-compose exec -T app tox -v
+        run: docker compose exec -T app tox -v
         
       - name: Logs on Failure
         if: failure()
-        run: docker-compose logs
+        run: docker compose logs
