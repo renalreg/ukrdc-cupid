@@ -21,7 +21,7 @@ from datetime import timedelta
 from sqlalchemy.orm import Session
 from ukrdc_cupid.core.parse.utils import load_xml_from_path
 from ukrdc_cupid.core.store.models.ukrdc import PatientRecord
-from ukrdc_cupid.core.investigate.utils import ISSUE_PICKLIST
+from ukrdc_cupid.core.investigate.picklists import ISSUE_PICKLIST
 from ukrdc_cupid.core.match.identify import (
     identify_patient_feed,
     read_patient_metadata,
