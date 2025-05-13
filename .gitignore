@@ -175,6 +175,5 @@ cython_debug/
 
 .venv
 .env.database
-.env.docker
 #.env.docker
 .qodo

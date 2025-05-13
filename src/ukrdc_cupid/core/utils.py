@@ -104,6 +104,7 @@ class DatabaseConnection:
             return
 
     def generate_database_url(self) -> str:
+        print(self.driver)
         return f"{self.driver}://{self.user}:{self.password}@{self.host}:{self.port}/{self.name}"
 
     def get_engine(self) -> Engine:

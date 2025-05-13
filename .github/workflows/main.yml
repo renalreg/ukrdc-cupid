@@ -1,50 +1,36 @@
-name: Test and Publish
-
 on:
   push:
+    branches: [ main ]
   pull_request:
-    branches:
-      # Branches from forks have the form 'user:branch-name' so we only run
-      # this job on pull_request events for branches that look like fork
-      # branches. Without this we would end up running this job twice for non
-      # forked PRs, once for the push and then once for opening the PR.
-      - "**:**"
+    branches: [ main ]
   workflow_dispatch:
-  release:
-    types: [published]
 
 jobs:
   test:
-    name: Run tests
-
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        python: ["3.10", "3.11", "3.12", "3.13"]
-
-
     steps:
-      - uses: actions/checkout@v3
+      - name: Checkout code
+        uses: actions/checkout@v3
 
-      - uses: harmon758/postgresql-action@v1
-        with:
-          postgresql version: "17"
-          postgresql db: "postgres"
-          postgresql user: postgres
-          postgresql password: "postgres"
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
 
-      - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: ${{ matrix.python }}
+      - name: Build containers
+        run: docker-compose build
 
-      - name: install
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y libxml2-dev libxslt-dev python3-dev
-          pip install poetry
-          poetry install --with dev
+      - name: Start containers
+        run: docker-compose up -d
 
-      - name: Run Tox
-        run:
-          poetry run tox
+      - name: Wait for containers to be ready
+        run: sleep 10
+
+      - name: Run tox tests
+        run: docker-compose exec -T app tox -v
+
+      - name: Show logs if tests fail
+        if: failure()
+        run: docker-compose logs
+
+      - name: Stop containers
+        if: always()
+        run: docker-compose down
