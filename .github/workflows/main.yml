@@ -28,8 +28,8 @@ jobs:
 
       - uses: harmon758/postgresql-action@v1
         with:
-          postgresql version: "13"
-          postgresql db: "cupid_test_database"
+          postgresql version: "17"
+          postgresql db: "postgres"
           postgresql user: postgres
           postgresql password: "postgres"
 
