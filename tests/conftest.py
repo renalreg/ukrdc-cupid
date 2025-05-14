@@ -1,6 +1,6 @@
 import uuid
 import pytest
-import sqlalchemy
+import os
 
 from ukrdc_cupid.core.utils import (
     generate_database,
@@ -51,7 +51,13 @@ def generate_ukrdc_test_session(gp_info: bool = False, teardown: bool = True):
     # Generate a random string as part of the URL
     random_string = str(uuid.uuid4()).replace("-", "")
     db_name = f"test_ukrdc_{random_string}"
-    url = f"postgresql+psycopg://postgres:postgres@localhost:5432/{db_name}"
+
+    if os.path.exists('/.dockerenv'):
+        host = 'db'
+    else:
+        host = 'localhost'
+    
+    url = f"postgresql+psycopg://postgres:postgres@{host}:5432/{db_name}"
     sessionmaker = ukrdc_sessionmaker(url=url, gp_info=gp_info)
     with sessionmaker() as session:
         yield session
