@@ -212,7 +212,9 @@ def insert_incoming_data(
         else:
             report = response.generate_insertion_summary()
 
-            response.msg = f"Updated patient: pid = {pid}, ukrdcid = {ukrdcid}. {report}"
+            response.msg = (
+                f"Updated patient: pid = {pid}, ukrdcid = {ukrdcid}. {report}"
+            )
     else:
         if not is_new:
             # if the patient is in the database raise an investigation for a
@@ -313,7 +315,7 @@ def process_file(
         ukrdcid=ukrdcid,
         incoming_xml_file=xml_object,
         is_new=is_new,
-        mode=mode
+        mode=mode,
     )
 
     # Any investigation at this point will be associated with a merge to
