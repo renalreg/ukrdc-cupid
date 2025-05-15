@@ -1,4 +1,4 @@
-name: Test and Publish
+name: Test
 
 on:
   push:
@@ -16,35 +16,19 @@ on:
 jobs:
   test:
     name: Run tests
-
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        python: ["3.10", "3.11", "3.12", "3.13"]
-
-
     steps:
-      - uses: actions/checkout@v3
+      - name: Checkout code
+        uses: actions/checkout@v3
 
-      - uses: harmon758/postgresql-action@v1
+      - name: Docker Compose Setup
+        uses: isbang/compose-action@v1.5.1
         with:
-          postgresql version: "13"
-          postgresql db: "cupid_test_database"
-          postgresql user: postgres
-          postgresql password: "postgres"
+          compose-file: "./docker-compose.yml"
 
-      - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: ${{ matrix.python }}
-
-      - name: install
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y libxml2-dev libxslt-dev python3-dev
-          pip install poetry
-          poetry install --with dev
-
-      - name: Run Tox
-        run:
-          poetry run tox
+      - name: Run Tests
+        run: docker compose exec -T app tox -v
+        
+      - name: Logs on Failure
+        if: failure()
+        run: docker compose logs

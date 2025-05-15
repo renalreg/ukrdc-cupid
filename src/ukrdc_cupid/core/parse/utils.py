@@ -107,11 +107,31 @@ def load_xml_from_path(
 def hash_xml(xml: PatientRecord) -> str:
     """
     Take file strip dates etc and produce a hashed version of it. This is
-    pretty quick overall but if you wanted to do something more complicated
-    like starting to strip out more data it might get slow.
+    pretty quick overall but there becomes a point where this sort of thing
+    will probably stop saving time.
     """
     xml_copy = copy.deepcopy(xml)
-    del xml_copy.sending_extract
+
+    # delete some bits of metadata which are likely to change every time
+    if xml_copy.sending_facility.batch_no:
+        del xml_copy.sending_facility.batch_no
+
+    if xml_copy.sending_facility.time:
+        del xml_copy.sending_facility.time
+
+    if xml_copy.procedures:
+        if xml_copy.procedures.dialysis_sessions:
+            del xml_copy.procedures.dialysis_sessions[0].start
+            del xml_copy.procedures.dialysis_sessions[0].stop
+
+    if xml_copy.lab_orders:
+        del xml_copy.lab_orders.start
+        del xml_copy.lab_orders.stop
+
+    if xml_copy.observations:
+        del xml_copy.observations.start
+        del xml_copy.observations.stop
+
     xml_reduced = serializer.render(xml_copy)
     xml_hash = hashlib.sha256(xml_reduced.encode("utf-8")).hexdigest()
 

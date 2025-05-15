@@ -1,5 +1,6 @@
-#FROM python:3.12-slim-bookworm
-FROM pypy:3.10-7.3.17-bookworm
+FROM python:3.12-slim-bookworm
+#FROM pypy:3.10-7.3.17-bookworm
+#FROM pypy:latest
 
 ENV PYTHONUNBUFFERED=1 \
     #POETRY_VIRTUALENVS_IN_PROJECT=true \
@@ -18,21 +19,20 @@ RUN apt-get update && \
 
 WORKDIR /app
 
-# Install "bootstrap" dependencies (wheel and poetry)
 RUN python -m pip install -U pip wheel && pip install poetry
+RUN pip install "psycopg[c]"
 
 # Copy source files
 COPY . ./
 
 # Rebuild Lock
-RUN poetry lock
+#RUN poetry lock
 
 # Install production dependencies with poetry
 #RUN poetry install --only main --no-interaction
 
-#RUN source /app/.venv/bin/activate
-#RUN
-RUN python -m pip install .
+
+RUN poetry install --with dev 
 
 
 #CMD ["python", "scripts/test_deploy/initialise_db.py"]

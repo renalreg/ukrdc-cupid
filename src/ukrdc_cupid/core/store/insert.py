@@ -1,34 +1,84 @@
 import time
-
-from sqlalchemy.orm import Session
-from sqlalchemy import text
-
-from ukrdc_cupid.core.parse.xml_validate import SUPPORTED_VERSIONS
-from ukrdc_cupid.core.parse.utils import load_xml_from_str
-from ukrdc_cupid.core.store.models.ukrdc import PatientRecord
-from ukrdc_cupid.core.store.exceptions import (
-    InsertionBlockedError,
-    DataInsertionError,
-)
-from ukrdc_cupid.core.investigate.create_investigation import (
-    get_patients,
-    Investigation,
-)
-from ukrdc_cupid.core.store.keygen import mint_new_pid, mint_new_ukrdcid
-
-from ukrdc_cupid.core.match.identify import (
-    identify_patient_feed,
-    read_patient_metadata,
-    identify_across_ukrdc,
-)
-
-from sqlalchemy.exc import OperationalError
-from ukrdc_sqla.ukrdc import Base
+from typing import Optional
 
 import ukrdc_xsdata.ukrdc as xsd_ukrdc  # type: ignore
-from typing import Optional, Tuple
+from pydantic import BaseModel
+from sqlalchemy import text
+from sqlalchemy.exc import OperationalError
+from sqlalchemy.orm import Session
+from ukrdc_cupid.core.investigate.create_investigation import (
+    Investigation,
+    get_patients,
+)
+from ukrdc_cupid.core.match.identify import (
+    identify_across_ukrdc,
+    identify_patient_feed,
+    read_patient_metadata,
+)
+from ukrdc_cupid.core.parse.utils import load_xml_from_str
+from ukrdc_cupid.core.parse.xml_validate import SUPPORTED_VERSIONS
+from ukrdc_cupid.core.store.exceptions import (
+    DataInsertionError,
+    InsertionBlockedError,
+)
+from ukrdc_cupid.core.store.keygen import mint_new_pid, mint_new_ukrdcid
+from ukrdc_cupid.core.store.models.structure import RecordStatus
+from ukrdc_cupid.core.store.models.ukrdc import PatientRecord
 
 CURRENT_SCHEMA = max(SUPPORTED_VERSIONS)
+
+
+class DataInsertionResponse(BaseModel):
+    """
+    Response model for data insertion operations
+    """
+
+    class Config:
+        arbitrary_types_allowed = True
+
+    new_records: int = 0
+    deleted_records: int = 0
+    unchanged_records: int = 0
+    modified_records: int = 0
+    identical_to_last: bool = False
+    msg: str = ""
+    errormsg: Optional[str] = None
+    patient_record: Optional[PatientRecord] = None
+    investigation: Optional[Investigation] = None
+
+    def generate_insertion_summary(self) -> str:
+        """
+        Generate a summary table of insertion results.
+
+        Returns:
+            str: Formatted table as a string.
+        """
+        if (
+            self.new_records == 0
+            and self.unchanged_records == 0
+            and self.modified_records == 0
+        ):
+            return ""
+
+        total_records = (
+            self.new_records
+            + self.deleted_records
+            + self.unchanged_records
+            + self.modified_records
+        )
+        percentage_new = 100.0 * self.new_records / total_records
+
+        table = (
+            f"Records Summary\n"
+            f"----------------\n"
+            f"New Records: {self.new_records}\n"
+            f"Deleted Records: {self.deleted_records}\n"
+            f"Unchanged Records: {self.unchanged_records}\n"
+            f"Modified Records: {self.modified_records}\n"
+            f"Total Records: {total_records}\n"
+            f"Percentage New Records: {percentage_new:.2f}%\n"
+        )
+        return table
 
 
 def advisory_lock(func):
@@ -100,8 +150,7 @@ def insert_incoming_data(
     incoming_xml_file: xsd_ukrdc.PatientRecord,
     is_new: bool = False,
     mode: str = "full",
-    debug: bool = False,
-) -> Optional[Tuple[Base, Base, Base]]:  # type:ignore
+) -> DataInsertionResponse:
     """Insert file into the database having matched to pid.
     do we need a no delete mode?
 
@@ -111,69 +160,65 @@ def insert_incoming_data(
         no_delete (bool, optional): _description_. Defaults to False.
     """
 
+    response = DataInsertionResponse()
+
     # load incoming xml file into cupid store models
     if mode == "ex-missing":
         patient_record = PatientRecord(xml=incoming_xml_file, ex_missing=True)
     else:
         patient_record = PatientRecord(xml=incoming_xml_file)
 
-    # map xml to rows in the database using the orm
-    is_update = patient_record.map_to_database(
+    # Map xml to rows in the database using cupid models this will produce a
+    # tree of cupid models. These contain ukrdc_sqla models which can be
+    # committed to the database to sync it to the incoming file.
+    different_file = patient_record.map_to_database(
         session=ukrdc_session,
         ukrdcid=ukrdcid,
         pid=pid,
         is_new=is_new,
     )
 
-    if not is_update:
-        print(
-            "Incoming file is identical to last uploaded file. No action has been taken."
-        )
-        return
+    if not different_file:
+        response.msg = f"Incoming file matched hash for last inserted file for pid = {pid}. No further data insertion has occurred."
+        response.identical_to_last = True
+        response.patient_record = patient_record
+        return response
 
-    # extract a list of records from cupid models
-    if debug:
-        new = patient_record.get_orm_list(
-            is_dirty=False, is_new=True, is_unchanged=False
-        )
-        dirty = patient_record.get_orm_list(
-            is_dirty=True, is_new=False, is_unchanged=False
-        )
-        unchanged = patient_record.get_orm_list(
-            is_dirty=False, is_new=True, is_unchanged=True
-        )
-        print(f"New : {len(new)}, Dirty : {len(dirty)}, Unchanged : {len(unchanged)}")
-    else:
-        new = patient_record.get_orm_list(
-            is_dirty=False, is_new=True, is_unchanged=False
-        )
-
-    # if patient record is new it needs to be added to session
+    # get the orm objects for the records that need to be created and add them
+    # to the session
+    orm_objects, counts = patient_record.get_orm_list()
+    new = orm_objects[RecordStatus.NEW]
     ukrdc_session.add_all(new)
 
-    # get list of records to delete
+    response.new_records = counts[RecordStatus.NEW]
+    response.modified_records = counts[RecordStatus.MODIFIED]
+    response.unchanged_records = counts[RecordStatus.UNCHANGED]
+
+    # get the orm objects for records not in the file
     records_for_deletion = patient_record.get_orm_deleted()
     for record in records_for_deletion:
         ukrdc_session.delete(record)
 
+    response.deleted_records = len(records_for_deletion)
+
     # insert changes into database if valid
     error = commit_changes(ukrdc_session)
-
     if error is None:
-        print("================================================")
         if is_new:
-            print(f"Creating Patient: pid = {pid}, ukrdcid = {ukrdcid}")
+            response.msg = (
+                f"Successfully created patient: pid = {pid}, ukrdcid = {ukrdcid}"
+            )
+
         else:
-            print(f"Updating Patient: pid = {pid}, ukrdcid = {ukrdcid}")
+            report = response.generate_insertion_summary()
 
-        print(f"New records: {len(ukrdc_session.new)}")
-
-        print(f"Updated records: {len(ukrdc_session.dirty)}")
-
-        print(f"Deleted records: {len(ukrdc_session.deleted)}")
+            response.msg = (
+                f"Updated patient: pid = {pid}, ukrdcid = {ukrdcid}. {report}"
+            )
     else:
         if not is_new:
-            # if the patient is in the database raise a workitem
+            # if the patient is in the database raise an investigation for a
+            # human insight to figure out what is going on.
             investigation = Investigation(
                 ukrdc_session,
                 patient_ids=[(pid, ukrdcid)],
@@ -181,18 +226,22 @@ def insert_incoming_data(
                 error_msg=str(error),
             )
             investigation.append_extras(xml=incoming_xml_file)
+            response.errormsg = f"Patient could not be updated due to error:\n{error}\n"
+            response.errormsg += (
+                f"See investigation id = {investigation.issue.id} for more details"
+            )
+            response.investigation = investigation
 
         else:
-            # Otherwise we raise an error this will usually be some sort of sql
-            # statement. In theory I think the patient should still have their
-            # demographics information inserted this allows it to be handled as
-            # an investigation rather than an error.
-            raise DataInsertionError(f"New patient could not be inserted - {error}")
+            # TODO: Alternatively create a patient using the minimum possible
+            # information (probably the contents of the patient_demog) and
+            # raise and attach an investigation to that.
+            raise DataInsertionError(
+                f"New patient could not be inserted due to error- {error}"
+            )
 
-    if debug:
-        return new, dirty, unchanged
-
-    return None
+    response.patient_record = patient_record
+    return response
 
 
 def process_file(
@@ -204,7 +253,7 @@ def process_file(
 ) -> str:
     """Takes an xml file as a string and
     applies the cupid matching algorithm to attempt uploading it to the
-    database
+    database.
 
     Args:
         xml_body (str): xml file as a string
@@ -220,6 +269,7 @@ def process_file(
     )
 
     print(f"Time to load file {time.time()-t0}")
+
     # identify patient
     patient_info = read_patient_metadata(xml_object)
     pid, ukrdcid, investigation = identify_patient_feed(
@@ -228,11 +278,11 @@ def process_file(
     )
 
     # if an investigation has been raised in identifying the patient we do not insert
-    # (we could introduce a force mode to make it try regardless)
+    # This can be force merged if the incoming file is correct
     if investigation:
         investigation.create_issue()
         investigation.append_extras(xml=xml_body, metadata=patient_info)
-        msg = "File could not successfully write to existing patient"
+        msg = "Writing to patient blocked by outstanding investigation"
         raise InsertionBlockedError(msg)
 
     # generate new patient ids if required
@@ -259,29 +309,38 @@ def process_file(
     print(f"Time to load validate and match {time.time()-t0}")
 
     # insert into the database
-    insert_incoming_data(
+    response = insert_incoming_data(
         ukrdc_session=ukrdc_session,
         pid=pid,
         ukrdcid=ukrdcid,
         incoming_xml_file=xml_object,
         is_new=is_new,
         mode=mode,
-        debug=True,
     )
 
     # Any investigation at this point will be associated with a merge to
     # a single patient record therefore there will be a single pid and
     # ukrdc id associated with it. Are we potentially storing data that
-    # cause problems if the record gets anonomised?
+    # cause problems if the record gets anonymised?
     if investigation:
         # should this be an inbuilt method?
         patient = get_patients((pid, ukrdcid))  # type : ignore
-        investigation.append_patients(patient)
-        issue_id = investigation.issue.issue_id
-        msg = f"New patient was uploaded successfully but there was an issue in linking to ukrdc data check issue id: {issue_id} for more details"
-    else:
-        msg = "File uploaded successfully"
+        response.investigation.append_patients(patient)
+        issue_id = response.investigation.issue.issue_id
+        if not response.errormsg:
+            msg = f"New patient was uploaded successfully but there was an issue in linking to ukrdc data check issue id: {issue_id} for more details.\n"
+            msg += response.generate_insertion_summary()
+        else:
+            msg = f"New patient contains linkage issues simultaneously cannot be inserted. Check issue id: {issue_id} for more details."
 
+    # add output response from committing the data to the general output
+    if response.errormsg:
+        msg = "File upload failed : " + response.errormsg
+    else:
+        msg = f"File successfully written to patient with pid = {pid} and ukrdcid = {ukrdcid}: \n"
+        msg = msg + response.generate_insertion_summary()
+
+    print(msg)
     print(f"That took {time.time() - t0:.2f} secs")
 
     return msg

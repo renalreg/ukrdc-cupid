@@ -1,0 +1,37 @@
+{
+    "name": "UKRDC Cupid Development",
+    "dockerComposeFile": ["../docker-compose.yml"],
+    "service": "app",
+    "workspaceFolder": "/app",
+    "customizations": {
+        "vscode": {
+            "extensions": [
+                "ms-python.python",
+                "ms-python.vscode-pylance",
+                "ms-python.black-formatter",
+                "charliermarsh.ruff",
+                "njpwerner.autodocstring",
+                "ms-azuretools.vscode-docker",
+                "matangover.mypy"
+            ],
+            "settings": {
+                "python.defaultInterpreterPath": "/usr/local/bin/python",
+                "python.formatting.provider": "black",
+                "editor.formatOnSave": true,
+                "editor.codeActionsOnSave": {
+                    "source.organizeImports": true
+                },
+                "python.linting.enabled": true,
+                "python.linting.lintOnSave": true,
+                "python.linting.mypyEnabled": true,
+                "python.testing.pytestEnabled": true,
+                "python.testing.pytestArgs": ["tests"],
+                "python.analysis.typeCheckingMode": "basic"
+            }
+        }
+    },
+    "shutdownAction": "stopCompose",
+    "postStartCommand": "poetry install --with dev",
+    "forwardPorts": [8100, 8008],
+    "overrideCommand": true
+}

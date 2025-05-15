@@ -1,12 +1,12 @@
 services:
   db:
-    image: postgres:13
+    image: postgres:17
     environment:
-      POSTGRES_USER: ${UKRDC_USER}
-      POSTGRES_PASSWORD: ${UKRDC_PASSWORD}
-      POSTGRES_DB: ${UKRDC_NAME}
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: cupid_test_database
     ports:
-      - "8008:${UKRDC_PORT}"
+      - "8008:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
 
@@ -15,9 +15,10 @@ services:
     depends_on:
       - db
     ports:
-      - "8000:8000"
+      - "8100:8000"
     volumes:
       - .:/app
+
     env_file:
       - .env.docker
 

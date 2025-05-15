@@ -1,20 +1,26 @@
 from __future__ import annotations  # allows typehint of node class
-from abc import ABC, abstractmethod
-from typing import Optional, Union, List, Type
-from decimal import Decimal
 
 import csv
+from abc import ABC, abstractmethod
+from datetime import datetime
+from decimal import Decimal
+from enum import Enum, auto
+from typing import Dict, List, Optional, Tuple, Type, Union
+
 import ukrdc_cupid.core.store.keygen as key_gen
 import ukrdc_sqla.ukrdc as sqla
-from sqlalchemy.orm import Session
-from sqlalchemy import select
-from datetime import datetime
-
 import ukrdc_xsdata as xsd_all  # type:ignore
-from xsdata.models.datatype import XmlDateTime, XmlDate
 import ukrdc_xsdata.ukrdc.types as xsd_types  # type: ignore
-
 from pytz import timezone
+from sqlalchemy import select
+from sqlalchemy.orm import Session
+from xsdata.models.datatype import XmlDate, XmlDateTime
+
+
+class RecordStatus(Enum):
+    NEW = auto()
+    MODIFIED = auto()
+    UNCHANGED = auto()
 
 
 class Node(ABC):
@@ -39,9 +45,8 @@ class Node(ABC):
         self.mapped_classes: List[Node] = []  # classes which depend on this one
         self.deleted_orm: List[sqla.Base] = []  # type:ignore
         self.orm_model = orm_model  # orm class
-        self.is_new_record: bool = True  # flag if record is new to database
-        self.is_modified: bool = False
         self.pid: Optional[str] = None  # placeholder for pid
+        self.status: RecordStatus = RecordStatus.UNCHANGED
 
     def generate_id(self, seq_no: int) -> str:
         # Each database record has a natural key formed from compounding bits of information
@@ -56,8 +61,6 @@ class Node(ABC):
     def map_to_database(
         self, session: Session, pid: Union[str, None], seq_no: int
     ) -> str:
-        # This is where we get really ORM. The function uses the primary key for the
-        # record and loads the
 
         self.pid = pid
         id = self.generate_id(seq_no)
@@ -65,14 +68,10 @@ class Node(ABC):
         # Use primary key to fetch record
         self.orm_object = session.get(self.orm_model, id)
 
-        # If it doesn't exit create it and flag that you have done that
-        # if it needs a pid add it to the orm
+        # If it doesn't exit create it and flag that it's new
         if self.orm_object is None:
             self.orm_object = self.orm_model(id=id)  # type:ignore
-            self.is_new_record = True
-
-        else:
-            self.is_new_record = False
+            self.status = RecordStatus.NEW
 
         return id
 
@@ -116,22 +115,28 @@ class Node(ABC):
 
         attr_value: Union[str, int, bool, Decimal, datetime, None]
         attr_persist = getattr(self.orm_object, sqla_property)
+
         # parse value from xml into a python variable
         if (optional and value is not None) or (not optional):
             if value is not None:
                 if isinstance(value, (XmlDateTime, XmlDate)):
-                    # When the xml datetime parser does it's magic it will produce a time aware datetime
+                    # When the xml datetime parser does it's magic it may produce a time aware datetime
                     # The persistent datetimes are naive by default.
                     # To avoid issues when it comes to comparing them have to tell the datetime module that
-                    # the persistant datetimes are assumed to be london.
-                    if attr_persist:
+                    # the persistant datetimes are assumed to be utc.
+                    local_tz = timezone("utc")
+                    if attr_persist and attr_persist.tzinfo is None:
                         if isinstance(attr_persist, datetime):
-                            local_tz = timezone("Europe/London")
                             attr_persist = local_tz.localize(attr_persist)
 
+                    # For incoming datetimes we localize them to utc if not tz aware
                     attr_value = value.to_datetime()
+                    if attr_value.tzinfo is None:
+                        attr_value = local_tz.localize(attr_value)
 
                 elif isinstance(value, (str, int, bool, Decimal)):
+                    # unify type of persist and incoming need to be unified
+
                     attr_value = value
                 else:
                     attr_value = value.value
@@ -140,10 +145,16 @@ class Node(ABC):
             # we over write property with null if it doesn't appear in the file
             attr_value = None
 
+        # coerce type
+        if attr_value and attr_persist and type(attr_value) != type(attr_persist):
+            the_type = type(attr_persist)
+            attr_value = the_type(attr_value)
+
         # get persistant attribute and compare to incoming
         if attr_value != attr_persist:
             setattr(self.orm_object, sqla_property, attr_value)
-            self.is_modified = True
+            if self.status != RecordStatus.NEW:
+                self.status = RecordStatus.MODIFIED
 
     def add_children(
         self, child_node: Type[Node], xml_attr: str, session: Session
@@ -240,39 +251,57 @@ class Node(ABC):
         ]
 
     def get_orm_list(
-        self, is_dirty: bool = False, is_new: bool = True, is_unchanged: bool = False
-    ) -> list:
-        """Utility function to return list of objects depending on their status.
-        Theoretically all of this information should be in the session anyway.
+        self, statuses: List[RecordStatus] = [RecordStatus.NEW], count_all: bool = True
+    ) -> Tuple[Dict[RecordStatus, List], Dict[RecordStatus, int]]:
+        """Get ORM objects grouped by status with optional counting.
 
         Args:
-            is_dirty (bool, optional): _description_. Defaults to False.
-            is_new (bool, optional): _description_. Defaults to True.
-            is_unchanged (bool, optional): _description_. Defaults to False.
+            statuses: Statuses to filter by. Defaults to [NEW].
+            count_all: Whether to count all statuses. Defaults to True.
 
         Returns:
-            _type_: _description_
+            Tuple of (objects_by_status, counts_by_status).
+            objects_by_status will only contain keys for requested statuses.
         """
+        # Initialize results
+        orm_objects = {status: [] for status in statuses}
+        counts = {
+            RecordStatus.NEW: 0,
+            RecordStatus.MODIFIED: 0,
+            RecordStatus.UNCHANGED: 0,
+        }
 
-        orm_objects = []
+        # Get current record's status
+        current_state = self.status
 
-        # In normal operation we only need to explicitly add new records to session
-        if self.is_new_record and is_new:
-            orm_objects.append(self.orm_object)
+        # Add to counts
+        counts[current_state] += 1
 
-        elif self.is_modified and is_dirty:
-            orm_objects.append(self.orm_object)
+        # Add to objects dict if status matches requested statuses
+        if current_state in statuses:
+            orm_objects[current_state].append(self.orm_object)
 
-        elif is_unchanged:
-            orm_objects.append(self.orm_object)
-
+        # Process children
         if self.mapped_classes:
             for child_class in self.mapped_classes:
-                orm_objects = orm_objects + child_class.get_orm_list(
-                    is_dirty, is_new, is_unchanged
+                child_objects, child_counts = child_class.get_orm_list(
+                    statuses, count_all
                 )
 
-        return orm_objects
+                # Merge child objects for each status
+                for status in statuses:
+                    if status in child_objects:
+                        orm_objects[status].extend(child_objects[status])
+
+                # Add child counts
+                for s in RecordStatus:
+                    counts[s] += child_counts[s]
+
+        return orm_objects, counts
+
+    def get_new_records(self):
+        orm_objects, _ = self.get_orm_list()
+        return orm_objects[RecordStatus.NEW]
 
     def get_orm_deleted(self) -> list:
         # function to walk through the patient record structure an retrieve
@@ -290,7 +319,7 @@ class Node(ABC):
         # these type of changes should be made carefully to avoid churn
         # should potentially be set in the db in the future
         assert self.orm_object is not None  # nosec
-        if self.is_modified is True:
+        if self.status == RecordStatus.MODIFIED:
             self.orm_object.update_date = datetime.now()
 
     def generate_parent_data(self, seq_no: int) -> dict:

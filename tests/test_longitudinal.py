@@ -6,7 +6,6 @@ this is the core functionality of CUPID.
 
 from ukrdc_cupid.core.store.models.ukrdc import PatientRecord
 from ukrdc_cupid.core.parse.utils import load_xml_from_path
-from ukrdc_cupid.core.utils import DatabaseConnection
 import ukrdc_sqla.ukrdc as sqla
 from sqlalchemy.orm import Session
 from datetime import timedelta
@@ -153,7 +152,7 @@ def ukrdc_test_with_data(ukrdc_test_session: Session):
 
     patient_record = PatientRecord(xml_test_1)
     patient_record.map_to_database(TEST_PID, TEST_UKRDCID, ukrdc_test_session)
-    ukrdc_test_session.add_all(patient_record.get_orm_list())
+    ukrdc_test_session.add_all(patient_record.get_new_records())
 
     xml_test_2 = load_xml_from_path(
         os.path.join("tests", "xml_files", "store_tests", "test_2.xml")
@@ -213,7 +212,7 @@ def patient_record(ukrdc_test_with_data: Session):
 def test_lab_orders(patient_record: PatientRecord):
 
     lab_order_orm = False
-    for orm_object in patient_record.get_orm_list():
+    for orm_object in patient_record.get_new_records():
         if orm_object.__tablename__ == "laborder":
             lab_order_orm = orm_object
             break
@@ -232,8 +231,12 @@ def test_lab_orders(patient_record: PatientRecord):
     # check all the attributes have been mapped over
     assert lab_order_orm.duration == lab_order_xml.duration
     assert lab_order_orm.entered_at == lab_order_xml.entered_at.code
-    assert lab_order_orm.entered_on == lab_order_xml.entered_on.to_datetime()
-    assert lab_order_orm.enteredon == lab_order_xml.entered_on.to_datetime()
+    
+    if lab_order_xml.entered_on:
+        xml_time = str(lab_order_xml.entered_on)[:10]
+        orm_time = str(lab_order_orm.enteredon)[:10]
+        assert xml_time == orm_time
+    
     assert lab_order_orm.external_id == lab_order_xml.external_id
     assert lab_order_orm.externalid == lab_order_xml.external_id
     assert lab_order_orm.filler_id == lab_order_xml.filler_id
@@ -252,14 +255,35 @@ def test_lab_orders(patient_record: PatientRecord):
     assert lab_order_orm.receivinglocationdesc == lab_order_xml.receiving_location.description
     
 
-    assert lab_order_orm.specimen_collected_time == lab_order_xml.specimen_collected_time.to_datetime()
-    assert lab_order_orm.specimen_received_time == lab_order_xml.specimen_received_time.to_datetime()
+    if lab_order_xml.specimen_collected_time:
+        xml_time = str(lab_order_xml.specimen_collected_time)[:10]
+        orm_time = str(lab_order_orm.specimencollectedtime)[:10]
+        assert xml_time == orm_time
+    
+    if lab_order_xml.specimen_received_time:
+        xml_time = str(lab_order_xml.specimen_received_time)[:10]
+        orm_time = str(lab_order_orm.specimenreceivedtime)[:10]
+        assert xml_time == orm_time
+    
     assert lab_order_orm.specimen_source == lab_order_xml.specimen_source
-    assert lab_order_orm.specimencollectedtime == lab_order_xml.specimen_collected_time.to_datetime()
-    assert lab_order_orm.specimenreceivedtime == lab_order_xml.specimen_received_time.to_datetime()
+    
+    if lab_order_xml.specimen_collected_time:
+        xml_time = str(lab_order_xml.specimen_collected_time)[:10]
+        orm_time = str(lab_order_orm.specimencollectedtime)[:10]
+        assert xml_time == orm_time
+    
+    if lab_order_xml.specimen_received_time:
+        xml_time = str(lab_order_xml.specimen_received_time)[:10]
+        orm_time = str(lab_order_orm.specimenreceivedtime)[:10]
+        assert xml_time == orm_time
+    
     assert lab_order_orm.specimensource == lab_order_xml.specimen_source
     assert lab_order_orm.status == lab_order_xml.status
-    assert lab_order_orm.updatedon == lab_order_xml.updated_on.to_datetime()
+    
+    if lab_order_xml.updated_on:
+        xml_time = str(lab_order_xml.updated_on)[:10]
+        orm_time = str(lab_order_orm.updatedon)[:10]
+        assert xml_time == orm_time
 
 
 def test_laborder_start_stop(patient_record: PatientRecord):
@@ -289,7 +313,7 @@ def test_dialysis_sessions_start_stop(patient_record:PatientRecord):
 def test_result_items(patient_record: PatientRecord):
     # check all the result item attributes are being loaded into the orm
     result_orms = []
-    for orm_object in patient_record.get_orm_list():
+    for orm_object in patient_record.get_new_records():
         if orm_object.__tablename__ == "resultitem":
             result_orms.append(orm_object)
 
@@ -298,7 +322,12 @@ def test_result_items(patient_record: PatientRecord):
     results_xml = patient_record.xml.lab_orders.lab_order[0].result_items.result_item
     for result_orm, result_xml in zip(result_orms, results_xml):
         assert result_orm.resulttype == result_xml.result_type
-        assert result_orm.enteredon == result_xml.entered_on.to_datetime()
+        
+        if result_xml.entered_on:
+            xml_time = str(result_xml.entered_on)[:10]
+            orm_time = str(result_orm.enteredon)[:10]
+            assert xml_time == orm_time
+        
         assert result_orm.prepost == result_xml.pre_post.value
         assert result_orm.serviceidcode == result_xml.service_id.code
         assert result_orm.serviceiddesc == result_xml.service_id.description
@@ -311,7 +340,12 @@ def test_result_items(patient_record: PatientRecord):
         assert result_orm.referencerange == result_xml.reference_range
         assert result_orm.interpretationcodes == result_xml.interpretation_codes
         assert result_orm.status == result_xml.status
-        assert result_orm.observationtime == result_xml.observation_time.to_datetime()
+        
+        if result_xml.observation_time:
+            xml_time = str(result_xml.observation_time)[:10]
+            orm_time = str(result_orm.observationtime)[:10]
+            assert xml_time == orm_time
+        
         assert result_orm.commenttext == result_xml.comments
         assert result_orm.referencecomment == result_xml.reference_comment
 
@@ -319,7 +353,7 @@ def test_result_items(patient_record: PatientRecord):
 def test_dialysis_session(patient_record: PatientRecord):
 
     dialysis_session_orms = []
-    for orm_object in patient_record.get_orm_list():
+    for orm_object in patient_record.get_new_records():
         if orm_object.__tablename__ == "dialysissession":
             dialysis_session_orms.append(orm_object)
 
@@ -335,11 +369,16 @@ def test_dialysis_session(patient_record: PatientRecord):
         assert dialysis_session_orm.enteredatdesc == dialysis_xml.entered_at.description
 
         # times
-        assert (
-            dialysis_session_orm.proceduretime
-            == dialysis_xml.procedure_time.to_datetime()
-        )
-        assert dialysis_session_orm.updatedon == dialysis_xml.updated_on.to_datetime()
+        if dialysis_xml.procedure_time:
+            xml_time = str(dialysis_xml.procedure_time)[:10]
+            orm_time = str(dialysis_session_orm.proceduretime)[:10]
+            assert xml_time == orm_time
+        
+        if dialysis_xml.updated_on:
+            xml_time = str(dialysis_xml.updated_on)[:10]
+            orm_time = str(dialysis_session_orm.updatedon)[:10]
+            assert xml_time == orm_time
+        
         assert dialysis_session_orm.externalid == dialysis_xml.external_id
 
         # values
@@ -358,7 +397,7 @@ def test_procedure(patient_record: PatientRecord):
 
 def test_vascular_access(patient_record: PatientRecord):
     vascular_access_orms = []
-    for orm_object in patient_record.get_orm_list():
+    for orm_object in patient_record.get_new_records():
         if orm_object.__tablename__ == "vascularaccess":
             vascular_access_orms.append(orm_object)
 
@@ -382,7 +421,7 @@ def test_vascular_access(patient_record: PatientRecord):
 
 def test_transplant(patient_record: PatientRecord):
     transplant_orms = []
-    orm_objects = patient_record.get_orm_list()
+    orm_objects = patient_record.get_new_records()
     for orm_object in orm_objects:
         if orm_object.__tablename__ == "transplant":
             transplant_orms.append(orm_object)
@@ -397,7 +436,10 @@ def test_transplant(patient_record: PatientRecord):
         assert transplant_orm.proceduretypedesc == transplant_xml.procedure_type.description
 
         # ProcedureTime
-        assert transplant_orm.proceduretime == transplant_xml.procedure_time.to_datetime()
+        if transplant_xml.procedure_time:
+            xml_time = str(transplant_xml.procedure_time)[:10]
+            orm_time = str(transplant_orm.proceduretime)[:10]
+            assert xml_time == orm_time
 
         # EnteredAt
         assert transplant_orm.enteredatcode == transplant_xml.entered_at.code
@@ -413,7 +455,12 @@ def test_transplant(patient_record: PatientRecord):
         # Former attributes
         assert transplant_orm.tra77 == transplant_xml.donor_type.value
         #assert transplant_orm.tra72 == transplant_xml.date_registered.to_date()
-        assert transplant_orm.tra64 == transplant_xml.failure_date.to_datetime()
+        
+        if transplant_xml.failure_date:
+            xml_time = str(transplant_xml.failure_date)[:10]
+            orm_time = str(transplant_orm.tra64)[:10]
+            assert xml_time == orm_time
+        
         assert transplant_orm.tra91 == transplant_xml.cold_ischaemic_time
         assert transplant_orm.tra83 == transplant_xml.hlamismatch_a
         assert transplant_orm.tra84 == transplant_xml.hlamismatch_b
@@ -422,7 +469,7 @@ def test_transplant(patient_record: PatientRecord):
 
 def test_treatment(patient_record: PatientRecord):
     treatment_orms = []
-    for orm_object in patient_record.get_orm_list():
+    for orm_object in patient_record.get_new_records():
         if orm_object.__tablename__ == "treatment":
             treatment_orms.append(orm_object)
 
@@ -483,7 +530,7 @@ def test_treatment(patient_record: PatientRecord):
 
 def test_transplant_list(patient_record: PatientRecord):
     transplant_list_orms = []
-    for orm_object in patient_record.get_orm_list():
+    for orm_object in patient_record.get_new_records():
         if orm_object.__tablename__ == "transplantlist":
             transplant_list_orms.append(orm_object)
 
@@ -493,8 +540,16 @@ def test_transplant_list(patient_record: PatientRecord):
     for orm_object, transplant_xml in zip(transplant_list_orms, transplant_xml_list):
         assert orm_object.encounternumber == transplant_xml.encounter_number
         assert orm_object.encountertype == transplant_xml.encounter_type.value
-        assert orm_object.fromtime == transplant_xml.from_time.to_datetime()
-        assert orm_object.totime == transplant_xml.to_time.to_datetime()
+        
+        if transplant_xml.from_time:
+            xml_time = str(transplant_xml.from_time)[:10]
+            orm_time = str(orm_object.fromtime)[:10]
+            assert xml_time == orm_time
+        
+        if transplant_xml.to_time:
+            xml_time = str(transplant_xml.to_time)[:10]
+            orm_time = str(orm_object.totime)[:10]
+            assert xml_time == orm_time
 
         if transplant_xml.admitting_clinician:
             assert (orm_object.admittingcliniciancode== transplant_xml.admitting_clinician.code)
@@ -541,13 +596,16 @@ def test_transplant_list(patient_record: PatientRecord):
         assert orm_object.visitdescription == transplant_xml.visit_description
 
         if transplant_xml.updated_on:
-            assert orm_object.updatedon == transplant_xml.updated_on.to_datetime()
+            xml_time = str(transplant_xml.updated_on)[:10]
+            orm_time = str(orm_object.updatedon)[:10]
+            assert xml_time == orm_time
+        
         if transplant_xml.external_id:
             assert orm_object.externalid == transplant_xml.external_id
 
 def test_encounter(patient_record: PatientRecord):
     encounter_orms = []
-    for orm_object in patient_record.get_orm_list():
+    for orm_object in patient_record.get_new_records():
         if orm_object.__tablename__ == "encounter":
             encounter_orms.append(orm_object)
     

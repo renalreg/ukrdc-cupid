@@ -21,13 +21,12 @@ from datetime import timedelta
 from sqlalchemy.orm import Session
 from ukrdc_cupid.core.parse.utils import load_xml_from_path
 from ukrdc_cupid.core.store.models.ukrdc import PatientRecord
-from ukrdc_cupid.core.investigate.utils import ISSUE_PICKLIST
+from ukrdc_cupid.core.investigate.picklists import ISSUE_PICKLIST
 from ukrdc_cupid.core.match.identify import (
     identify_patient_feed,
     read_patient_metadata,
     identify_across_ukrdc
 )
-from ukrdc_cupid.core.utils import DatabaseConnection
 
 
 TEST_PID = "test_pid:731"
@@ -47,7 +46,7 @@ def ukrdc_test(ukrdc_test_session: Session):
 def commit_patient_record(ukrdc_session: Session, pid, ukrdcid, xml):
     patient_record = PatientRecord(xml)
     patient_record.map_to_database(pid, ukrdcid, ukrdc_session)
-    ukrdc_session.add_all(patient_record.get_orm_list())
+    ukrdc_session.add_all(patient_record.get_new_records())
     ukrdc_session.commit()
     return
 
@@ -197,3 +196,5 @@ def test_multiple_matches_ukrdcid(ukrdc_test:Session):
     assert investigation.issue.issue_id in POSSIBLE_ISSUES
     assert investigation.issue.issue_id == 6
     assert not investigation.issue.is_blocking
+
+
