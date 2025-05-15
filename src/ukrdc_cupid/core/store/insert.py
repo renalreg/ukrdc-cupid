@@ -1,34 +1,29 @@
 import time
-
-from pydantic import BaseModel
 from typing import Optional
 
-from sqlalchemy.orm import Session
+import ukrdc_xsdata.ukrdc as xsd_ukrdc  # type: ignore
+from pydantic import BaseModel
 from sqlalchemy import text
-
-from ukrdc_cupid.core.parse.xml_validate import SUPPORTED_VERSIONS
-from ukrdc_cupid.core.parse.utils import load_xml_from_str
-from ukrdc_cupid.core.store.models.ukrdc import PatientRecord
-from ukrdc_cupid.core.store.models.structure import RecordStatus
-from ukrdc_cupid.core.store.exceptions import (
-    InsertionBlockedError,
-    DataInsertionError,
-)
+from sqlalchemy.exc import OperationalError
+from sqlalchemy.orm import Session
 from ukrdc_cupid.core.investigate.create_investigation import (
-    get_patients,
     Investigation,
+    get_patients,
 )
-from ukrdc_cupid.core.store.keygen import mint_new_pid, mint_new_ukrdcid
-
 from ukrdc_cupid.core.match.identify import (
+    identify_across_ukrdc,
     identify_patient_feed,
     read_patient_metadata,
-    identify_across_ukrdc,
 )
-
-from sqlalchemy.exc import OperationalError
-
-import ukrdc_xsdata.ukrdc as xsd_ukrdc  # type: ignore
+from ukrdc_cupid.core.parse.utils import load_xml_from_str
+from ukrdc_cupid.core.parse.xml_validate import SUPPORTED_VERSIONS
+from ukrdc_cupid.core.store.exceptions import (
+    DataInsertionError,
+    InsertionBlockedError,
+)
+from ukrdc_cupid.core.store.keygen import mint_new_pid, mint_new_ukrdcid
+from ukrdc_cupid.core.store.models.structure import RecordStatus
+from ukrdc_cupid.core.store.models.ukrdc import PatientRecord
 
 CURRENT_SCHEMA = max(SUPPORTED_VERSIONS)
 
@@ -155,8 +150,7 @@ def insert_incoming_data(
     incoming_xml_file: xsd_ukrdc.PatientRecord,
     is_new: bool = False,
     mode: str = "full",
-    debug: bool = False,
-) -> dict:
+) -> DataInsertionResponse:
     """Insert file into the database having matched to pid.
     do we need a no delete mode?
 
@@ -216,14 +210,9 @@ def insert_incoming_data(
             )
 
         else:
-            all_records = (
-                response.modified_records
-                + response.unchanged_records
-                + response.new_records
-            )
-            new_records = 100.0 * response.new_records / all_records
+            report = response.generate_insertion_summary()
 
-            response.msg = f"Updated patient: pid = {pid}, ukrdcid = {ukrdcid}. {new_records:.2f}% of {all_records} records were new. {response.deleted_records} were new"
+            response.msg = f"Updated patient: pid = {pid}, ukrdcid = {ukrdcid}. {report}"
     else:
         if not is_new:
             # if the patient is in the database raise an investigation for a
@@ -324,8 +313,7 @@ def process_file(
         ukrdcid=ukrdcid,
         incoming_xml_file=xml_object,
         is_new=is_new,
-        mode=mode,
-        debug=True,
+        mode=mode
     )
 
     # Any investigation at this point will be associated with a merge to

@@ -26,7 +26,7 @@ RUN pip install "psycopg[c]"
 COPY . ./
 
 # Rebuild Lock
-RUN poetry lock
+#RUN poetry lock
 
 # Install production dependencies with poetry
 #RUN poetry install --only main --no-interaction

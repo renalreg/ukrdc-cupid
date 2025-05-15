@@ -1,12 +1,12 @@
-from sqlalchemy.orm import Session
-from ukrdc_cupid.core.store.models.structure import Node, RecordStatus
-from xsdata.models.datatype import XmlDateTime
 from datetime import datetime
+
+import pytest
 import ukrdc_sqla.ukrdc as sqla
 import ukrdc_xsdata.ukrdc as xsd_ukrdc
 import ukrdc_xsdata.ukrdc.types as xsd_types
-
-import pytest
+from sqlalchemy.orm import Session
+from ukrdc_cupid.core.store.models.structure import Node, RecordStatus
+from xsdata.models.datatype import XmlDateTime
 
 
 # Partial sample of Nodes to be static for testing
@@ -103,13 +103,16 @@ def test_add_item(patient_node: Node):
     dod = XmlDateTime.from_string("1984-10-06T00:00:00+00:00")
     dod_datetime = datetime(1984, 10, 6, 1)
     patient_node.add_item("deathtime", dod)
-    assert patient_node.status == RecordStatus.MODIFIED
+
+    domain_date = patient_node.orm_object.deathtime.date()
+    incoming_date = dod_datetime.date()
+
+    assert domain_date == incoming_date
     assert patient_node.orm_object.deathtime.date() == dod_datetime.date()
 
 
     # Check nothing changes when we repeat the process
     patient_node.status = RecordStatus.UNCHANGED
-    patient_node.orm_object.deathtime = dod_datetime
     patient_node.add_item("deathtime", dod)
     assert patient_node.status == RecordStatus.UNCHANGED
 

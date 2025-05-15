@@ -25,8 +25,7 @@ def test_churn(ukrdc_test_session):
         ukrdc_test_session, 
         TEST_PID, 
         TEST_UKRDCID, 
-        xml_test, 
-        debug=True,
+        xml_test,
         is_new=True
     )
 
@@ -40,7 +39,6 @@ def test_churn(ukrdc_test_session):
         TEST_PID, 
         TEST_UKRDCID, 
         xml_test, 
-        debug=True,
         is_new=False
     )
     assert status.msg == "Incoming file matched hash for last inserted file for pid = 314159. No further data insertion has occurred."

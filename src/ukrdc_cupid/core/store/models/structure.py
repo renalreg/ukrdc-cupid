@@ -1,21 +1,20 @@
 from __future__ import annotations  # allows typehint of node class
-from abc import ABC, abstractmethod
-from typing import Optional, Union, List, Type, Tuple, Dict
-from decimal import Decimal
-from enum import Enum, auto
 
 import csv
+from abc import ABC, abstractmethod
+from datetime import datetime
+from decimal import Decimal
+from enum import Enum, auto
+from typing import Dict, List, Optional, Tuple, Type, Union
+
 import ukrdc_cupid.core.store.keygen as key_gen
 import ukrdc_sqla.ukrdc as sqla
-from sqlalchemy.orm import Session
-from sqlalchemy import select
-from datetime import datetime
-
 import ukrdc_xsdata as xsd_all  # type:ignore
-from xsdata.models.datatype import XmlDateTime, XmlDate
 import ukrdc_xsdata.ukrdc.types as xsd_types  # type: ignore
-
 from pytz import timezone
+from sqlalchemy import select
+from sqlalchemy.orm import Session
+from xsdata.models.datatype import XmlDate, XmlDateTime
 
 
 class RecordStatus(Enum):
@@ -121,15 +120,16 @@ class Node(ABC):
         if (optional and value is not None) or (not optional):
             if value is not None:
                 if isinstance(value, (XmlDateTime, XmlDate)):
-                    # When the xml datetime parser does it's magic it will produce a time aware datetime
+                    # When the xml datetime parser does it's magic it may produce a time aware datetime
                     # The persistent datetimes are naive by default.
                     # To avoid issues when it comes to comparing them have to tell the datetime module that
-                    # the persistant datetimes are assumed to be london.
-                    local_tz = timezone("Europe/London")
-                    if attr_persist:
+                    # the persistant datetimes are assumed to be utc.
+                    local_tz = timezone("utc")
+                    if attr_persist and attr_persist.tzinfo is None:
                         if isinstance(attr_persist, datetime):
                             attr_persist = local_tz.localize(attr_persist)
 
+                    # For incoming datetimes we localize them to utc if not tz aware
                     attr_value = value.to_datetime()
                     if attr_value.tzinfo is None:
                         attr_value = local_tz.localize(attr_value)
