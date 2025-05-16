@@ -1,4 +1,4 @@
-FROM python:3.12-slim-bookworm
+FROM python:3.13-slim-bookworm
 #FROM pypy:3.10-7.3.17-bookworm
 #FROM pypy:latest
 
