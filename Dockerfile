@@ -12,9 +12,9 @@ RUN apt-get update && \
     apt-get install -y --no-install-recommends build-essential git && \
     rm -rf /var/lib/apt/lists/*
 
-# install psycopg2 dependencies
+# install psycopg2 dependencies and a few useful tools
 RUN apt-get update && \
-    apt-get install -y postgresql-server-dev-all gcc python3-dev musl-dev nano && \
+    apt-get install -y postgresql-server-dev-all gcc python3-dev musl-dev nano curl procps && \
     rm -rf /var/lib/apt/lists/*    
 
 WORKDIR /app
@@ -26,7 +26,7 @@ RUN pip install "psycopg[c]"
 COPY . ./
 
 # Rebuild Lock
-#RUN poetry lock
+RUN poetry lock
 
 # Install production dependencies with poetry
 #RUN poetry install --only main --no-interaction
@@ -34,7 +34,4 @@ COPY . ./
 
 RUN poetry install --with dev 
 
-
-#CMD ["python", "scripts/test_deploy/initialise_db.py"]
-#CMD ["poetry", "run", "uvicorn", "ukrdc_xml_converter.api:app", "--host", "0.0.0.0", "--port", "8000"]
 CMD ["python", "scripts/start_api_docker.py"]
