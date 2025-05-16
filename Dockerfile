@@ -14,7 +14,7 @@ RUN apt-get update && \
 
 # install psycopg2 dependencies
 RUN apt-get update && \
-    apt-get install -y postgresql-server-dev-all gcc python3-dev musl-dev nano && \
+    apt-get install -y postgresql-server-dev-all gcc python3-dev musl-dev nano curl procps && \
     rm -rf /var/lib/apt/lists/*    
 
 WORKDIR /app
