@@ -26,6 +26,9 @@ optional = true
 ukrdc-sqla = {git ="http://git@github.com/renalreg/ukrdc-sqla.git", branch = "v5"}
 sqlalchemy-utils = "^0.41.1"
 psycopg = "^3.2.2"
+pytz = "^2025.2"
+
+
 
 [tool.poetry.group.api]
 optional = true
@@ -34,7 +37,6 @@ optional = true
 fastapi = "^0.111.0"
 uvicorn = "^0.30.6"
 requests = "^2.31.0"
-pytz = "^2023.3.post1"
 
 [tool.poetry.group.utils]
 optional = true
