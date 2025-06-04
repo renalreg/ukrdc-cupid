@@ -26,10 +26,10 @@ CENTRES = [
 
 sftp_path = "/data/rdastaging/archive"
 errored_files_folder = Path(".xml_errored")
-decrypted_folder = Path(".xml_decrypted")
+decrypted_folder = Path(".xml_to_load")
 
 
-LOAD_FILES_FROM_SFTP = True
+LOAD_FILES_FROM_SFTP = False
 #SPECIFIC_FILES = ["RH8_000022_RH8_11063796.xml"]
 SPECIFIC_FILES = []
 

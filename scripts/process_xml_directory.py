@@ -13,12 +13,12 @@ from sqlalchemy.orm import sessionmaker
 
 
 # Configure 
-#SOURCE_FOLDER = ".xml_to_load/*.xml"
-#PROCESSED_FOLDER = ".xml_to_load/"
-SOURCE_FOLDER = "tests/xml_files/store_tests/*.xml"
-PROCESSED_FOLDER ="tests/xml_files/store_tests/"
+SOURCE_FOLDER = ".xml_to_load/*.xml"
+PROCESSED_FOLDER = ".xml_to_load/"
+#SOURCE_FOLDER = "tests/xml_files/store_tests/*.xml"
+#PROCESSED_FOLDER ="tests/xml_files/store_tests/"
 
-DB_URL = "postgresql+psycopg://postgres:postgres@localhost:8000/ukrdc4"
+DB_URL = "postgresql+psycopg://postgres:postgres@db:8008/cupid_test_database"
 HANDLE_ERRORS = True
 
 files =  glob.glob(SOURCE_FOLDER)
