@@ -26,8 +26,12 @@ jobs:
         with:
           compose-file: "./docker-compose.yml"
 
+      - name: Make script executable
+        run: docker compose exec -T app chmod +x ./run_checks.sh
+
       - name: Run Tests
-        run: docker compose exec -T app tox -v
+        run: |
+          docker compose exec -T app ./run_checks.sh
         
       - name: Logs on Failure
         if: failure()
