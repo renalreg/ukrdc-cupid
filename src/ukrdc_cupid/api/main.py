@@ -26,6 +26,7 @@ def get_session() -> Session:
     sessionmaker = UKRDCConnection().create_sessionmaker()
     session = sessionmaker()
     try:
+
         yield session
     finally:
         session.close()

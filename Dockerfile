@@ -1,5 +1,4 @@
-FROM python:3.12-slim-bookworm
-#FROM pypy:3.10-7.3.17-bookworm
+FROM python:latest
 #FROM pypy:latest
 
 ENV PYTHONUNBUFFERED=1 \
@@ -25,16 +24,10 @@ RUN pip install "psycopg[c]"
 # Copy source files
 COPY . ./
 
-# Rebuild Lock
-#RUN poetry lock
+# Install production dependencies with poetry
+#RUN poetry install --only main --no-interaction
 
-# Install dependencies with poetry
-# Install core dependencies plus required groups
-# - store: database access
-# - api: web API functionality 
-# - dev: development tools
+
 RUN poetry install --with store,api,utils
 
-#CMD ["python", "scripts/test_deploy/initialise_db.py"]
-#CMD ["poetry", "run", "uvicorn", "ukrdc_xml_converter.api:app", "--host", "0.0.0.0", "--port", "8000"]
 CMD ["python", "scripts/start_api_docker.py"]

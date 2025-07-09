@@ -20,18 +20,17 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
+      
+      - name: rename docker.example
+        run: cp .env.docker.example .env.docker
 
       - name: Docker Compose Setup
         uses: isbang/compose-action@v1.5.1
         with:
           compose-file: "./docker-compose.yml"
 
-      - name: Make script executable
-        run: docker compose exec -T app chmod +x ./run_checks.sh
-
       - name: Run Tests
-        run: |
-          docker compose exec -T app ./run_checks.sh
+        run: docker compose exec -T app tox -v
         
       - name: Logs on Failure
         if: failure()
