@@ -11,7 +11,7 @@ import ukrdc_cupid.core.store.keygen as key_gen
 import ukrdc_sqla.ukrdc as sqla
 import ukrdc_xsdata as xsd_all  # type:ignore
 import ukrdc_xsdata.ukrdc.types as xsd_types  # type: ignore
-from pytz import timezone
+from zoneinfo import ZoneInfo
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 from xsdata.models.datatype import XmlDate, XmlDateTime
@@ -103,7 +103,9 @@ class Node(ABC):
     def add_item(
         self,
         sqla_property: str,
-        value: Optional[Union[str, XmlDateTime, XmlDate, bool, int, Decimal]],
+        attr_value: Optional[
+            Union[str, XmlDateTime, XmlDate, bool, int, Decimal, xsd_all]
+        ],
         optional: bool = True,
     ) -> None:
         """Function to do the mapping of a specific item from the xml file to the orm object. Since there are a varity of different items which can appear in the xml schema they.
@@ -113,44 +115,34 @@ class Node(ABC):
             optional (bool, optional): This determines whether it is a required field or not
         """
 
-        attr_value: Union[str, int, bool, Decimal, datetime, None]
+        # Ensure we have reached the bottom of the xsdata object
+        while hasattr(attr_value, "value"):
+            attr_value = attr_value.value
+
+        if not optional and not attr_value:
+            raise ValueError("Value is required for {sqla_property}")
+
         attr_persist = getattr(self.orm_object, sqla_property)
 
-        # parse value from xml into a python variable
-        if (optional and value is not None) or (not optional):
-            if value is not None:
-                if isinstance(value, (XmlDateTime, XmlDate)):
-                    # When the xml datetime parser does it's magic it may produce a time aware datetime
-                    # The persistent datetimes are naive by default.
-                    # To avoid issues when it comes to comparing them have to tell the datetime module that
-                    # the persistant datetimes are assumed to be utc.
-                    local_tz = timezone("utc")
-                    if attr_persist and attr_persist.tzinfo is None:
-                        if isinstance(attr_persist, datetime):
-                            attr_persist = local_tz.localize(attr_persist)
+        # Xml can contain the timezone info which we don't store this requires
+        # us to convert it to a naive datetime under the assumption all
+        # domain datetimes are utc
+        if attr_value:
+            if isinstance(attr_value, XmlDateTime):
+                attr_value = attr_value.to_datetime()
+                if attr_value.tzinfo is not None:
+                    attr_value = attr_value.astimezone(ZoneInfo("utc"))
+                    attr_value = attr_value.replace(tzinfo=None)
 
-                    # For incoming datetimes we localize them to utc if not tz aware
-                    attr_value = value.to_datetime()
-                    if attr_value.tzinfo is None:
-                        attr_value = local_tz.localize(attr_value)
+            if isinstance(attr_value, XmlDate):
+                attr_value = attr_value.to_datetime()
 
-                elif isinstance(value, (str, int, bool, Decimal)):
-                    # unify type of persist and incoming need to be unified
-
-                    attr_value = value
-                else:
-                    attr_value = value.value
-
-        else:
-            # we over write property with null if it doesn't appear in the file
-            attr_value = None
-
-        # coerce type
+        # coerce type to ensure integer can be compared to strings etc
         if attr_value and attr_persist and type(attr_value) != type(attr_persist):
             the_type = type(attr_persist)
             attr_value = the_type(attr_value)
 
-        # get persistant attribute and compare to incoming
+        # get persistent attribute and compare to incoming
         if attr_value != attr_persist:
             setattr(self.orm_object, sqla_property, attr_value)
             if self.status != RecordStatus.NEW:

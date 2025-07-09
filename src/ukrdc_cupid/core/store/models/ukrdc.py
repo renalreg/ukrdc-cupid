@@ -15,13 +15,17 @@ to orm.
 5) Contain the relationship between the primary keys and the order of items
 this could include a sort by date or something. 
 
+Update: looks like I'm not the first man on the moon:
+https://github.com/renalreg/cornflake
+
 These would save a considerable amount of effort in the different places where
 we are doing this kind of thing.
 """
 
 from __future__ import annotations  # allows typehint of node class
 
-from typing import Union
+from typing import Union, Type
+from ukrdc_cupid.core.store.keygen import KEY_SEPARATOR
 from ukrdc_cupid.core.store.models.utils import cull_singlet_lists
 from ukrdc_cupid.core.store.models.structure import Node, RecordStatus
 from ukrdc_cupid.core.store.models.patient import (
@@ -183,6 +187,34 @@ class PatientRecord(Node):
         self.add_children(TransplantList,"encounters.transplant_list", session)
         self.add_children(Survey, "surveys.survey", session)
         # fmt: on
+
+        self.deduplicate_keys(Observation)
+        self.deduplicate_keys(DialysisSession)
+
+    def deduplicate_keys(self, node_type: Type[Node]):
+        """
+        The cupid ready database has primary key turned on which means that any
+        records with duplicate keys will fail. There are some issues in the
+        data where keys have been implemented incorrectly for records with
+        start/stop. For these records the general principle of enumerating by
+        the order of appearance in the file fails since only a subset of the
+        records is sent. In the future this should be designed better but for
+        now this fixes duplicate keys when they arise.
+
+        TODO: figure out if this belongs better in the structure class
+        """
+        # definition of the keys
+        ids = []
+        for child in self.mapped_classes:
+            if isinstance(child, node_type):
+                id = child.orm_object.id
+                while id in ids:
+                    id_components = id.split(KEY_SEPARATOR)
+                    id_components[-1] = str(int(id_components[-1]) + 1)
+                    id = KEY_SEPARATOR.join(id_components)
+
+                child.orm_object.id = id
+                ids.append(id)
 
     def map_to_database(
         self, pid: str, ukrdcid: str, session: Session, is_new=True

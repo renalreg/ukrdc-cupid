@@ -12,7 +12,7 @@ import ukrdc_xsdata.ukrdc.surveys as xsd_surveys
 
 from typing import Optional
 
-KEY_SEPERATOR = ":"
+KEY_SEPARATOR = ":"
 
 
 def mint_new_pid(session: Session) -> str:
@@ -41,12 +41,12 @@ def mint_new_ukrdcid(session: Session) -> str:
 
 def generate_generic_key(parent: str, seq_no: Optional[int] = None) -> str:
     # not sure there is much point in this function
-    return f"{parent}{KEY_SEPERATOR}{seq_no}"
+    return f"{parent}{KEY_SEPARATOR}{seq_no}"
 
 
 def generate_key_laborder(laborder_xml: xsd_lab_orders, pid: str) -> str:
     # generate lab_order consitant with: https://github.com/renalreg/Data-Repository/blob/44d0b9af3eb73705de800fd52fe5a6b847219b31/src/main/java/org/ukrdc/repository/RepositoryManager.java#L679
-    return f"{pid}{KEY_SEPERATOR}{laborder_xml.placer_id}"
+    return f"{pid}{KEY_SEPARATOR}{laborder_xml.placer_id}"
 
 
 def generate_key_resultitem(xml, order_id: int, seq_no: int) -> str:
@@ -61,9 +61,9 @@ def generate_key_resultitem(xml, order_id: int, seq_no: int) -> str:
     service_id = xml.service_id.code
     pre_post = xml.pre_post.value
     if pre_post == "PRE":
-        return f"{order_id}{KEY_SEPERATOR}{service_id}{KEY_SEPERATOR}{seq_no}"
+        return f"{order_id}{KEY_SEPARATOR}{service_id}{KEY_SEPARATOR}{seq_no}"
     else:
-        return f"{order_id}{KEY_SEPERATOR}{pre_post}{KEY_SEPERATOR}{service_id}{KEY_SEPERATOR}{seq_no}"
+        return f"{order_id}{KEY_SEPARATOR}{pre_post}{KEY_SEPARATOR}{service_id}{KEY_SEPARATOR}{seq_no}"
 
 
 def generate_key_dialysis_session(
@@ -73,7 +73,7 @@ def generate_key_dialysis_session(
 ) -> str:
     procedure_time_uts = xml.procedure_time.to_datetime().timestamp()
     procedure_type_code = xml.procedure_type.code
-    return f"{pid}{KEY_SEPERATOR}{procedure_time_uts}{KEY_SEPERATOR}{procedure_type_code}{KEY_SEPERATOR}{seq_no}"
+    return f"{pid}{KEY_SEPARATOR}{procedure_time_uts}{KEY_SEPARATOR}{procedure_type_code}{KEY_SEPARATOR}{seq_no}"
 
 
 def generate_key_observations(
@@ -81,10 +81,10 @@ def generate_key_observations(
 ):
     time_uts = xml.observation_time.to_datetime().timestamp()
     code = xml.observation_code.code
-    return f"{pid}{KEY_SEPERATOR}{time_uts}{KEY_SEPERATOR}{code}{KEY_SEPERATOR}{seq_no}"
+    return f"{pid}{KEY_SEPARATOR}{time_uts}{KEY_SEPARATOR}{code}{KEY_SEPARATOR}{seq_no}"
 
 
 def generate_key_surveys(xml: xsd_surveys.Survey, pid: str):
     time_uts = xml.survey_time.to_datetime().timestamp()
     code = xml.survey_code.code
-    return f"{pid}{KEY_SEPERATOR}{time_uts}{KEY_SEPERATOR}{code}"
+    return f"{pid}{KEY_SEPARATOR}{time_uts}{KEY_SEPARATOR}{code}"
