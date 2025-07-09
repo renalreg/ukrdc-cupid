@@ -9,7 +9,7 @@ from ukrdc_cupid.core.store.insert import insert_incoming_data
 from xsdata.models.datatype import XmlDateTime
 
 TEST_PID = "314159"
-TEST_UKRDCID = "\(00)/"
+TEST_UKRDCID = "299792458"
 
 
 def test_churn(ukrdc_test_session):

@@ -136,6 +136,11 @@ class UKRDCConnection(DatabaseConnection):
             pool_pre_ping=True,
         )
 
+    def reset_id_sequences(self):
+        with self.create_sessionmaker()() as ukrdc_session:
+            reset_id_sequence(session=ukrdc_session, id_type="pid")
+            reset_id_sequence(session=ukrdc_session, id_type="ukrdcid")
+
 
 class UKRRConnection(DatabaseConnection):
     def __init__(
@@ -150,12 +155,18 @@ class UKRRConnection(DatabaseConnection):
 
 def create_id_generation_sequences(session: Session):
     # run sequences for generating PID and UKRDCID if they don't exist
+    print("Fetching existing database sequences...")
     db_sequencies = session.execute(text("SELECT sequencename FROM pg_sequences;"))
     sequencies = [seq[0] for seq in db_sequencies]
+    print(f"Found existing sequences: {sequencies}")
 
     for key, sql in ID_SEQUENCES.items():
         if key not in sequencies:
+            print(f"Creating sequence '{key}'...")
             session.execute(text(sql))
+            print(f"Sequence '{key}' created successfully.")
+        else:
+            print(f"Sequence '{key}' already exists.")
 
 
 def populate_ukrdc_tables(session: Session, gp_info: bool = False):
@@ -245,3 +256,34 @@ def generate_database(url: str, gp_info=False):
         session.commit()
 
     return ":)"
+
+
+def reset_id_sequence(session: Session, id_type: str):
+    """Function to set the id sequence of the ukrdcid and the pid to the
+    maximum. This may have issues if any non integer id's are allowed into the
+    database.
+
+    Args:
+        session (Session): _description_
+        id_type (str): _description_
+
+    Raises:
+        ValueError: _description_
+    """
+
+    print(f"Resetting ID sequence for '{id_type}'...")
+
+    if id_type == "pid":
+        query = "SELECT setval('generate_new_pid', (SELECT max(COALESCE(pid::integer, 0))+1 as pid FROM patientrecord order by pid));"
+        result = session.execute(text(query))
+        new_value = result.scalar()
+        print(f"PID sequence reset to {new_value}")
+    elif id_type == "ukrdcid":
+        query = "SELECT setval('generate_new_ukrdcid', (SELECT max(COALESCE(ukrdcid::integer, 0))+1 as ukrdcid FROM patientrecord order by ukrdcid));"
+        result = session.execute(text(query))
+        new_value = result.scalar()
+        print(f"UKRDCID sequence reset to {new_value}")
+    else:
+        raise ValueError(f"Unknown id type: {id_type}")
+
+    print(f"'{id_type}' sequence reset successfully.")

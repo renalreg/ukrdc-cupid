@@ -407,13 +407,13 @@ def test_vascular_access(patient_record: PatientRecord):
         assert vascular_orm.proceduretypecode == vascular_xml.procedure_type.code
         assert vascular_orm.proceduretypecodestd == vascular_xml.procedure_type.coding_standard.value
         assert vascular_orm.proceduretypedesc == vascular_xml.procedure_type.description
-        assert vascular_orm.proceduretime == vascular_xml.procedure_time.to_datetime()
+        assert vascular_orm.proceduretime == vascular_xml.procedure_time.to_datetime().replace(tzinfo=None)
         assert vascular_orm.enteredatcode == vascular_xml.entered_at.code
         assert vascular_orm.enteredatcodestd == vascular_xml.entered_at.coding_standard.value
         assert vascular_orm.enteredatdesc == vascular_xml.entered_at.description
-        assert vascular_orm.acc19 == vascular_xml.attributes.acc19.to_datetime()
-        assert vascular_orm.acc20 == vascular_xml.attributes.acc20.to_datetime()
-        assert vascular_orm.acc21 == vascular_xml.attributes.acc21.to_datetime()
+        assert vascular_orm.acc19 == vascular_xml.attributes.acc19.to_datetime().replace(tzinfo=None)
+        assert vascular_orm.acc20 == vascular_xml.attributes.acc20.to_datetime().replace(tzinfo=None)
+        assert vascular_orm.acc21 == vascular_xml.attributes.acc21.to_datetime().replace(tzinfo=None)
         assert vascular_orm.acc22 == vascular_xml.attributes.acc22
         assert vascular_orm.acc30 == vascular_xml.attributes.acc30.value
         assert vascular_orm.acc40 == vascular_xml.attributes.acc40

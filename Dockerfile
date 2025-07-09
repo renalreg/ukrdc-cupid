@@ -24,16 +24,10 @@ RUN pip install "psycopg[c]"
 # Copy source files
 COPY . ./
 
-# Rebuild Lock
-#RUN poetry lock
-
 # Install production dependencies with poetry
 #RUN poetry install --only main --no-interaction
 
 
-RUN poetry install --with dev 
+RUN poetry install --with store,api,utils
 
-
-#CMD ["python", "scripts/test_deploy/initialise_db.py"]
-#CMD ["poetry", "run", "uvicorn", "ukrdc_xml_converter.api:app", "--host", "0.0.0.0", "--port", "8000"]
 CMD ["python", "scripts/start_api_docker.py"]

@@ -8,27 +8,28 @@ import shutil
 from time import time
 from ukrdc_cupid.core.store.insert import process_file
 from ukrdc_cupid.core.utils import UKRDCConnection
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
 
-
-# Configure 
+# Config
 #SOURCE_FOLDER = ".xml_to_load/*.xml"
 #PROCESSED_FOLDER = ".xml_to_load/"
-SOURCE_FOLDER = "tests/xml_files/store_tests/*.xml"
-PROCESSED_FOLDER ="tests/xml_files/store_tests/"
+SOURCE_FOLDER = ".xml_errored/debug/*.xml"
+PROCESSED_FOLDER =".xml_errored/debug/"
+# set to true if new pids being generated are colliding with existing
+RESET_ID_SEQUENCES = False 
 
 DB_URL = "postgresql+psycopg://postgres:postgres@localhost:8000/ukrdc4"
-HANDLE_ERRORS = True
+HANDLE_ERRORS = False
 
 files =  glob.glob(SOURCE_FOLDER)
 
 total_thinking_time = time() - time()
-#engine = create_engine(DB_URL)
-#sessionmaker = sessionmaker(bind=engine)
-sessionmaker = UKRDCConnection(url=DB_URL).create_sessionmaker()
+connection = UKRDCConnection(url=DB_URL)
 
-with sessionmaker() as session:
+if RESET_ID_SEQUENCES:
+    connection.reset_id_sequences() 
+
+
+with connection.create_sessionmaker()() as session:
     for file_url in files:
         with open(file_url, "r", encoding="utf-8") as file:
             xml_file = file.read()
@@ -49,7 +50,7 @@ with sessionmaker() as session:
             if HANDLE_ERRORS:
                 print(msg)
             else:
-                raise Exception(msg) from e
+                raise Exception(msg + "\n" + str(e)) from e
             session.rollback()
             
         time_diff = time() - t0
