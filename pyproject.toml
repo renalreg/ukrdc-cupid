@@ -6,7 +6,7 @@ authors = [
 description = "An application to convert, match, and store RDA XML files"
 name = "ukrdc-cupid"
 readme = "README.md"
-version = "0.3.0"
+version = "0.3.1"
 
 [tool.poetry.dependencies]
 python = "^3.10"
