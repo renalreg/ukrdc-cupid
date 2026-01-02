@@ -986,7 +986,7 @@ version = "1.3.6"
 description = "Python package to provide utilities for NHS Numbers, including validity checks, normalisation, and generation."
 optional = false
 python-versions = "<4.0,>=3.8"
-groups = ["utils"]
+groups = ["main", "utils"]
 files = [
     {file = "nhs_number-1.3.6-py3-none-any.whl", hash = "sha256:22b8937b148f0d930acc69aaff00af1d6fb0e73f4c03fced3df4ad017479dc19"},
     {file = "nhs_number-1.3.6.tar.gz", hash = "sha256:5effca980ce7bb6734f07a7843816ae952166767511c3edf179b8fdcde8713e5"},
@@ -2342,4 +2342,4 @@ test = ["pre-commit", "pytest", "pytest-benchmark", "pytest-cov"]
 [metadata]
 lock-version = "2.1"
 python-versions = "^3.10"
-content-hash = "e3d0da9b2c0105677d598bd5a67d224d28cb3301852e432de262a52b9d4ea281"
+content-hash = "1b37d1dc36f6cfc98d533610023232934a383ded683f1ae7401bd1c56377474b"
