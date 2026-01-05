@@ -322,13 +322,15 @@ def deserialise_xml_dict(domain_file:etree._Element,xml_dict:dict)->etree._Eleme
         matches = root.xpath(f"//{xpath}", namespaces=NAMESPACES)
         if matches:
             parent = matches[0].getparent()
-            # Remove all existing child elements first
+            # Get the position of the first match before removing
+            insert_position = list(parent).index(matches[0])
+            # Remove all existing child elements
             for match in matches:
                 parent.remove(match)
-            # Add the new elements
-            for _, xml in elements_to_add.items():
+            # Add the new elements at the original position
+            for idx, (_, xml) in enumerate(elements_to_add.items()):
                 xml_element = etree.fromstring(xml)
-                parent.append(xml_element)
+                parent.insert(insert_position + idx, xml_element)
 
     return root
 
@@ -471,6 +473,12 @@ def merge_xml_dir_with_ukrdc(input_dir:Path, output_dir:Path, ukrdc_session:Sess
                             records[key] = value
                 
                 merged_file[table] = records
+
+        # Write domain XML to output directory for comparison
+        domain_output_path = output_dir / f"{Path(xml_path).stem}_domain.xml"
+        with open(domain_output_path, "wb") as f:
+            f.write(etree.tostring(domain_xml_doc, encoding="utf-8", xml_declaration=True, pretty_print=True))
+   
 
         # deserialse back to xml and write to output directory
         merged_doc = deserialise_xml_dict(domain_xml_doc,merged_file)
