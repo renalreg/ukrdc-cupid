@@ -4,12 +4,13 @@ to overwrite existing patients with extra data without deleting the data which
 is already in place. This logic is more how I would do the store models in 2026
 sans Joel.
 
+The following will need to be installed to make it work:
 git@github.com:renalreg/ukrdc_database.git
 """
 
 
 import glob
-from abc import abstractmethod
+from enum import Enum
 from lxml import etree
 from ukrdc_cupid.core.match.identify import read_patient_metadata_etree, match_pid
 from pathlib import Path
@@ -37,9 +38,9 @@ class BaseModel:
         self.xpath = xpath
         self.xml_elements = self.get_elements()
     
-    @abstractmethod
-    def key_gen(self, element:etree._Element):
-        pass
+    def key_gen(self, element:etree._Element, idx:str):
+        element = element
+        return f"{self.parent_id}:{idx}"
 
     def get_elements(self):
         # Get the elements themselves, not text nodes which include whitespace
@@ -47,45 +48,51 @@ class BaseModel:
 
     def serialize_to_dict(self):
         xml_dict = {}
-        for element in self.xml_elements:
-            key = self.key_gen(element)
+        for idx,element in enumerate(self.xml_elements):
+            key = self.key_gen(element, idx)
             xml_dict[key] = etree.tostring(element)
         return xml_dict
 
+
 class LabOrder(BaseModel):
-    def __init__(self, pid:str, patient_xml: etree._Element):
-        super().__init__(pid, patient_xml, "LabOrders/LabOrder")
+    XPATH = "LabOrders/LabOrder"
     
-    def key_gen(self, lab_order:etree._Element) -> str:
+    def __init__(self, pid:str, patient_xml: etree._Element):
+        super().__init__(pid, patient_xml, self.XPATH)
+    
+    def key_gen(self, lab_order:etree._Element,_) -> str:
         placer_id = lab_order.find(".//PlacerId")
         return f"{self.parent_id}:{placer_id.text}"
-        
 
 
 class Observation(BaseModel):
+    XPATH = "Observations/Observation"
+    
     def __init__(self, pid:str, patient_xml: etree._Element):
-        super().__init__(pid, patient_xml, "Observations/Observation")
+        super().__init__(pid, patient_xml, self.XPATH)
 
-    def key_gen(self, observation:etree._Element) -> str:
+    def key_gen(self, observation:etree._Element,idx:str) -> str:
         
         # Extract observation time and convert to timestamp
         obs_time_elem = observation.find(".//ObservationTime")
         obs_time = datetime.fromisoformat(obs_time_elem.text.replace('Z', '+00:00'))
         time_uts = obs_time.timestamp()
         
-        # Extract observation code
-        seq_no = 0
+        # Extract observation code and hardcode idx
+        idx = 0
         code_elem = observation.find(".//ObservationCode/Code")
         code = code_elem.text
         
-        return f"{self.parent_id}:{time_uts}:{code}:{seq_no}"
+        return f"{self.parent_id}:{time_uts}:{code}:{idx}"
 
 
 class DialysisSession(BaseModel):
-    def __init__(self, pid:str, patient_xml: etree._Element):
-        super().__init__(pid, patient_xml, "DialysisSessions/DialysisSession")
+    XPATH = "DialysisSessions/DialysisSession"
     
-    def key_gen(self, dialysis_session: etree._Element) -> str:
+    def __init__(self, pid:str, patient_xml: etree._Element):
+        super().__init__(pid, patient_xml, self.XPATH)
+    
+    def key_gen(self, dialysis_session: etree._Element,idx:str) -> str:
         # Extract procedure time and convert to timestamp
         procedure_time_elem = dialysis_session.find(".//ProcedureTime")
         procedure_time = datetime.fromisoformat(procedure_time_elem.text.replace('Z', '+00:00'))
@@ -95,28 +102,331 @@ class DialysisSession(BaseModel):
         procedure_type_elem = dialysis_session.find(".//ProcedureType/Code")
         procedure_type_code = procedure_type_elem.text
         
-        seq_no = 0  # hardcode as zero to prevent problems with ex-missing
-        return f"{self.parent_id}:{procedure_time_uts}:{procedure_type_code}:{seq_no}"
+        # Hardcode to zero for now
+        idx = 0  
+        return f"{self.parent_id}:{procedure_time_uts}:{procedure_type_code}:{idx}"
 
 
-def serialise_xml_to_dict(pid:str, xml_doc: etree._Element):
-    """Extract elements from XML document based on XPATH_MAP."""
+class Patient(BaseModel):
+    XPATH = "Patient"
+    
+    def __init__(self, pid: str, patient_xml: etree._Element):
+        super().__init__(pid, patient_xml, self.XPATH)
 
-    return {
-        "lab_order" : LabOrder(pid, xml_doc).serialize_to_dict(),
-        "observation" : Observation(pid, xml_doc), 
-        "dialysis_session" : DialysisSession(pid, xml_doc)
+
+class SocialHistory(BaseModel):
+    XPATH = "SocialHistories/SocialHistory"
+    
+    def __init__(self, pid: str, patient_xml: etree._Element):
+        super().__init__(pid, patient_xml, self.XPATH)
+
+
+class FamilyHistory(BaseModel):
+    XPATH = "FamilyHistories/FamilyHistory"
+    
+    def __init__(self, pid: str, patient_xml: etree._Element):
+        super().__init__(pid, patient_xml, self.XPATH)
+
+
+class Allergy(BaseModel):
+    XPATH = "Allergies/Allergy"
+    
+    def __init__(self, pid: str, patient_xml: etree._Element):
+        super().__init__(pid, patient_xml, self.XPATH)
+
+
+class Diagnosis(BaseModel):
+    XPATH = "Diagnoses/Diagnosis"
+    
+    def __init__(self, pid: str, patient_xml: etree._Element):
+        super().__init__(pid, patient_xml, self.XPATH)
+
+
+class CauseOfDeath(BaseModel):
+    XPATH = "CauseOfDeath"
+    
+    def __init__(self, pid: str, patient_xml: etree._Element):
+        super().__init__(pid, patient_xml, self.XPATH)
+
+
+class RenalDiagnosis(BaseModel):
+    XPATH = "RenalDiagnoses/RenalDiagnosis"
+    
+    def __init__(self, pid: str, patient_xml: etree._Element):
+        super().__init__(pid, patient_xml, self.XPATH)
+
+
+class Medication(BaseModel):
+    XPATH = "Medications/Medication"
+    
+    def __init__(self, pid: str, patient_xml: etree._Element):
+        super().__init__(pid, patient_xml, self.XPATH)
+
+
+class VascularAccess(BaseModel):
+    XPATH = "VascularAccesses/VascularAccess"
+    
+    def __init__(self, pid: str, patient_xml: etree._Element):
+        super().__init__(pid, patient_xml, self.XPATH)
+
+
+class Procedure(BaseModel):
+    XPATH = "Procedures/Procedure"
+    
+    def __init__(self, pid: str, patient_xml: etree._Element):
+        super().__init__(pid, patient_xml, self.XPATH)
+
+
+class Document(BaseModel):
+    XPATH = "Documents/Document"
+    
+    def __init__(self, pid: str, patient_xml: etree._Element):
+        super().__init__(pid, patient_xml, self.XPATH)
+
+
+class Encounter(BaseModel):
+    XPATH = "Encounters/Encounter"
+    
+    def __init__(self, pid: str, patient_xml: etree._Element):
+        super().__init__(pid, patient_xml, self.XPATH)
+
+
+class TransplantList(BaseModel):
+    XPATH = "TransplantList"
+    
+    def __init__(self, pid: str, patient_xml: etree._Element):
+        super().__init__(pid, patient_xml, self.XPATH)
+
+
+class Treatment(BaseModel):
+    XPATH = "Treatments/Treatment"
+    
+    def __init__(self, pid: str, patient_xml: etree._Element):
+        super().__init__(pid, patient_xml, self.XPATH)
+
+
+class ProgramMembership(BaseModel):
+    XPATH = "ProgramMemberships/ProgramMembership"
+    
+    def __init__(self, pid: str, patient_xml: etree._Element):
+        super().__init__(pid, patient_xml, self.XPATH)
+
+
+class Transplant(BaseModel):
+    XPATH = "Transplants/Transplant"
+    
+    def __init__(self, pid: str, patient_xml: etree._Element):
+        super().__init__(pid, patient_xml, self.XPATH)
+
+
+class OptOut(BaseModel):
+    XPATH = "OptOuts/OptOut"
+    
+    def __init__(self, pid: str, patient_xml: etree._Element):
+        super().__init__(pid, patient_xml, self.XPATH)
+
+
+class ClinicalRelationship(BaseModel):
+    XPATH = "ClinicalRelationships/ClinicalRelationship"
+    
+    def __init__(self, pid: str, patient_xml: etree._Element):
+        super().__init__(pid, patient_xml, self.XPATH)
+
+
+class Survey(BaseModel):
+    XPATH = "Surveys/Survey"
+    
+    def __init__(self, pid: str, patient_xml: etree._Element):
+        super().__init__(pid, patient_xml, self.XPATH)
+
+
+class PVData(BaseModel):
+    XPATH = "PVData"
+    
+    def __init__(self, pid: str, patient_xml: etree._Element):
+        super().__init__(pid, patient_xml, self.XPATH)
+
+
+XML_CONFIG = {
+    "patient": {"model": Patient, "include_domain": True, "include_incoming": False},
+    "lab_order": {"model": LabOrder, "include_domain": True, "include_incoming": True},
+    "dialysis_session": {"model": DialysisSession, "include_domain": True, "include_incoming": True},
+    "observation": {"model": Observation, "include_domain": True, "include_incoming": True},
+    "social_history": {"model": SocialHistory, "include_domain": True, "include_incoming": False},
+    "family_history": {"model": FamilyHistory, "include_domain": True, "include_incoming": False},
+    "allergy": {"model": Allergy, "include_domain": True, "include_incoming": False},
+    "diagnosis": {"model": Diagnosis, "include_domain": True, "include_incoming": False},
+    "cause_of_death": {"model": CauseOfDeath, "include_domain": True, "include_incoming": False},
+    "renal_diagnosis": {"model": RenalDiagnosis, "include_domain": True, "include_incoming": False},
+    "medication": {"model": Medication, "include_domain": True, "include_incoming": False},
+    "vascular_access": {"model": VascularAccess, "include_domain": True, "include_incoming": False},
+    "procedure": {"model": Procedure, "include_domain": True, "include_incoming": False},
+    "document": {"model": Document, "include_domain": True, "include_incoming": False},
+    "encounter": {"model": Encounter, "include_domain": True, "include_incoming": False},
+    "transplant_list": {"model": TransplantList, "include_domain": True, "include_incoming": False},
+    "treatment": {"model": Treatment, "include_domain": True, "include_incoming": False},
+    "program_membership": {"model": ProgramMembership, "include_domain": True, "include_incoming": False},
+    "transplant": {"model": Transplant, "include_domain": True, "include_incoming": False},
+    "opt_out": {"model": OptOut, "include_domain": True, "include_incoming": False},
+    "clinical_relationship": {"model": ClinicalRelationship, "include_domain": True, "include_incoming": False},
+    "survey": {"model": Survey, "include_domain": True, "include_incoming": False},
+    "pvdata": {"model": PVData, "include_domain": True, "include_incoming": False},
+}
+
+
+class XmlSource(Enum):
+    INCOMING = "incoming"
+    DOMAIN = "domain"
+
+def serialise_xml_to_dict(pid: str, xml_doc: etree._Element, source: XmlSource = XmlSource.INCOMING) -> dict:
+    """Extract elements from XML document and serialize based on source type.
+    
+    Args:
+        pid: Patient identifier
+        xml_doc: XML document element
+        source: Source type (INCOMING or DOMAIN)
+    
+    Returns:
+        Dictionary of serialized XML elements
+    """
+    result = {}
+    
+    for key, config in XML_CONFIG.items():
+        match source:
+            case XmlSource.INCOMING:
+                if config["include_incoming"]:
+                    model_instance = config["model"](pid, xml_doc)
+                    result[key] = model_instance.serialize_to_dict()
+            case XmlSource.DOMAIN:
+                if config["include_domain"]:
+                    model_instance = config["model"](pid, xml_doc)
+                    result[key] = model_instance.serialize_to_dict()
+    
+    return result 
+
+def deserialise_xml_dict(domain_file:etree._Element,xml_dict:dict)->etree._Element:
+    """Takes the domain xml file and assembles the content based on the
+    dictionary containing the merged xml contents.
+
+    Args:
+        domain_file (etree._Element): xml generated from the database
+        xml_dict (dict): dictionary containing elements to insert into the file 
+    """
+
+    root = etree.fromstring(etree.tostring(domain_file))
+    for table, config in XML_CONFIG.items():
+        elements_to_add = xml_dict[table]
+        xpath = config["model"].XPATH
+
+        # Use xpath() not search(), and handle the namespace
+        matches = root.xpath(f"//{xpath}", namespaces=NAMESPACES)
+        if matches:
+            parent = matches[0].getparent()
+            # Remove all existing child elements first
+            for match in matches:
+                parent.remove(match)
+            # Add the new elements
+            for _, xml in elements_to_add.items():
+                xml_element = etree.fromstring(xml)
+                parent.append(xml_element)
+
+    return root
+
+def deserialise_xml_dict_ai_junk(domain_file:etree._Element, xml_dict:dict) -> etree._Element:
+    """Takes the domain xml file and assembles the content based on the
+    dictionary containing the merged xml contents.
+
+    Args:
+        domain_file (etree._Element): xml generated from the database
+        xml_dict (dict): dictionary containing elements to insert into the file 
+    
+    Returns:
+        etree._Element: Reconstructed XML with merged content
+    """
+    # Map table names to their container element names in the XML
+    containers = {
+        "lab_order": "LabOrders",
+        "observation": "Observations",
+        "dialysis_session": "DialysisSessions",
+        "social_history": "SocialHistories",
+        "family_history": "FamilyHistories",
+        "allergy": "Allergies",
+        "diagnosis": "Diagnoses",
+        "renal_diagnosis": "RenalDiagnoses",
+        "medication": "Medications",
+        "vascular_access": "VascularAccesses",
+        "procedure": "Procedures",
+        "document": "Documents",
+        "encounter": "Encounters",
+        "treatment": "Treatments",
+        "program_membership": "ProgramMemberships",
+        "transplant": "Transplants",
+        "opt_out": "OptOuts",
+        "clinical_relationship": "ClinicalRelationships",
+        "survey": "Surveys",
     }
+    
+    # Make a copy of the domain file to avoid mutating the original
+    root = etree.fromstring(etree.tostring(domain_file))
+    
+    for table_name, elements_dict in xml_dict.items():
+        if not elements_dict:
+            continue
+        
+        # Get the container name or use the table name directly for root-level elements
+        container_name = containers.get(table_name)
+        
+        if container_name:
+            # Find or create the container element
+            container_xpath = f".//{{http://www.rixg.org.uk/}}{container_name}"
+            container = root.find(container_xpath)
+            
+            if container is None:
+                # Create container if it doesn't exist
+                container = etree.SubElement(
+                    root,
+                    f"{{http://www.rixg.org.uk/}}{container_name}"
+                )
+            else:
+                # Clear existing children from the container
+                container.clear()
+            
+            # Add all elements from the merged dictionary
+            for key, xml_bytes in elements_dict.items():
+                element = etree.fromstring(xml_bytes)
+                container.append(element)
+        else:
+            # Handle root-level elements (Patient, CauseOfDeath, TransplantList, PVData)
+            # Map table names to their element names
+            element_names = {
+                "patient": "Patient",
+                "cause_of_death": "CauseOfDeath",
+                "transplant_list": "TransplantList",
+                "pvdata": "PVData",
+            }
+            
+            element_name = element_names.get(table_name)
+            if element_name:
+                # Remove existing element if present
+                existing = root.find(f".//{{http://www.rixg.org.uk/}}{element_name}")
+                if existing is not None:
+                    root.remove(existing)
+                
+                # Add the new element(s)
+                for key, xml_bytes in elements_dict.items():
+                    element = etree.fromstring(xml_bytes)
+                    root.append(element)
+    
+    return root
 
 def get_domain_xml_dump(pid:str, ukrdc_session:Session):
     patient_record = ukrdc_session.execute(
         select(PatientRecord).where(PatientRecord.pid == pid)
     ).scalar_one_or_none()
-    xml_settings =  XmlSettings
-    xml_settings.full_patient_record = True
-    xml_dump = PatientRecord_pyxb_xml(patient_record, xml_settings)
-    print(":)")
-    return
+
+    xml_dump = PatientRecord_pyxb_xml(patient_record, XmlSettings())
+
+    return xml_dump.toxml(encoding="utf-8")
 
 def merge_xml_dir_with_ukrdc(input_dir:Path, output_dir:Path, ukrdc_session:Session):
     """Function loads a set of xml files containing incomplete information from
@@ -140,8 +450,35 @@ def merge_xml_dir_with_ukrdc(input_dir:Path, output_dir:Path, ukrdc_session:Sess
             xml_doc = etree.XML(data.encode())
             patient_info = read_patient_metadata_etree(xml_doc)
             pid,_,_  = match_pid(ukrdc_session, patient_info)
+            
+            # convert the xml to a format which allows comparison between content
             incoming_xml_dict = serialise_xml_to_dict(pid, xml_doc)
             domain_xml_doc = etree.XML(get_domain_xml_dump(pid, ukrdc_session))
+            domain_xml_dict = serialise_xml_to_dict(pid, domain_xml_doc, XmlSource.DOMAIN)
+
+            # merge files by appending anything missing in the domain record
+            # from incoming
+            merged_file = {}
+            for table, config in XML_CONFIG.items():
+                records = {}
+                if config["include_domain"] == True:
+                    records = domain_xml_dict.get(table, {})
+
+                if config["include_incoming"] == True:
+                    incoming_records = incoming_xml_dict.get(table, {})
+                    for key, value in incoming_records.items():
+                        if key not in records.keys():
+                            records[key] = value
+                
+                merged_file[table] = records
+
+        # deserialse back to xml and write to output directory
+        merged_doc = deserialise_xml_dict(domain_xml_doc,merged_file)
+        output_path = output_dir / f"{Path(xml_path).stem}_merged.xml"
+        with open(output_path, "wb") as f:
+            f.write(etree.tostring(merged_doc, encoding="utf-8", xml_declaration=True, pretty_print=True))
+
+    return
 
 
 if __name__ == "__main__":
