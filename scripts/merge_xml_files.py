@@ -32,12 +32,24 @@ env = dotenv_values()
 
 # utility classes to handle xml serialization
 class BaseModel:
+    HAS_START_STOP = False
     def __init__(self, parent_id:str, patient_xml: etree._Element, xpath:str):
         self.parent_id = parent_id
         self.patient_record = patient_xml
         self.xpath = xpath
         self.xml_elements = self.get_elements()
+        if self.HAS_START_STOP:
+            self.start_stop_elements = self.get_start_stop_elements()
+
     
+    def get_start_stop_elements(self):
+        parent_xpath = str(Path(self.xpath).parent)
+        parent_element = self.patient_record.xpath(f"//{parent_xpath}", namespaces=NAMESPACES)
+        if parent_element:
+            start = parent_element[0].get("start")
+            stop = parent_element[0].get("stop") 
+            return start, stop
+
     def key_gen(self, element:etree._Element, idx:str):
         element = element
         return f"{self.parent_id}:{idx}"
@@ -56,6 +68,7 @@ class BaseModel:
 
 class LabOrder(BaseModel):
     XPATH = "LabOrders/LabOrder"
+    HAS_START_STOP = True
     
     def __init__(self, pid:str, patient_xml: etree._Element):
         super().__init__(pid, patient_xml, self.XPATH)
@@ -67,10 +80,10 @@ class LabOrder(BaseModel):
 
 class Observation(BaseModel):
     XPATH = "Observations/Observation"
+    HAS_START_STOP = True
     
     def __init__(self, pid:str, patient_xml: etree._Element):
         super().__init__(pid, patient_xml, self.XPATH)
-
     def key_gen(self, observation:etree._Element,idx:str) -> str:
         
         # Extract observation time and convert to timestamp
@@ -88,6 +101,7 @@ class Observation(BaseModel):
 
 class DialysisSession(BaseModel):
     XPATH = "DialysisSessions/DialysisSession"
+    HAS_START_STOP = True
     
     def __init__(self, pid:str, patient_xml: etree._Element):
         super().__init__(pid, patient_xml, self.XPATH)
@@ -247,11 +261,15 @@ class PVData(BaseModel):
         super().__init__(pid, patient_xml, self.XPATH)
 
 
+# Configuration to determine the logic of the merge if include_domain and
+# include_incoming are true the merge process will try to include each of the
+# unique records from each files once. If set to false the records from that
+# file will be excluded
 XML_CONFIG = {
     "patient": {"model": Patient, "include_domain": True, "include_incoming": False},
-    "lab_order": {"model": LabOrder, "include_domain": True, "include_incoming": True},
-    "dialysis_session": {"model": DialysisSession, "include_domain": True, "include_incoming": True},
-    "observation": {"model": Observation, "include_domain": True, "include_incoming": True},
+    "lab_order": {"model": LabOrder, "include_domain": False, "include_incoming": True},
+    "dialysis_session": {"model": DialysisSession, "include_domain": False, "include_incoming": True},
+    "observation": {"model": Observation, "include_domain": False, "include_incoming": True},
     "social_history": {"model": SocialHistory, "include_domain": True, "include_incoming": False},
     "family_history": {"model": FamilyHistory, "include_domain": True, "include_incoming": False},
     "allergy": {"model": Allergy, "include_domain": True, "include_incoming": False},
@@ -292,16 +310,24 @@ def serialise_xml_to_dict(pid: str, xml_doc: etree._Element, source: XmlSource =
     result = {}
     
     for key, config in XML_CONFIG.items():
+        model_instance = config["model"](pid, xml_doc)
         match source:
             case XmlSource.INCOMING:
                 if config["include_incoming"]:
-                    model_instance = config["model"](pid, xml_doc)
                     result[key] = model_instance.serialize_to_dict()
+                else:
+                    result[key] = {}
+
             case XmlSource.DOMAIN:
                 if config["include_domain"]:
-                    model_instance = config["model"](pid, xml_doc)
                     result[key] = model_instance.serialize_to_dict()
-    
+                else:
+                    result[key] = {}
+        
+        if model_instance.HAS_START_STOP:
+            start_stop = model_instance.get_start_stop_elements()
+            result[key]["start_stop"] = start_stop
+
     return result 
 
 def deserialise_xml_dict(domain_file:etree._Element,xml_dict:dict)->etree._Element:
@@ -327,11 +353,22 @@ def deserialise_xml_dict(domain_file:etree._Element,xml_dict:dict)->etree._Eleme
             # Remove all existing child elements
             for match in matches:
                 parent.remove(match)
+
             # Add the new elements at the original position
-            for idx, (_, xml) in enumerate(elements_to_add.items()):
+            for idx, (element_id, xml) in enumerate(elements_to_add.items()):
+                if element_id == "start_stop":
+                    continue
                 xml_element = etree.fromstring(xml)
                 parent.insert(insert_position + idx, xml_element)
 
+            # Update start and stop times
+            if config["model"].HAS_START_STOP:
+                start_stop = elements_to_add.get("start_stop")
+                if start_stop:
+                    start, stop = start_stop
+                    parent.set("start", start)
+                    parent.set("stop", stop)
+                    
     return root
 
 def get_domain_xml_dump(pid:str, ukrdc_session:Session):
@@ -342,6 +379,83 @@ def get_domain_xml_dump(pid:str, ukrdc_session:Session):
     xml_dump = PatientRecord_pyxb_xml(patient_record, XmlSettings())
 
     return xml_dump.toxml(encoding="utf-8")
+
+
+def merge_xml_file_with_ukrdc(xml_file:str, ukrdc_session:Session):
+    """Takes an xml file as a string matches the patient identity to the ukrdc and 
+    Args:
+        xml_file (str): Incoming xml file
+        ukrdc_session (Session): Sqlalchemy session to the ukrdc database
+
+    Returns:
+        _type_: _description_
+    """
+    xml_doc = etree.XML(xml_file.encode())
+    patient_info = read_patient_metadata_etree(xml_doc)
+    pid,_,_  = match_pid(ukrdc_session, patient_info)
+
+    # if no match is found return the original xml file
+    if not pid:
+        return xml_file
+            
+    # dump patient from ukrdc to xml file and convert the xml to a format which
+    # allows comparison between content
+    incoming_xml_dict = serialise_xml_to_dict(pid, xml_doc)
+    domain_xml_doc = etree.XML(get_domain_xml_dump(pid, ukrdc_session))
+    domain_xml_dict = serialise_xml_to_dict(pid, domain_xml_doc, XmlSource.DOMAIN)
+
+    # apply merge logic defined in the XML_CONFIG to the two xml files
+    merged_file = {}
+    for table, config in XML_CONFIG.items():
+        records = {}
+        domain_start = domain_stop = None
+        incoming_start = incoming_stop = None
+        
+        if config["include_domain"] == True:
+            records = domain_xml_dict.get(table, {})
+            if config["model"].HAS_START_STOP:
+                start_stop = records.get("start_stop")
+                if start_stop:
+                    domain_start, domain_stop = start_stop
+
+        if config["include_incoming"] == True:
+            incoming_records = incoming_xml_dict.get(table, {})
+            if config["model"].HAS_START_STOP:
+                start_stop = incoming_records.get("start_stop")
+                if start_stop:
+                    incoming_start, incoming_stop = start_stop
+
+            # compare unique identifiers and add any missing records 
+            for key, value in incoming_records.items():
+                if key not in records.keys() and key != "start_stop":
+                    records[key] = value
+            
+        # Set the start and stop times for the combined record
+        if config["model"].HAS_START_STOP:
+            start = incoming_start if domain_start is None else (
+                domain_start if incoming_start is None else (
+                    incoming_start if incoming_start < domain_start else domain_start
+                )
+            )
+            
+            stop = incoming_stop if domain_stop is None else (
+                domain_stop if incoming_stop is None else (
+                    incoming_stop if incoming_stop > domain_stop else domain_stop
+                )
+            )
+            
+            records["start_stop"] = (start, stop) 
+        
+        merged_file[table] = records
+
+    merged_doc = deserialise_xml_dict(domain_xml_doc, merged_file)
+    
+    return etree.tostring(
+        merged_doc, 
+        encoding="utf-8", 
+        xml_declaration=True, 
+        pretty_print=True
+    )
 
 def merge_xml_dir_with_ukrdc(input_dir:Path, output_dir:Path, ukrdc_session:Session):
     """Function loads a set of xml files containing incomplete information from
@@ -362,44 +476,11 @@ def merge_xml_dir_with_ukrdc(input_dir:Path, output_dir:Path, ukrdc_session:Sess
     for xml_path in xml_files:
         with open(xml_path, "r", encoding="utf-8") as file:
             data = file.read()
-            xml_doc = etree.XML(data.encode())
-            patient_info = read_patient_metadata_etree(xml_doc)
-            pid,_,_  = match_pid(ukrdc_session, patient_info)
-            
-            # convert the xml to a format which allows comparison between content
-            incoming_xml_dict = serialise_xml_to_dict(pid, xml_doc)
-            domain_xml_doc = etree.XML(get_domain_xml_dump(pid, ukrdc_session))
-            domain_xml_dict = serialise_xml_to_dict(pid, domain_xml_doc, XmlSource.DOMAIN)
+            merged_doc = merge_xml_file_with_ukrdc(data, ukrdc_session)
 
-            # merge files by appending anything missing in the domain record
-            # from incoming
-            merged_file = {}
-            for table, config in XML_CONFIG.items():
-                records = {}
-                if config["include_domain"] == True:
-                    records = domain_xml_dict.get(table, {})
-
-                if config["include_incoming"] == True:
-                    incoming_records = incoming_xml_dict.get(table, {})
-                    for key, value in incoming_records.items():
-                        if key not in records.keys():
-                            records[key] = value
-                
-                merged_file[table] = records
-
-        # Write domain XML to output directory for comparison
-        domain_output_path = output_dir / f"{Path(xml_path).stem}_domain.xml"
-        with open(domain_output_path, "wb") as f:
-            f.write(etree.tostring(domain_xml_doc, encoding="utf-8", xml_declaration=True, pretty_print=True))
-   
-
-        # deserialse back to xml and write to output directory
-        merged_doc = deserialise_xml_dict(domain_xml_doc,merged_file)
         output_path = output_dir / f"{Path(xml_path).stem}_merged.xml"
         with open(output_path, "wb") as f:
-            f.write(etree.tostring(merged_doc, encoding="utf-8", xml_declaration=True, pretty_print=True))
-
-    return
+            f.write(merged_doc)
 
 
 if __name__ == "__main__":
