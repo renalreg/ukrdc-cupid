@@ -4,8 +4,10 @@ to overwrite existing patients with extra data without deleting the data which
 is already in place. This logic is more how I would do the store models in 2026
 sans Joel.
 
-The following will need to be installed to make it work:
-git@github.com:renalreg/ukrdc_database.git
+The following will need to be installed separately to cupid for this script to work:
+pip install git+ssh://git@github.com/renalreg/ukrdc_database.git --no-deps
+
+it seems sensible not to make this an official cupid dependency
 """
 
 
@@ -371,7 +373,17 @@ def deserialise_xml_dict(domain_file:etree._Element,xml_dict:dict)->etree._Eleme
                     
     return root
 
-def get_domain_xml_dump(pid:str, ukrdc_session:Session):
+def get_domain_xml_dump(pid:str, ukrdc_session:Session)->str:
+    """
+    Dump whole patient record to an RDA xml file
+
+    Args:
+        pid (str): patient identifier matched to incoming file
+        ukrdc_session (Session): Sqlalchemy session to the ukrdc database
+
+    Returns:
+        str: xml file gererated from the ukrdc database
+    """
     patient_record = ukrdc_session.execute(
         select(PatientRecord).where(PatientRecord.pid == pid)
     ).scalar_one_or_none()
@@ -381,7 +393,7 @@ def get_domain_xml_dump(pid:str, ukrdc_session:Session):
     return xml_dump.toxml(encoding="utf-8")
 
 
-def merge_xml_file_with_ukrdc(xml_file:str, ukrdc_session:Session):
+def merge_xml_file_with_ukrdc(xml_file:str, ukrdc_session:Session)->str:
     """Takes an xml file as a string matches the patient identity to the ukrdc and 
     Args:
         xml_file (str): Incoming xml file
@@ -463,7 +475,7 @@ def merge_xml_dir_with_ukrdc(input_dir:Path, output_dir:Path, ukrdc_session:Sess
     in the database for reprocessing. 
 
     TODO: This may be a many to one type deal so it might be helpful to combine
-    all incoming files with the domain simultaneously 
+    all incoming files from a particular patient with the domain simultaneously 
 
     Args:
         input_dir (Path): Directory containing xml files to be merged
