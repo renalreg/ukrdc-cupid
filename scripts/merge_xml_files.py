@@ -7,7 +7,9 @@ sans Joel.
 The following will need to be installed separately to cupid for this script to work:
 pip install git+ssh://git@github.com/renalreg/ukrdc_database.git --no-deps
 
-it seems sensible not to make this an official cupid dependency
+it seems sensible not to make this an official cupid dependency. 
+
+The script should work but has yet to be tested in anger on patient files
 """
 
 
