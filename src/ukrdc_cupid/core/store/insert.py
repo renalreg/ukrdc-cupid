@@ -133,13 +133,10 @@ def commit_changes(ukrdc_session: Session):
         ukrdc_session.commit()
 
     except Exception as e:
-        # We may wish to generate more metadata here
-        msg = e.args[0]
         # code = e.code
-        errormsg = f"Error inserting data into database: {msg}"
         ukrdc_session.rollback()
 
-        return errormsg
+        raise DataInsertionError("Failed to insert patient data due to database error") from e
 
 
 @advisory_lock
@@ -200,23 +197,16 @@ def insert_incoming_data(
         ukrdc_session.delete(record)
 
     response.deleted_records = len(records_for_deletion)
+    response.patient_record = patient_record
 
-    # insert changes into database if valid
-    error = commit_changes(ukrdc_session)
-    if error is None:
+    # attempt to commit session changes to the database 
+    try:
+        commit_changes(ukrdc_session)
+    except DataInsertionError as e:
         if is_new:
-            response.msg = (
-                f"Successfully created patient: pid = {pid}, ukrdcid = {ukrdcid}"
-            )
-
+            raise DataInsertionError("Couldn't insert new patient") from e 
         else:
-            report = response.generate_insertion_summary()
-
-            response.msg = (
-                f"Updated patient: pid = {pid}, ukrdcid = {ukrdcid}. {report}"
-            )
-    else:
-        if not is_new:
+            error = str(e)
             # if the patient is in the database raise an investigation for a
             # human insight to figure out what is going on.
             investigation = Investigation(
@@ -231,16 +221,21 @@ def insert_incoming_data(
                 f"See investigation id = {investigation.issue.id} for more details"
             )
             response.investigation = investigation
+            
+            return response
 
-        else:
-            # TODO: Alternatively create a patient using the minimum possible
-            # information (probably the contents of the patient_demog) and
-            # raise and attach an investigation to that.
-            raise DataInsertionError(
-                f"New patient could not be inserted due to error- {error}"
-            )
+    if is_new:
+        response.msg = (
+            f"Successfully created patient: pid = {pid}, ukrdcid = {ukrdcid}"
+        )
 
-    response.patient_record = patient_record
+    else:
+        report = response.generate_insertion_summary()
+
+        response.msg = (
+            f"Updated patient: pid = {pid}, ukrdcid = {ukrdcid}. {report}"
+        )
+    
     return response
 
 

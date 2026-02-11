@@ -1,0 +1,513 @@
+"""
+Motivated by  TNG-1286 the motivation behind this script is to generate files
+to overwrite existing patients with extra data without deleting the data which
+is already in place. This logic is more how I would do the store models in 2026
+sans Joel.
+
+The following will need to be installed separately to cupid for this script to work:
+pip install git+ssh://git@github.com/renalreg/ukrdc_database.git --no-deps
+
+it seems sensible not to make this an official cupid dependency. 
+
+The script should work but has yet to be tested in anger on patient files
+"""
+
+
+import glob
+from enum import Enum
+from lxml import etree
+from ukrdc_cupid.core.match.identify import read_patient_metadata_etree, match_pid
+from pathlib import Path
+from sqlalchemy import create_engine, select
+from sqlalchemy.orm import sessionmaker, Session
+from dotenv import dotenv_values
+from datetime import datetime
+from ukrdc_sqla.ukrdc import PatientRecord
+from ukrdc.database.models.pyxb_xml import PatientRecord_pyxb_xml
+from ukrdc.database.models.pyxb_xml_settings import XmlSettings
+
+# i/o
+INPUT_DIR = Path(".xml_to_load") / "xml_in"
+OUTPUT_DIR = Path(".xml_to_load")/ "xml_out"
+NAMESPACES = {"ukrdc": "http://www.rixg.org.uk/"}
+
+# db connection parameters
+env = dotenv_values()
+
+# utility classes to handle xml serialization
+class BaseModel:
+    HAS_START_STOP = False
+    def __init__(self, parent_id:str, patient_xml: etree._Element, xpath:str):
+        self.parent_id = parent_id
+        self.patient_record = patient_xml
+        self.xpath = xpath
+        self.xml_elements = self.get_elements()
+        if self.HAS_START_STOP:
+            self.start_stop_elements = self.get_start_stop_elements()
+
+    
+    def get_start_stop_elements(self):
+        parent_xpath = str(Path(self.xpath).parent)
+        parent_element = self.patient_record.xpath(f"//{parent_xpath}", namespaces=NAMESPACES)
+        if parent_element:
+            start = parent_element[0].get("start")
+            stop = parent_element[0].get("stop") 
+            return start, stop
+
+    def key_gen(self, element:etree._Element, idx:str):
+        element = element
+        return f"{self.parent_id}:{idx}"
+
+    def get_elements(self):
+        # Get the elements themselves, not text nodes which include whitespace
+        return self.patient_record.xpath(self.xpath, namespaces=NAMESPACES)
+
+    def serialize_to_dict(self):
+        xml_dict = {}
+        for idx,element in enumerate(self.xml_elements):
+            key = self.key_gen(element, idx)
+            xml_dict[key] = etree.tostring(element)
+        return xml_dict
+
+
+class LabOrder(BaseModel):
+    XPATH = "LabOrders/LabOrder"
+    HAS_START_STOP = True
+    
+    def __init__(self, pid:str, patient_xml: etree._Element):
+        super().__init__(pid, patient_xml, self.XPATH)
+    
+    def key_gen(self, lab_order:etree._Element,_) -> str:
+        placer_id = lab_order.find(".//PlacerId")
+        return f"{self.parent_id}:{placer_id.text}"
+
+
+class Observation(BaseModel):
+    XPATH = "Observations/Observation"
+    HAS_START_STOP = True
+    
+    def __init__(self, pid:str, patient_xml: etree._Element):
+        super().__init__(pid, patient_xml, self.XPATH)
+    def key_gen(self, observation:etree._Element,idx:str) -> str:
+        
+        # Extract observation time and convert to timestamp
+        obs_time_elem = observation.find(".//ObservationTime")
+        obs_time = datetime.fromisoformat(obs_time_elem.text.replace('Z', '+00:00'))
+        time_uts = obs_time.timestamp()
+        
+        # Extract observation code and hardcode idx
+        idx = 0
+        code_elem = observation.find(".//ObservationCode/Code")
+        code = code_elem.text
+        
+        return f"{self.parent_id}:{time_uts}:{code}:{idx}"
+
+
+class DialysisSession(BaseModel):
+    XPATH = "DialysisSessions/DialysisSession"
+    HAS_START_STOP = True
+    
+    def __init__(self, pid:str, patient_xml: etree._Element):
+        super().__init__(pid, patient_xml, self.XPATH)
+    
+    def key_gen(self, dialysis_session: etree._Element,idx:str) -> str:
+        # Extract procedure time and convert to timestamp
+        procedure_time_elem = dialysis_session.find(".//ProcedureTime")
+        procedure_time = datetime.fromisoformat(procedure_time_elem.text.replace('Z', '+00:00'))
+        procedure_time_uts = procedure_time.timestamp()
+        
+        # Extract procedure type code
+        procedure_type_elem = dialysis_session.find(".//ProcedureType/Code")
+        procedure_type_code = procedure_type_elem.text
+        
+        # Hardcode to zero for now
+        idx = 0  
+        return f"{self.parent_id}:{procedure_time_uts}:{procedure_type_code}:{idx}"
+
+
+class Patient(BaseModel):
+    XPATH = "Patient"
+    
+    def __init__(self, pid: str, patient_xml: etree._Element):
+        super().__init__(pid, patient_xml, self.XPATH)
+
+
+class SocialHistory(BaseModel):
+    XPATH = "SocialHistories/SocialHistory"
+    
+    def __init__(self, pid: str, patient_xml: etree._Element):
+        super().__init__(pid, patient_xml, self.XPATH)
+
+
+class FamilyHistory(BaseModel):
+    XPATH = "FamilyHistories/FamilyHistory"
+    
+    def __init__(self, pid: str, patient_xml: etree._Element):
+        super().__init__(pid, patient_xml, self.XPATH)
+
+
+class Allergy(BaseModel):
+    XPATH = "Allergies/Allergy"
+    
+    def __init__(self, pid: str, patient_xml: etree._Element):
+        super().__init__(pid, patient_xml, self.XPATH)
+
+
+class Diagnosis(BaseModel):
+    XPATH = "Diagnoses/Diagnosis"
+    
+    def __init__(self, pid: str, patient_xml: etree._Element):
+        super().__init__(pid, patient_xml, self.XPATH)
+
+
+class CauseOfDeath(BaseModel):
+    XPATH = "CauseOfDeath"
+    
+    def __init__(self, pid: str, patient_xml: etree._Element):
+        super().__init__(pid, patient_xml, self.XPATH)
+
+
+class RenalDiagnosis(BaseModel):
+    XPATH = "RenalDiagnoses/RenalDiagnosis"
+    
+    def __init__(self, pid: str, patient_xml: etree._Element):
+        super().__init__(pid, patient_xml, self.XPATH)
+
+
+class Medication(BaseModel):
+    XPATH = "Medications/Medication"
+    
+    def __init__(self, pid: str, patient_xml: etree._Element):
+        super().__init__(pid, patient_xml, self.XPATH)
+
+
+class VascularAccess(BaseModel):
+    XPATH = "VascularAccesses/VascularAccess"
+    
+    def __init__(self, pid: str, patient_xml: etree._Element):
+        super().__init__(pid, patient_xml, self.XPATH)
+
+
+class Procedure(BaseModel):
+    XPATH = "Procedures/Procedure"
+    
+    def __init__(self, pid: str, patient_xml: etree._Element):
+        super().__init__(pid, patient_xml, self.XPATH)
+
+
+class Document(BaseModel):
+    XPATH = "Documents/Document"
+    
+    def __init__(self, pid: str, patient_xml: etree._Element):
+        super().__init__(pid, patient_xml, self.XPATH)
+
+
+class Encounter(BaseModel):
+    XPATH = "Encounters/Encounter"
+    
+    def __init__(self, pid: str, patient_xml: etree._Element):
+        super().__init__(pid, patient_xml, self.XPATH)
+
+
+class TransplantList(BaseModel):
+    XPATH = "TransplantList"
+    
+    def __init__(self, pid: str, patient_xml: etree._Element):
+        super().__init__(pid, patient_xml, self.XPATH)
+
+
+class Treatment(BaseModel):
+    XPATH = "Treatments/Treatment"
+    
+    def __init__(self, pid: str, patient_xml: etree._Element):
+        super().__init__(pid, patient_xml, self.XPATH)
+
+
+class ProgramMembership(BaseModel):
+    XPATH = "ProgramMemberships/ProgramMembership"
+    
+    def __init__(self, pid: str, patient_xml: etree._Element):
+        super().__init__(pid, patient_xml, self.XPATH)
+
+
+class Transplant(BaseModel):
+    XPATH = "Transplants/Transplant"
+    
+    def __init__(self, pid: str, patient_xml: etree._Element):
+        super().__init__(pid, patient_xml, self.XPATH)
+
+
+class OptOut(BaseModel):
+    XPATH = "OptOuts/OptOut"
+    
+    def __init__(self, pid: str, patient_xml: etree._Element):
+        super().__init__(pid, patient_xml, self.XPATH)
+
+
+class ClinicalRelationship(BaseModel):
+    XPATH = "ClinicalRelationships/ClinicalRelationship"
+    
+    def __init__(self, pid: str, patient_xml: etree._Element):
+        super().__init__(pid, patient_xml, self.XPATH)
+
+
+class Survey(BaseModel):
+    XPATH = "Surveys/Survey"
+    
+    def __init__(self, pid: str, patient_xml: etree._Element):
+        super().__init__(pid, patient_xml, self.XPATH)
+
+
+class PVData(BaseModel):
+    XPATH = "PVData"
+    
+    def __init__(self, pid: str, patient_xml: etree._Element):
+        super().__init__(pid, patient_xml, self.XPATH)
+
+
+# Configuration to determine the logic of the merge if include_domain and
+# include_incoming are true the merge process will try to include each of the
+# unique records from each files once. If set to false the records from that
+# file will be excluded
+XML_CONFIG = {
+    "patient": {"model": Patient, "include_domain": True, "include_incoming": False},
+    "lab_order": {"model": LabOrder, "include_domain": False, "include_incoming": True},
+    "dialysis_session": {"model": DialysisSession, "include_domain": False, "include_incoming": True},
+    "observation": {"model": Observation, "include_domain": False, "include_incoming": True},
+    "social_history": {"model": SocialHistory, "include_domain": True, "include_incoming": False},
+    "family_history": {"model": FamilyHistory, "include_domain": True, "include_incoming": False},
+    "allergy": {"model": Allergy, "include_domain": True, "include_incoming": False},
+    "diagnosis": {"model": Diagnosis, "include_domain": True, "include_incoming": False},
+    "cause_of_death": {"model": CauseOfDeath, "include_domain": True, "include_incoming": False},
+    "renal_diagnosis": {"model": RenalDiagnosis, "include_domain": True, "include_incoming": False},
+    "medication": {"model": Medication, "include_domain": True, "include_incoming": False},
+    "vascular_access": {"model": VascularAccess, "include_domain": True, "include_incoming": False},
+    "procedure": {"model": Procedure, "include_domain": True, "include_incoming": False},
+    "document": {"model": Document, "include_domain": True, "include_incoming": False},
+    "encounter": {"model": Encounter, "include_domain": True, "include_incoming": False},
+    "transplant_list": {"model": TransplantList, "include_domain": True, "include_incoming": False},
+    "treatment": {"model": Treatment, "include_domain": True, "include_incoming": False},
+    "program_membership": {"model": ProgramMembership, "include_domain": True, "include_incoming": False},
+    "transplant": {"model": Transplant, "include_domain": True, "include_incoming": False},
+    "opt_out": {"model": OptOut, "include_domain": True, "include_incoming": False},
+    "clinical_relationship": {"model": ClinicalRelationship, "include_domain": True, "include_incoming": False},
+    "survey": {"model": Survey, "include_domain": True, "include_incoming": False},
+    "pvdata": {"model": PVData, "include_domain": True, "include_incoming": False},
+}
+
+
+class XmlSource(Enum):
+    INCOMING = "incoming"
+    DOMAIN = "domain"
+
+def serialise_xml_to_dict(pid: str, xml_doc: etree._Element, source: XmlSource = XmlSource.INCOMING) -> dict:
+    """Extract elements from XML document and serialize based on source type.
+    
+    Args:
+        pid: Patient identifier
+        xml_doc: XML document element
+        source: Source type (INCOMING or DOMAIN)
+    
+    Returns:
+        Dictionary of serialized XML elements
+    """
+    result = {}
+    
+    for key, config in XML_CONFIG.items():
+        model_instance = config["model"](pid, xml_doc)
+        match source:
+            case XmlSource.INCOMING:
+                if config["include_incoming"]:
+                    result[key] = model_instance.serialize_to_dict()
+                else:
+                    result[key] = {}
+
+            case XmlSource.DOMAIN:
+                if config["include_domain"]:
+                    result[key] = model_instance.serialize_to_dict()
+                else:
+                    result[key] = {}
+        
+        if model_instance.HAS_START_STOP:
+            start_stop = model_instance.get_start_stop_elements()
+            result[key]["start_stop"] = start_stop
+
+    return result 
+
+def deserialise_xml_dict(domain_file:etree._Element,xml_dict:dict)->etree._Element:
+    """Takes the domain xml file and assembles the content based on the
+    dictionary containing the merged xml contents.
+
+    Args:
+        domain_file (etree._Element): xml generated from the database
+        xml_dict (dict): dictionary containing elements to insert into the file 
+    """
+
+    root = etree.fromstring(etree.tostring(domain_file))
+    for table, config in XML_CONFIG.items():
+        elements_to_add = xml_dict[table]
+        xpath = config["model"].XPATH
+
+        # Use xpath() not search(), and handle the namespace
+        matches = root.xpath(f"//{xpath}", namespaces=NAMESPACES)
+        if matches:
+            parent = matches[0].getparent()
+            # Get the position of the first match before removing
+            insert_position = list(parent).index(matches[0])
+            # Remove all existing child elements
+            for match in matches:
+                parent.remove(match)
+
+            # Add the new elements at the original position
+            for idx, (element_id, xml) in enumerate(elements_to_add.items()):
+                if element_id == "start_stop":
+                    continue
+                xml_element = etree.fromstring(xml)
+                parent.insert(insert_position + idx, xml_element)
+
+            # Update start and stop times
+            if config["model"].HAS_START_STOP:
+                start_stop = elements_to_add.get("start_stop")
+                if start_stop:
+                    start, stop = start_stop
+                    parent.set("start", start)
+                    parent.set("stop", stop)
+                    
+    return root
+
+def get_domain_xml_dump(pid:str, ukrdc_session:Session)->str:
+    """
+    Dump whole patient record to an RDA xml file
+
+    Args:
+        pid (str): patient identifier matched to incoming file
+        ukrdc_session (Session): Sqlalchemy session to the ukrdc database
+
+    Returns:
+        str: xml file gererated from the ukrdc database
+    """
+    patient_record = ukrdc_session.execute(
+        select(PatientRecord).where(PatientRecord.pid == pid)
+    ).scalar_one_or_none()
+
+    xml_dump = PatientRecord_pyxb_xml(patient_record, XmlSettings())
+
+    return xml_dump.toxml(encoding="utf-8")
+
+
+def merge_xml_file_with_ukrdc(xml_file:str, ukrdc_session:Session)->str:
+    """Takes an xml file as a string matches the patient identity to the ukrdc and 
+    Args:
+        xml_file (str): Incoming xml file
+        ukrdc_session (Session): Sqlalchemy session to the ukrdc database
+
+    Returns:
+        _type_: _description_
+    """
+    xml_doc = etree.XML(xml_file.encode())
+    patient_info = read_patient_metadata_etree(xml_doc)
+    pid,_,_  = match_pid(ukrdc_session, patient_info)
+
+    # if no match is found return the original xml file
+    if not pid:
+        return xml_file
+            
+    # dump patient from ukrdc to xml file and convert the xml to a format which
+    # allows comparison between content
+    incoming_xml_dict = serialise_xml_to_dict(pid, xml_doc)
+    domain_xml_doc = etree.XML(get_domain_xml_dump(pid, ukrdc_session))
+    domain_xml_dict = serialise_xml_to_dict(pid, domain_xml_doc, XmlSource.DOMAIN)
+
+    # apply merge logic defined in the XML_CONFIG to the two xml files
+    merged_file = {}
+    for table, config in XML_CONFIG.items():
+        records = {}
+        domain_start = domain_stop = None
+        incoming_start = incoming_stop = None
+        
+        if config["include_domain"] == True:
+            records = domain_xml_dict.get(table, {})
+            if config["model"].HAS_START_STOP:
+                start_stop = records.get("start_stop")
+                if start_stop:
+                    domain_start, domain_stop = start_stop
+
+        if config["include_incoming"] == True:
+            incoming_records = incoming_xml_dict.get(table, {})
+            if config["model"].HAS_START_STOP:
+                start_stop = incoming_records.get("start_stop")
+                if start_stop:
+                    incoming_start, incoming_stop = start_stop
+
+            # compare unique identifiers and add any missing records 
+            for key, value in incoming_records.items():
+                if key not in records.keys() and key != "start_stop":
+                    records[key] = value
+            
+        # Set the start and stop times for the combined record
+        if config["model"].HAS_START_STOP:
+            start = incoming_start if domain_start is None else (
+                domain_start if incoming_start is None else (
+                    incoming_start if incoming_start < domain_start else domain_start
+                )
+            )
+            
+            stop = incoming_stop if domain_stop is None else (
+                domain_stop if incoming_stop is None else (
+                    incoming_stop if incoming_stop > domain_stop else domain_stop
+                )
+            )
+            
+            records["start_stop"] = (start, stop) 
+        
+        merged_file[table] = records
+
+    merged_doc = deserialise_xml_dict(domain_xml_doc, merged_file)
+    
+    return etree.tostring(
+        merged_doc, 
+        encoding="utf-8", 
+        xml_declaration=True, 
+        pretty_print=True
+    )
+
+def merge_xml_dir_with_ukrdc(input_dir:Path, output_dir:Path, ukrdc_session:Session):
+    """Function loads a set of xml files containing incomplete information from
+    a specified directory and adds them to a dump of an existing patient record
+    in the database for reprocessing. 
+
+    TODO: This may be a many to one type deal so it might be helpful to combine
+    all incoming files from a particular patient with the domain simultaneously 
+
+    Args:
+        input_dir (Path): Directory containing xml files to be merged
+        output_dir (Path): Directory to write merged xml files to
+        ukrdc_session (Session): SQLAlchemy session to the ukrdc database
+    """
+    # Parse xml file 
+    xml_files = glob.glob(str(input_dir / "*.xml"))
+
+    for xml_path in xml_files:
+        with open(xml_path, "r", encoding="utf-8") as file:
+            data = file.read()
+            merged_doc = merge_xml_file_with_ukrdc(data, ukrdc_session)
+
+        output_path = output_dir / f"{Path(xml_path).stem}_merged.xml"
+        with open(output_path, "wb") as f:
+            f.write(merged_doc)
+
+
+if __name__ == "__main__":
+    
+    driver = env["UKRDC_DRIVER"]
+    user = env["UKRDC_USER"]
+    password = env["UKRDC_PASSWORD"]
+    port = env["UKRDC_PORT"]
+    name = env["UKRDC_NAME"]
+    host = env["UKRDC_HOST"]
+    
+    db_url = f"{driver}://{user}:{password}@{host}:{port}/{name}"
+    engine = create_engine(db_url)
+    ukrdc_sessionmaker = sessionmaker(bind=engine)
+    with ukrdc_sessionmaker() as ukrdc_session:
+        merge_xml_dir_with_ukrdc(INPUT_DIR, OUTPUT_DIR, ukrdc_session)

@@ -25,7 +25,8 @@ from xsdata.models.datatype import XmlDateTime, XmlDate
 
 def add_address(node: Node, address_xml: xsd_types.Address):
     # fmt: off
-    node.add_item("addressuse", address_xml.use)
+    if address_xml.use:
+        node.add_item("addressuse", address_xml.use)
     node.add_item("fromtime", address_xml.from_time)
     node.add_item("totime", address_xml.to_time)
     node.add_item("street", address_xml.street)
@@ -101,8 +102,10 @@ class FamilyDoctor(Node):
         return self.pid
 
     def add_gp_contact_detail(self, xml: xsd_types.FamilyDoctor) -> None:
+        #TODO:why doesn't this use self.add_item?
         if xml.contact_detail:
-            self.orm_object.contactuse = xml.contact_detail.use.value
+            if xml.contact_detail.use:
+                self.orm_object.contactuse = xml.contact_detail.use.value
             self.orm_object.contactvalue = xml.contact_detail.value
             self.orm_object.commenttext = xml.contact_detail.comments
 
@@ -358,24 +361,14 @@ class Document(Node):
         return "documents"
 
     def map_xml_to_orm(self, _):
-        self.add_code(
-            "cliniciancode", "cliniciancodestd", "cliniciandesc", self.xml.clinician
-        )
+        # fmt: off
+        self.add_code("cliniciancode", "cliniciancodestd", "cliniciandesc", self.xml.clinician)
         self.add_item("documentname", self.xml.document_name)
         self.add_item("documenttime", self.xml.document_time)
-        self.add_code(
-            "documenttypecode",
-            "documenttypecodestd",
-            "documenttypedesc",
-            self.xml.document_type,
-        )
+        self.add_code("documenttypecode","documenttypecodestd","documenttypedesc",self.xml.document_type)
         self.add_item("documenturl", self.xml.document_url)
-        self.add_code(
-            "enteredatcode", "enteredatcodestd", "enteredatdesc", self.xml.entered_at
-        )
-        self.add_code(
-            "enteredbycode", "enteredbycodestd", "enteredbydesc", self.xml.entered_by
-        )
+        self.add_code("enteredatcode", "enteredatcodestd", "enteredatdesc", self.xml.entered_at)
+        self.add_code("enteredbycode", "enteredbycodestd", "enteredbydesc", self.xml.entered_by)
         self.add_item("externalid", self.xml.external_id, optional=True)
         self.add_item("filename", self.xml.file_name)
         self.add_item("filetype", self.xml.file_type)
@@ -389,7 +382,7 @@ class Document(Node):
 
         # self.add_item("stream", int(self.xml.stream))
         self.add_item("updatedon", self.xml.updated_on, optional=True)
-
+        # fmt: on
 
 class Survey(Node):
     def __init__(self, xml: xsd_surveys.Survey):
@@ -477,18 +470,13 @@ class Question(Node):
         return "questions"
 
     def map_xml_to_orm(self, _):
-        # fmt:on
+        # fmt: off
         self.add_item("surveyid", self.xml.survey_id)
-        self.add_code(
-            "questiontypecode",
-            "questiontypecodestd",
-            "questiontypedesc",
-            self.xml.question_type,
-        )
+        self.add_code("questiontypecode", "questiontypecodestd", "questiontypedesc", self.xml.question_type)
         self.add_item("response", self.xml.response)
         self.add_item("quesiontext", self.xml.question_text)
         self.add_item("update_date", self.xml.update_date)
-        # fmt:off
+        # fmt: on
 
 
 class Level(Node):

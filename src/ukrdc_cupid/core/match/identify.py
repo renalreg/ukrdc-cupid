@@ -19,6 +19,7 @@ from ukrdc_cupid.core.investigate.create_investigation import Investigation
 
 from typing import List, Any
 from nhs_number.validate import is_valid
+from datetime import datetime
 
 
 def match_ni(session: Session, patient_info: dict) -> Any:
@@ -140,6 +141,60 @@ def read_patient_metadata(xml: xsd_ukrdc.PatientRecord) -> dict:
             "placeholder exception...this should really never pass validation"
         )
 
+    return patient_info
+
+
+
+def read_patient_metadata_etree(xml_doc) -> dict:
+    """
+    """
+
+    
+    # Parse sending facility
+    sending_facility = xml_doc.find(".//SendingFacility")
+    
+    # Parse birth time
+    birth_time_str = xml_doc.find(".//Patient/BirthTime").text
+    birth_time = datetime.fromisoformat(birth_time_str.replace('Z', '+00:00'))
+    
+    # Parse sending time
+    sending_time_str = sending_facility.get("time")
+    sending_time = datetime.fromisoformat(sending_time_str.replace('Z', '+00:00'))
+    
+    patient_info = {
+        "sending_extract": xml_doc.find(".//SendingExtract").text,
+        "sending_facility": sending_facility.text,
+        "channel": sending_facility.get("channelName"),
+        "sending_time": sending_time,
+        "schema_version": sending_facility.get("schemaVersion"),
+        "birth_time": birth_time,
+        "MRN": None,
+        "NI": [],
+    }
+    
+    # Parse patient numbers
+    patient_numbers = xml_doc.findall(".//PatientNumbers/PatientNumber")
+    for number in patient_numbers:
+        number_type = number.find("NumberType").text
+        number_value = number.find("Number").text
+        organization = number.find("Organization").text
+        
+        if number_type == "MRN":
+            patient_info["MRN"] = [number_value, organization]
+        
+        if number_type == "NI":
+            patient_info["NI"].append([number_value, organization])
+        
+        if organization in ("NHS", "HSC", "CHI"):
+            if not is_valid(number_value):
+                raise Exception("placeholder exception...nhs number invalid")
+    
+    # MRN is non negotiable for cupid matching
+    if not patient_info.get("MRN"):
+        raise Exception(
+            "placeholder exception...this should really never pass validation"
+        )
+    
     return patient_info
 
 
