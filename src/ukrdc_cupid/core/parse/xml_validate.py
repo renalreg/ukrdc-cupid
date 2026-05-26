@@ -11,9 +11,9 @@ import shutil
 from git import Repo
 from lxml import etree  # nosec B410
 from pydantic import Field
-from pydantic_settings import BaseSettings
-from platformdirs import user_data_dir
 from typing import Tuple, Union
+from platformdirs import user_data_dir
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 # TODO: I think this bit of code could be generalised so that new versions of the schema
@@ -26,41 +26,41 @@ class Settings(BaseSettings):
     """
 
     appdata_dir: str = Field(env="APPDATA_DIR", default=user_data_dir())  # type:ignore
-
+    model_config = SettingsConfigDict(env_file=".env", extra="ignore",)
+    
     schema_repo: str = Field(
-        env="SCHEMA_REPO",
-        default="https://github.com/renalreg/resources.git",  # type:ignore
+        default="https://github.com/renalreg/resources.git",
+        validation_alias="SCHEMA_REPO",
     )
 
     v3_3_0_commit: str = Field(
-        env="V3_3_0_COMMIT",
-        default="7095add5ea07369dedbd499fa4662f3f72754d31",  # type:ignore
+        default="7095add5ea07369dedbd499fa4662f3f72754d31",
+        validation_alias="V3_3_0_COMMIT",
     )
 
-    v3_3_1_commit: str = Field(  # type: ignore
-        env="V3_3_1_COMMIT", default="d5a23051fbf194c462a4c90ba5ac2f44049f88bd"
+    v3_3_1_commit: str = Field(
+        default="d5a23051fbf194c462a4c90ba5ac2f44049f88bd",
+        validation_alias="V3_3_1_COMMIT",
     )
 
     v3_4_5_commit: str = Field(
-        env="V3_4_5_COMMIT",
-        default="14fa420a971e16306de3e00cd1fc51b6e344c596",  # type:ignore
+        default="14fa420a971e16306de3e00cd1fc51b6e344c596",
+        validation_alias="V3_4_5_COMMIT",
     )
 
     v4_0_0_commit: str = Field(
-        env="V4_0_0_COMMIT",
-        default="046b25021c52ebeaff1d878a01aa8ec56c4667ed",  # type:ignore
+        default="046b25021c52ebeaff1d878a01aa8ec56c4667ed",
+        validation_alias="V4_0_0_COMMIT",
     )
 
-    v4_1_0_commit: str = Field(  # type: ignore
-        env="V4_1_0_COMMIT", default="ce0f8618a0712c86e895f302d99bfda94a2787c4"
+    v4_1_0_commit: str = Field(
+        default="ce0f8618a0712c86e895f302d99bfda94a2787c4",
+        validation_alias="V4_1_0_COMMIT",
     )
 
-    v4_2_0_commit: str = Field(  # type: ignore
-        env="V4_2_0_COMMIT", default="1302c015aebfac25bc462c8d20c0aa31df810b5e"
-    )
-
-    v4_1_0_commit: str = Field(  # type: ignore
-        env="V4_1_0_COMMIT", default="ce0f8618a0712c86e895f302d99bfda94a2787c4"
+    v4_2_0_commit: str = Field(
+        default="1302c015aebfac25bc462c8d20c0aa31df810b5e",
+        validation_alias="V4_2_0_COMMIT",
     )
 
 
