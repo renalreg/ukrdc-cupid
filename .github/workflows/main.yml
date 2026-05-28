@@ -19,13 +19,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
       
       - name: rename docker.example
         run: cp .env.docker.example .env.docker
 
       - name: Docker Compose Setup
-        uses: isbang/compose-action@v2.4.1
+        uses: isbang/compose-action@v2.6.0
         with:
           compose-file: "./docker-compose.yml"
 
