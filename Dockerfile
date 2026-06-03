@@ -2,9 +2,10 @@ FROM python:3.12-slim-bookworm
 #FROM pypy:latest
 
 ENV PYTHONUNBUFFERED=1 \
-    #POETRY_VIRTUALENVS_IN_PROJECT=true \
-    POETRY_VIRTUALENVS_CREATE=false \
-    POETRY_NO_INTERACTION=1
+    POETRY_VIRTUALENVS_IN_PROJECT=true \
+    POETRY_VIRTUALENVS_CREATE=true \
+    POETRY_NO_INTERACTION=1 \
+    PATH="/app/.venv/bin:$PATH"
 
 # `build-essential` required to build some wheels on newer Python versions, `openssh-client` required to clone some dependencies
 RUN apt-get update && \
@@ -18,16 +19,23 @@ RUN apt-get update && \
 
 WORKDIR /app
 
-RUN python -m pip install -U pip wheel && pip install poetry
+ENV PYTHONPATH=/app/src
+
+RUN python -m pip install -U pip wheel \
+    && pip install "poetry==1.8.5"
+
 RUN pip install "psycopg[c]"
 
-# Copy source files
+
+COPY pyproject.toml poetry.lock ./
+
+RUN poetry install --with store,api,utils --no-root --no-ansi
+
 COPY . ./
+
+RUN poetry install --with store,api,utils --no-ansi
 
 # Install production dependencies with poetry
 #RUN poetry install --only main --no-interaction
-
-
-RUN poetry install --with store,api,utils
 
 CMD ["python", "scripts/start_api_docker.py"]
