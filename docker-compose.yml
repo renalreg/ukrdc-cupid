@@ -16,9 +16,6 @@ services:
       - db
     ports:
       - "8100:8000"
-    volumes:
-      - .:/app
-
     env_file:
       - .env.docker
 
