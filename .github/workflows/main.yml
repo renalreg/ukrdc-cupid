@@ -32,7 +32,7 @@ jobs:
           up-flags: "--wait"
 
       - name: Run Tests
-        run: docker compose exec -T app tox -v
+        run: docker compose exec -T app run_checks.sh
         
       - name: Logs on Failure
         if: failure()
