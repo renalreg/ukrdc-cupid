@@ -6,7 +6,7 @@ from ukrdc_cupid.core.utils import (
     generate_database,
     UKRDCConnection
 )
-from ukrdc_cupid.api import app
+from ukrdc_cupid.api import app, security
 from ukrdc_cupid.api.main import get_session
 
 from sqlalchemy_utils import (
@@ -17,6 +17,10 @@ from sqlalchemy_utils import (
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 
+TEST_API_KEY = "test-key-for-pytest-only"
+security.API_KEYS = {
+    "pytest": {"key": TEST_API_KEY, "scopes": {"all"}},
+}
 
 def ukrdc_sessionmaker(url: str, gp_info: bool = False):
     """
@@ -81,5 +85,7 @@ def ukrdc_test_session_with_gp_info():
 def client(ukrdc_test_session:Session):
     # Create a client to use for testing api
     app.dependency_overrides[get_session] = lambda: ukrdc_test_session
-    return TestClient(app)
+    test_client = TestClient(app)
+    test_client.headers.update({"X-API-Key": TEST_API_KEY})
+    return test_client
     
