@@ -18,8 +18,9 @@ from ukrdc_cupid.core.audit.domain import (
     generate_domain_data_audit,
 )
 
+from ukrdc_cupid.api.security import verify_api_key
 
-app = FastAPI()
+app = FastAPI(dependencies=[Depends(verify_api_key)])
 
 
 def get_session() -> Session:
@@ -84,7 +85,7 @@ async def validate_xml(schema_version: str, xml_body=Depends(_get_xml_body)):
     return Response(content=msg)
 
 
-@app.post("/store/upload_patient_file/{mode}")
+@app.post("/store/upload_patient_file/{mode}",name="upload_patient_file")
 async def load_xml(
     mode: str,
     xml_body: str = Depends(_get_xml_body),
@@ -128,7 +129,7 @@ async def load_xml(
     return Response(content=msg)
 
 
-@app.post("/modify/ukrdcid")
+@app.post("/modify/ukrdcid",name="modify_ukrdcid")
 async def split_merge_ukrdcid(
     pid: str, ukrdcid: str = None, ukrdc_session: Session = Depends(get_session)
 ):
@@ -149,7 +150,7 @@ async def split_merge_ukrdcid(
     return Response(content="UKRDC ID split/merge operation completed successfully")
 
 
-@app.post("/modify/force_merge_file/{issue_id}/{domain_pid}")
+@app.post("/modify/force_merge_file/{issue_id}/{domain_pid}",name="force_merge_file")
 async def force_upload_file(
     issue_id: str, domain_pid: str, ukrdc_session: Session = Depends(get_session)
 ):
@@ -176,7 +177,7 @@ async def force_upload_file(
     return Response(content=f"Successfully force merged {issue_id}")
 
 
-@app.post("/modify/delete_patient/{domain_pid}")
+@app.post("/modify/delete_patient/{domain_pid}",name="delete_patient")
 async def delete_patient(
     domain_pid: str, ukrdc_session: Session = Depends(get_session)
 ):
@@ -198,7 +199,7 @@ async def delete_patient(
     return Response(content=msg)
 
 
-@app.post("/audit/run")
+@app.post("/audit/run",name="audit_run")
 async def run_audit_functions(ukrdc_session: Session = Depends(get_session)):
     """Api route to trigger functions which audit records in the database
     against each other.
