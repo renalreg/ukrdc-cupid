@@ -63,10 +63,15 @@ class Settings(BaseSettings):
         validation_alias="V4_2_0_COMMIT",
     )
 
+    v4_3_0_commit: str = Field(
+        default="15f55c36c45a86608bcde3d96f9ec26a1b9e3b8c",
+        validation_alias="V4_3_0_COMMIT",
+    )
+
 
 env_variables = Settings()
 
-SUPPORTED_VERSIONS = ["3.3.0", "3.3.1", "3.4.5", "4.0.0", "4.1.0", "4.2.0"]
+SUPPORTED_VERSIONS = ["3.3.0", "3.3.1", "3.4.5", "4.0.0", "4.1.0", "4.2.0", "4.3.0"]
 
 
 def download_ukrdc_schema(filepath: str, schema_version: str) -> None:
